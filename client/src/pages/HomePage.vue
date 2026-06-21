@@ -9,6 +9,7 @@ import TimeSelector from '../components/TimeSelector.vue'
 import DistanceSelector from '../components/DistanceSelector.vue'
 import PreferenceTags from '../components/PreferenceTags.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
+import ErrorBoundary from '../components/ErrorBoundary.vue'
 import type { TimeOption, DistanceOption, PreferenceTag, MealType, CuisineType, PhotoType, ScenicType, WanderType, WalkLevel } from '../types/route'
 
 const router = useRouter()
@@ -142,6 +143,7 @@ async function handleGenerate() {
 
     <!-- Main content -->
     <div class="flex-1 overflow-auto px-5">
+      <ErrorBoundary>
       <!-- Location -->
       <section class="mb-6">
         <div v-if="!hasRequestedLocation && !coords" class="text-center py-6">
@@ -211,6 +213,7 @@ async function handleGenerate() {
           />
         </section>
       </template>
+      </ErrorBoundary>
     </div>
 
     <!-- Bottom fixed CTA -->

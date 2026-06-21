@@ -8,6 +8,7 @@ import RouteCompare from '../components/RouteCompare.vue'
 import RouteSkeleton from '../components/RouteSkeleton.vue'
 import RouteError from '../components/RouteError.vue'
 import EmptyState from '../components/EmptyState.vue'
+import ErrorBoundary from '../components/ErrorBoundary.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -80,54 +81,56 @@ const transitionStyle = computed(() => {
 
     <!-- Content -->
     <div class="flex-1 overflow-auto px-4 pb-4">
-      <!-- Loading -->
-      <div v-if="loading">
-        <RouteSkeleton v-for="i in 3" :key="i" class="mb-4" />
-      </div>
-
-      <!-- Error -->
-      <RouteError
-        v-else-if="error"
-        :error="error"
-        @retry="retry()"
-      />
-
-      <!-- Empty -->
-      <EmptyState v-else-if="routeCount === 0" />
-
-      <!-- Routes -->
-      <!-- Compare mode -->
-      <RouteCompare
-        v-else-if="viewMode === 'compare'"
-        :routes="routes"
-        @select="() => {}"
-      />
-
-      <!-- Swipe mode -->
-      <div
-        v-else
-        class="relative"
-        @touchstart.passive="onTouchStart"
-        @touchmove="onTouchMove"
-        @touchend="onTouchEnd"
-        @pointerdown="onPointerDown"
-        @pointermove="onPointerMove"
-        @pointerup="onPointerUp"
-        @pointercancel="onPointerUp"
-      >
-        <div
-          v-for="(rt, i) in routes"
-          :key="rt.id"
-          v-show="i === swipeState.currentIndex"
-          :style="i === swipeState.currentIndex ? transitionStyle : {}"
-        >
-          <RouteCard
-            :route="rt"
-            :index="i"
-            :total="routeCount"
-          />
+      <ErrorBoundary>
+        <!-- Loading -->
+        <div v-if="loading">
+          <RouteSkeleton v-for="i in 3" :key="i" class="mb-4" />
         </div>
-      </div>
+
+        <!-- Error -->
+        <RouteError
+          v-else-if="error"
+          :error="error"
+          @retry="retry()"
+        />
+
+        <!-- Empty -->
+        <EmptyState v-else-if="routeCount === 0" />
+
+        <!-- Routes -->
+        <!-- Compare mode -->
+        <RouteCompare
+          v-else-if="viewMode === 'compare'"
+          :routes="routes"
+          @select="() => {}"
+        />
+
+        <!-- Swipe mode -->
+        <div
+          v-else
+          class="relative"
+          @touchstart.passive="onTouchStart"
+          @touchmove="onTouchMove"
+          @touchend="onTouchEnd"
+          @pointerdown="onPointerDown"
+          @pointermove="onPointerMove"
+          @pointerup="onPointerUp"
+          @pointercancel="onPointerUp"
+        >
+          <div
+            v-for="(rt, i) in routes"
+            :key="rt.id"
+            v-show="i === swipeState.currentIndex"
+            :style="i === swipeState.currentIndex ? transitionStyle : {}"
+          >
+            <RouteCard
+              :route="rt"
+              :index="i"
+              :total="routeCount"
+            />
+          </div>
+        </div>
+      </ErrorBoundary>
     </div>
 
     <!-- Dot indicators (swipe mode only) -->

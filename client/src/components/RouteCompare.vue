@@ -86,7 +86,7 @@ function handleSelect(route: Route) {
         <div class="flex items-center justify-between mb-1">
           <h3 class="text-lg font-bold text-gray-900">{{ rt.name }}</h3>
           <span class="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-medium">
-            {{ metaMap[i]?.icon }} {{ metaMap[i]?.bestFor }}
+            {{ metaMap[i]?.icon || '✨' }} {{ metaMap[i]?.bestFor || '综合推荐' }}
           </span>
         </div>
         <p class="text-sm text-gray-400">{{ rt.tagline }}</p>
