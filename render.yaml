@@ -4,7 +4,7 @@ services:
     env: node
     region: singapore
     plan: free
-    buildCommand: npm install --include=dev && npm run build -w server
+    buildCommand: npm install --include=dev && npm run build -w client && npm run build -w server
     startCommand: npm run start -w server
     envVars:
       - key: NODE_ENV
