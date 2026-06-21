@@ -15,16 +15,16 @@ function asyncHandler(
 router.post(
   '/generate',
   asyncHandler(async (req, res) => {
-    const { lat, lng, timeOption, preferences, mealTypes, cuisineTypes } = req.body
+    const { lat, lng, timeOption, distance, preferences, mealTypes, cuisineTypes, photoTypes, scenicTypes, wanderTypes, walkLevel } = req.body
 
-    if (lat == null || lng == null || !timeOption || !preferences?.length) {
+    if (lat == null || lng == null || !timeOption || !distance || !preferences?.length) {
       res.status(400).json({
-        error: { code: 'INVALID_PARAMS', message: '请提供位置、时间和至少一个偏好' },
+        error: { code: 'INVALID_PARAMS', message: '请提供位置、时间、距离和至少一个偏好' },
       })
       return
     }
 
-    const result = await generateRoutes({ lat, lng, timeOption, preferences, mealTypes, cuisineTypes })
+    const result = await generateRoutes({ lat, lng, timeOption, distance, preferences, mealTypes, cuisineTypes, photoTypes, scenicTypes, wanderTypes, walkLevel })
 
     if (result.routes.length === 0) {
       res.status(404).json({

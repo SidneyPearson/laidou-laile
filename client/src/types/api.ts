@@ -1,12 +1,17 @@
-import type { PreferenceTag, TimeOption, MealType, CuisineType } from './route'
+import type { PreferenceTag, TimeOption, MealType, CuisineType, PhotoType, ScenicType, WanderType, WalkLevel, DistanceOption } from './route'
 
 export interface GenerateRoutesRequest {
   lat: number
   lng: number
   timeOption: TimeOption
+  distance: DistanceOption
   preferences: PreferenceTag[]
   mealTypes?: MealType[]
   cuisineTypes?: CuisineType[]
+  photoTypes?: PhotoType[]
+  scenicTypes?: ScenicType[]
+  wanderTypes?: WanderType[]
+  walkLevel?: WalkLevel
 }
 
 export interface GenerateRoutesResponse {

@@ -18,6 +18,22 @@ const CUISINE_CN: Record<string, string> = {
   local_cuisine: '本地菜', western: '西餐', coffee_tea: '咖啡茶饮',
 }
 
+const PHOTO_CN: Record<string, string> = {
+  landmark: '地标景点', street: '街拍打卡',
+}
+
+const SCENIC_CN: Record<string, string> = {
+  popular: '热门景点', museum: '博物馆/文化', hidden: '小众秘境',
+}
+
+const WANDER_CN: Record<string, string> = {
+  shopping: '逛街购物', cafe: '咖啡茶馆', entertainment: '休闲娱乐', park: '公园散步',
+}
+
+const WALK_LEVEL_CN: Record<string, string> = {
+  minimal: '尽量少走（500m以内）', moderate: '可以走一段（1km以内）',
+}
+
 export const SYSTEM_PROMPT = `你是一个资深本地导游和旅行规划师，名叫"阿来"。
 你的风格接地气、懂行、热情，像一个熟悉这座城市的朋友。
 
@@ -27,11 +43,10 @@ export const SYSTEM_PROMPT = `你是一个资深本地导游和旅行规划师�
 3. 三条路线的主题要明显不同，不能三条都是同类型。
 4. 时间分配合理：步行时间按每 100 米 ≈ 1.5 分钟估算。
 5. 30 分钟时只做 1-2 站，优先最近 POI。
-6. "少走路" 时所有 stop 集中在 500 米内。
-7. 根据当前天气调整推荐：晴天优先户外、雨天优先室内，tips 中根据天气给出建议。
-8. route name 简短有记忆点（3-8 个汉字）。
-9. tagline 简短说明路线特色。
-10. 路线对比：三条路线要有明显的差异化，让用户能根据自己的需求选择（如"最短步行""最多美食""最佳拍照"等）。
+6. 根据当前天气调整推荐：晴天优先户外、雨天优先室内，tips 中根据天气给出建议。
+7. route name 简短有记忆点（3-8 个汉字）。
+8. tagline 简短说明路线特色。
+9. 路线对比：三条路线要有明显的差异化，让用户能根据自己的需求选择（如"最短步行""最多美食""最佳拍照"等）。
 
 ## 饮食偏好规则
 - 如果用户指定了用餐时段（早餐/午餐/晚餐/下午茶），只推荐适合该时段的餐饮。
@@ -44,8 +59,25 @@ export const SYSTEM_PROMPT = `你是一个资深本地导游和旅行规划师�
 - 格式：【拍照点】+ 具体机位描述 + 最佳时间段 + 构图建议。
 - 不要只说"这个地方适合拍照"，要给出具体角度和位置。
 - 例如：【拍照点】主殿东侧回廊第三根柱子处，上午10点光线透过窗棂，适合逆光人像。
+- 如果指定了"地标景点"，优先推荐大型知名景点和标志性建筑。
+- 如果指定了"街拍打卡"，优先推荐特色街道、网红打卡点、文创园区、胡同小巷。
 - 推荐"隐藏机位"——不是所有人都知道的角度，避免千篇一律的游客照。
-- 如果 POI 附近有特别出片的角落或背景，优先在 notes 中说明。
+
+## 本地景点规则
+- 如果指定了"热门景点"，推荐大众熟知的著名景点。
+- 如果指定了"博物馆/文化"，推荐博物馆、美术馆、展览馆、纪念馆等文化场所。
+- 如果指定了"小众秘境"，推荐故居、寺庙、园林、老街、小众打卡地。
+- 每个 stop 的 notes 要包含该景点的历史或文化背景。
+
+## 随便逛逛规则
+- 如果指定了"逛街购物"，推荐商场、购物中心、步行街、特色集市。
+- 如果指定了"咖啡茶馆"，推荐特色咖啡馆、茶馆、书吧等休闲场所。
+- 如果指定了"休闲娱乐"，推荐电影院、KTV、桌游、密室、演出场所等。
+- 如果指定了"公园散步"，推荐公园、绿地、植物园、湖畔步道等户外休闲处。
+
+## 少走路规则
+- 如果指定了"尽量少走"，所有 stop 必须集中在 500 米范围内，步行总距离不超过 500 米。
+- 如果指定了"可以走一段"，所有 stop 集中在 1 公里范围内。
 
 ## 天气规则
 - 当前天气信息已提供在上下文中，必须在 tips 中体现天气建议。
@@ -64,23 +96,49 @@ export function buildUserPrompt(input: {
   city: string
   weather: string
   timeMinutes: number
+  distance: number
   preferences: PreferenceTag[]
   pois: AmapPOI[]
   mealTypes?: string[]
   cuisineTypes?: string[]
+  photoTypes?: string[]
+  scenicTypes?: string[]
+  wanderTypes?: string[]
+  walkLevel?: string
 }): string {
-  const { city, weather, timeMinutes, preferences, pois, mealTypes, cuisineTypes } = input
+  const { city, weather, timeMinutes, distance, preferences, pois, mealTypes, cuisineTypes, photoTypes, scenicTypes, wanderTypes, walkLevel } = input
 
   const prefCN = preferences.map((p) => PREFERENCE_CN[p]).join('、')
 
-  // Food sub-preference detail
-  let foodDetail = ''
+  // Build sub-preference details
+  const subDetails: string[] = []
+
   if (preferences.includes('food') && (mealTypes?.length || cuisineTypes?.length)) {
     const parts: string[] = []
     if (mealTypes?.length) parts.push(`时段：${mealTypes.map((m: string) => MEAL_CN[m] || m).join('、')}`)
     if (cuisineTypes?.length) parts.push(`类型：${cuisineTypes.map((c: string) => CUISINE_CN[c] || c).join('、')}`)
-    foodDetail = `\n- 饮食偏好：${parts.join('；')}`
+    subDetails.push(`饮食偏好：${parts.join('；')}`)
   }
+
+  if (preferences.includes('photo') && photoTypes?.length) {
+    subDetails.push(`拍照偏好：${photoTypes.map((p) => PHOTO_CN[p] || p).join('、')}`)
+  }
+
+  if (preferences.includes('scenic') && scenicTypes?.length) {
+    subDetails.push(`景点偏好：${scenicTypes.map((s) => SCENIC_CN[s] || s).join('、')}`)
+  }
+
+  if (preferences.includes('wander') && wanderTypes?.length) {
+    subDetails.push(`休闲偏好：${wanderTypes.map((w) => WANDER_CN[w] || w).join('、')}`)
+  }
+
+  if (preferences.includes('less_walk') && walkLevel) {
+    subDetails.push(`步行偏好：${WALK_LEVEL_CN[walkLevel] || walkLevel}`)
+  }
+
+  const subDetailText = subDetails.length > 0
+    ? `\n- ${subDetails.join('\n- ')}`
+    : ''
 
   // Photo-specific instruction
   const photoInstruction = preferences.includes('photo')
@@ -88,18 +146,19 @@ export function buildUserPrompt(input: {
     : ''
 
   // Each POI gets a unique index for LLM to reference
-  const poiTable = pois.slice(0, 15).map((p, i) => {
+  const poiTable = pois.slice(0, 20).map((p, i) => {
     const dist = p.distance >= 1000
       ? `${(p.distance / 1000).toFixed(1)}km`
       : `${p.distance}m`
-    return `[${i}] ${p.name} | ${p.address.slice(0, 35)} | ${dist} | id=${p.id} | ${p.lng},${p.lat}`
+    return `[${i}] ${p.name} | ${p.address.slice(0, 40)} | ${dist} | id=${p.id} | ${p.lng},${p.lat}`
   }).join('\n')
 
   return `## 上下文
 - 城市：${city}
 - 天气：${weather}
 - 可用时间：${timeMinutes} 分钟
-- 偏好：${prefCN}${foodDetail}
+- 探索距离：${distance}m
+- 偏好：${prefCN}${subDetailText}
 
 ## POI 清单（只能使用以下地点，不得编造）
 ${poiTable}${photoInstruction}

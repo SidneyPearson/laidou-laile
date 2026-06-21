@@ -1,6 +1,6 @@
 import { getAmapClient } from './client.js'
 import type { AmapAroundResponse, AmapTextResponse, AmapPOI } from '../../types/poi.js'
-import type { PreferenceTag, TimeOption } from '../../types/route.js'
+import type { PreferenceTag } from '../../types/route.js'
 
 // Preference → Amap typecode mapping
 const PREFERENCE_TYPECODES: Record<PreferenceTag, string> = {
@@ -30,12 +30,31 @@ const CUISINE_KEYWORDS: Record<string, string> = {
   coffee_tea: '咖啡|茶馆|奶茶|茶饮',
 }
 
-// Time → radius mapping
-const TIME_RADIUS: Record<TimeOption, number> = {
-  30: 1000,
-  60: 2000,
-  120: 3000,
-  240: 5000,
+// Photo type → Amap typecode + keywords
+const PHOTO_CONFIG: Record<string, { types: string; keywords?: string }> = {
+  landmark: { types: '110000' },                                    // 地标景点 → 风景名胜
+  street: { types: '060300|140000', keywords: '打卡|网红|街拍|特色街|胡同|文创' }, // 街拍打卡
+}
+
+// Scenic type → Amap keywords
+const SCENIC_KEYWORDS: Record<string, string> = {
+  popular: '著名景点|5A|4A|名胜古迹|地标|必去',
+  museum: '博物馆|美术馆|展览馆|纪念馆|科技馆',
+  hidden: '故居|寺庙|园林|小众|秘境|胡同|老街|古巷',
+}
+
+// Wander type → Amap typecode + keywords
+const WANDER_CONFIG: Record<string, { types?: string; keywords?: string }> = {
+  shopping: { types: '060000', keywords: '商场|购物中心|步行街|集市' },
+  cafe: { types: '050000', keywords: '咖啡|茶馆|茶饮|书吧' },
+  entertainment: { types: '080000', keywords: '电影院|KTV|桌游|密室|演出' },
+  park: { types: '110000', keywords: '公园|绿地|步道|植物园|湖畔' },
+}
+
+// Walk level → radius adjustment factor
+const WALK_LEVEL_RADIUS: Record<string, number> = {
+  minimal: 0.5,   // 500m range → reduce to 50%
+  moderate: 1.0,  // no adjustment
 }
 
 // Max POI results cap
@@ -82,22 +101,44 @@ function dedupeAndSort(pois: AmapPOI[]): AmapPOI[] {
 export async function searchNearbyPOIs(params: {
   lat: number
   lng: number
-  timeOption: TimeOption
+  distance: number
+  timeOption: number
   preferences: PreferenceTag[]
   mealTypes?: string[]
   cuisineTypes?: string[]
+  photoTypes?: string[]
+  scenicTypes?: string[]
+  wanderTypes?: string[]
+  walkLevel?: string
 }): Promise<AmapPOI[]> {
-  const { lat, lng, timeOption, preferences, mealTypes, cuisineTypes } = params
+  const { lat, lng, distance, preferences, mealTypes, cuisineTypes, photoTypes, scenicTypes, wanderTypes, walkLevel } = params
   const client = getAmapClient()
-  const radius = TIME_RADIUS[timeOption]
 
-  // Build typecode union
-  const typecodes = preferences
+  // Apply walk level radius adjustment
+  const radiusFactor = walkLevel ? (WALK_LEVEL_RADIUS[walkLevel] || 1.0) : 1.0
+  const radius = Math.round(distance * radiusFactor)
+
+  // Build typecode union from preferences
+  let typeFilter = preferences
     .map((p) => PREFERENCE_TYPECODES[p])
     .filter(Boolean)
 
-  // Fallback: if all preferences are constraint-only (e.g. less_walk), default to mixed
-  let typesParam = [...new Set(typecodes.flatMap((t) => t.split('|')))].join('|')
+  // Add photo sub-type typecodes if photo is selected and has sub-options
+  if (preferences.includes('photo') && photoTypes?.length) {
+    for (const pt of photoTypes) {
+      if (PHOTO_CONFIG[pt]) typeFilter.push(PHOTO_CONFIG[pt].types)
+    }
+  }
+
+  // Add wander sub-type typecodes if wander is selected and has sub-options
+  if (preferences.includes('wander') && wanderTypes?.length) {
+    for (const wt of wanderTypes) {
+      if (WANDER_CONFIG[wt]?.types) typeFilter.push(WANDER_CONFIG[wt].types!)
+    }
+  }
+
+  // Deduplicate types
+  let typesParam = [...new Set(typeFilter.flatMap((t) => t.split('|')))].join('|')
   if (!typesParam) {
     typesParam = '050000|060000|080000|110000' // mixed default
     console.log(`No type filters from preferences [${preferences}], using default types`)
@@ -105,8 +146,10 @@ export async function searchNearbyPOIs(params: {
 
   console.log(`Amap around-search: location=${lng},${lat} radius=${radius} types=${typesParam}`)
 
+  const promises: Promise<AmapPOI[]>[] = []
+
   // Main around-search
-  const promises: Promise<AmapPOI[]>[] = [
+  promises.push(
     client
       .get<AmapAroundResponse>('/place/around', {
         params: {
@@ -127,35 +170,11 @@ export async function searchNearbyPOIs(params: {
         if (err.response?.data) console.error('  Amap response:', JSON.stringify(err.response.data).slice(0, 200))
         return [] as AmapPOI[]
       }),
-  ]
+  )
 
-  // Supplementary text search for 'scenic' preference
-  if (preferences.includes('scenic')) {
-    promises.push(
-      client
-        .get<AmapTextResponse>('/place/text', {
-          params: {
-            location: `${lng},${lat}`,
-            keywords: '景点|名胜|故居|博物馆|寺庙|园林|地标|打卡',
-            types: '110000|140000',
-            city: '010',
-            offset: 10,
-            page: 1,
-            extensions: 'all',
-          },
-        })
-        .then((res) => {
-          const pois = (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[]
-          return pois
-        })
-        .catch((err) => {
-          console.error('Amap text-search FAILED:', err.message)
-          return [] as AmapPOI[]
-        }),
-    )
-  }
+  // ── Supplementary text searches ──────────────────────
 
-  // Supplementary text search for food sub-preferences
+  // Food sub-preferences
   if (preferences.includes('food') && (mealTypes?.length || cuisineTypes?.length)) {
     const kwParts: string[] = []
     if (mealTypes?.length) {
@@ -180,15 +199,88 @@ export async function searchNearbyPOIs(params: {
               extensions: 'all',
             },
           })
-          .then((res) => {
-            const pois = (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[]
-            return pois
-          })
-          .catch((err) => {
-            console.error('Amap food text-search FAILED:', err.message)
-            return [] as AmapPOI[]
-          }),
+          .then((res) => (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[])
+          .catch((err) => { console.error('Amap food text-search FAILED:', err.message); return [] as AmapPOI[] }),
       )
+    }
+  }
+
+  // Scenic + scenic sub-preferences
+  if (preferences.includes('scenic')) {
+    let scenicKws = '景点|名胜|故居|博物馆|寺庙|园林|地标|打卡'
+    if (scenicTypes?.length) {
+      const subKws = scenicTypes.map((st) => SCENIC_KEYWORDS[st]).filter(Boolean)
+      if (subKws.length) scenicKws = subKws.join('|')
+    }
+    console.log(`Amap scenic text-search: keywords=${scenicKws}`)
+    promises.push(
+      client
+        .get<AmapTextResponse>('/place/text', {
+          params: {
+            location: `${lng},${lat}`,
+            keywords: scenicKws,
+            types: '110000|140000',
+            city: '010',
+            offset: 10,
+            page: 1,
+            extensions: 'all',
+          },
+        })
+        .then((res) => (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[])
+        .catch((err) => { console.error('Amap scenic text-search FAILED:', err.message); return [] as AmapPOI[] }),
+    )
+  }
+
+  // Photo sub-preferences with keywords
+  if (preferences.includes('photo') && photoTypes?.length) {
+    for (const pt of photoTypes) {
+      const cfg = PHOTO_CONFIG[pt]
+      if (cfg?.keywords) {
+        console.log(`Amap photo text-search (${pt}): keywords=${cfg.keywords}`)
+        promises.push(
+          client
+            .get<AmapTextResponse>('/place/text', {
+              params: {
+                location: `${lng},${lat}`,
+                keywords: cfg.keywords,
+                types: cfg.types,
+                city: '010',
+                offset: 10,
+                page: 1,
+                extensions: 'all',
+              },
+            })
+            .then((res) => (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[])
+            .catch((err) => { console.error(`Amap photo text-search (${pt}) FAILED:`, err.message); return [] as AmapPOI[] }),
+        )
+      }
+    }
+  }
+
+  // Wander sub-preferences with keywords
+  if (preferences.includes('wander') && wanderTypes?.length) {
+    for (const wt of wanderTypes) {
+      const cfg = WANDER_CONFIG[wt]
+      if (cfg?.keywords) {
+        const searchTypes = cfg.types || '060000|080000'
+        console.log(`Amap wander text-search (${wt}): keywords=${cfg.keywords} types=${searchTypes}`)
+        promises.push(
+          client
+            .get<AmapTextResponse>('/place/text', {
+              params: {
+                location: `${lng},${lat}`,
+                keywords: cfg.keywords,
+                types: searchTypes,
+                city: '010',
+                offset: 10,
+                page: 1,
+                extensions: 'all',
+              },
+            })
+            .then((res) => (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[])
+            .catch((err) => { console.error(`Amap wander text-search (${wt}) FAILED:`, err.message); return [] as AmapPOI[] }),
+        )
+      }
     }
   }
 

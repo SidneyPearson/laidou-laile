@@ -1,24 +1,54 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useRouteRequest } from '../composables/useRouteRequest'
 import LocationGate from '../components/LocationGate.vue'
 import TimeSelector from '../components/TimeSelector.vue'
+import DistanceSelector from '../components/DistanceSelector.vue'
 import PreferenceTags from '../components/PreferenceTags.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
-import type { TimeOption, PreferenceTag, MealType, CuisineType } from '../types/route'
+import type { TimeOption, DistanceOption, PreferenceTag, MealType, CuisineType, PhotoType, ScenicType, WanderType, WalkLevel } from '../types/route'
 
 const router = useRouter()
 const { coords, loading: locLoading, error: locError, isMock, requestLocation } = useGeolocation()
 const { routes, locationName, weather, weatherNote, loading: genLoading, loadingStage, error: genError, fetchRoutes } = useRouteRequest()
 
-const timeOption = ref<TimeOption>(60)
-const preferences = ref<PreferenceTag[]>(['food'])
+// ── Selections (all start empty — user must choose) ──
+const timeOption = ref<TimeOption | null>(null)
+const distance = ref<DistanceOption | null>(null)
+const preferences = ref<PreferenceTag[]>([])
 const mealTypes = ref<MealType[]>([])
 const cuisineTypes = ref<CuisineType[]>([])
+const photoTypes = ref<PhotoType[]>([])
+const scenicTypes = ref<ScenicType[]>([])
+const wanderTypes = ref<WanderType[]>([])
+const walkLevel = ref<WalkLevel | null>(null)
 
 const hasRequestedLocation = ref(false)
+
+// ── Computed ──────────────────────────────────────────
+
+const canGenerate = computed(() => {
+  return (
+    coords.value &&
+    timeOption.value !== null &&
+    distance.value !== null &&
+    preferences.value.length > 0
+  )
+})
+
+const missingHint = computed(() => {
+  if (!coords.value) return null
+  const missing: string[] = []
+  if (!timeOption.value) missing.push('可用时间')
+  if (!distance.value) missing.push('探索距离')
+  if (preferences.value.length === 0) missing.push('怎么玩')
+  if (missing.length === 0) return null
+  return `请选择：${missing.join('、')}`
+})
+
+// ── Methods ───────────────────────────────────────────
 
 function handleRequestLocation(useMock: boolean) {
   hasRequestedLocation.value = true
@@ -26,14 +56,19 @@ function handleRequestLocation(useMock: boolean) {
 }
 
 async function handleGenerate() {
-  if (!coords.value) return
+  if (!coords.value || !timeOption.value || !distance.value) return
   await fetchRoutes({
     lat: coords.value.lat,
     lng: coords.value.lng,
     timeOption: timeOption.value,
+    distance: distance.value,
     preferences: preferences.value,
     mealTypes: preferences.value.includes('food') ? mealTypes.value : undefined,
     cuisineTypes: preferences.value.includes('food') ? cuisineTypes.value : undefined,
+    photoTypes: preferences.value.includes('photo') ? photoTypes.value : undefined,
+    scenicTypes: preferences.value.includes('scenic') ? scenicTypes.value : undefined,
+    wanderTypes: preferences.value.includes('wander') ? wanderTypes.value : undefined,
+    walkLevel: preferences.value.includes('less_walk') ? walkLevel.value ?? undefined : undefined,
   })
   if (routes.value.length > 0) {
     router.push({
@@ -90,18 +125,44 @@ async function handleGenerate() {
 
       <!-- Preferences (only show after location is set) -->
       <template v-if="coords">
+        <!-- Guidance banner -->
+        <div
+          v-if="missingHint"
+          class="mb-5 p-3 bg-primary-50 border border-primary-100 rounded-xl text-center"
+        >
+          <p class="text-sm text-primary-700 font-medium">{{ missingHint }}</p>
+        </div>
+
         <section class="mb-6">
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
             可用时间
+            <span v-if="!timeOption" class="text-primary-400 animate-pulse ml-1">← 必选</span>
           </h2>
           <TimeSelector v-model="timeOption" />
+        </section>
+
+        <section class="mb-6">
+          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            探索距离
+            <span v-if="!distance" class="text-primary-400 animate-pulse ml-1">← 必选</span>
+          </h2>
+          <DistanceSelector v-model="distance" />
         </section>
 
         <section class="mb-8">
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
             想怎么玩
+            <span v-if="preferences.length === 0" class="text-primary-400 animate-pulse ml-1">← 必选</span>
           </h2>
-          <PreferenceTags v-model="preferences" v-model:meal-types="mealTypes" v-model:cuisine-types="cuisineTypes" />
+          <PreferenceTags
+            v-model="preferences"
+            v-model:meal-types="mealTypes"
+            v-model:cuisine-types="cuisineTypes"
+            v-model:photo-types="photoTypes"
+            v-model:scenic-types="scenicTypes"
+            v-model:wander-types="wanderTypes"
+            v-model:walk-level="walkLevel"
+          />
         </section>
       </template>
     </div>
@@ -113,7 +174,8 @@ async function handleGenerate() {
     >
       <button
         class="btn-primary w-full py-3.5 text-base font-semibold flex items-center justify-center gap-2"
-        :disabled="genLoading || preferences.length === 0"
+        :class="!canGenerate ? 'opacity-50 cursor-not-allowed' : ''"
+        :disabled="genLoading || !canGenerate"
         @click="handleGenerate"
       >
         {{ genLoading ? '生成中...' : '✨ 生成路线' }}

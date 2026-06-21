@@ -16,11 +16,21 @@ export interface PlanInput {
   weather: string
   /** Available time in minutes: 30 | 60 | 120 | 240 */
   timeMinutes: number
+  /** Search distance in meters */
+  distance: number
   /** Selected preference tags */
   preferences: PreferenceTag[]
   /** Food sub-preferences */
   mealTypes?: string[]
   cuisineTypes?: string[]
+  /** Photo sub-preferences */
+  photoTypes?: string[]
+  /** Scenic sub-preferences */
+  scenicTypes?: string[]
+  /** Wander sub-preferences */
+  wanderTypes?: string[]
+  /** Walk level */
+  walkLevel?: string
   /** POI list from Amap — the ONLY allowed data source */
   pois: AmapPOI[]
 }
@@ -80,10 +90,15 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
     city,
     weather,
     timeMinutes,
+    distance: input.distance,
     preferences,
     pois,
     mealTypes: input.mealTypes,
     cuisineTypes: input.cuisineTypes,
+    photoTypes: input.photoTypes,
+    scenicTypes: input.scenicTypes,
+    wanderTypes: input.wanderTypes,
+    walkLevel: input.walkLevel,
   })
 
   // Call LLM
