@@ -43,6 +43,7 @@ router.post(
       fallbackReason: result.fallbackReason,
     }
 
+    res.setHeader('Cache-Control', 'no-store')
     res.json(response)
   }),
 )

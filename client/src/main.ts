@@ -17,11 +17,4 @@ const router = createRouter({
 
 const app = createApp(App)
 app.use(router)
-
-// Global error handler — prevent blank page on uncaught render errors
-app.config.errorHandler = (err: unknown, _instance, info: string) => {
-  console.error('[Vue Global Error]', err, info)
-  // Don't let the error propagate and unmount the app
-}
-
 app.mount('#app')

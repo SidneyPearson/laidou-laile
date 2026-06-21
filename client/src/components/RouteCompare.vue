@@ -18,14 +18,15 @@ interface RouteMeta {
 
 const metaMap = computed<RouteMeta[]>(() => {
   const routes = props.routes
-  if (routes.length === 0) return []
+  if (!Array.isArray(routes) || routes.length === 0) return []
 
   // Determine differentiation
   const diversities = routes.map((r) => {
-    const foodCount = r.stops.filter((s) => s.notes?.includes('吃') || s.name?.includes('餐') || s.name?.includes('店')).length
-    const photoCount = r.stops.filter((s) => s.notes?.includes('拍') || s.photoTip).length
-    const walkDist = r.walkingDistanceMeters
-    const stopCount = r.stops.length
+    const stops = Array.isArray(r.stops) ? r.stops : [];
+    const foodCount = stops.filter((s) => s.notes?.includes('吃') || s.name?.includes('餐') || s.name?.includes('店')).length
+    const photoCount = stops.filter((s) => s.notes?.includes('拍') || s.photoTip).length
+    const walkDist = r.walkingDistanceMeters ?? 0
+    const stopCount = stops.length
     return { foodCount, photoCount, walkDist, stopCount }
   })
 
@@ -86,7 +87,7 @@ function handleSelect(route: Route) {
         <div class="flex items-center justify-between mb-1">
           <h3 class="text-lg font-bold text-gray-900">{{ rt.name }}</h3>
           <span class="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-medium">
-            {{ metaMap[i]?.icon || '✨' }} {{ metaMap[i]?.bestFor || '综合推荐' }}
+            {{ metaMap[i]?.icon }} {{ metaMap[i]?.bestFor }}
           </span>
         </div>
         <p class="text-sm text-gray-400">{{ rt.tagline }}</p>

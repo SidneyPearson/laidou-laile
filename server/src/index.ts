@@ -22,10 +22,32 @@ app.use('/api/plan', planRoutes)
 
 // ── Serve frontend static files ──────────────────────
 const distPath = resolve(__dirname, '../../client/dist')
-app.use(express.static(distPath))
+
+// Assets with content hash: cache aggressively
+app.use(
+  '/assets',
+  express.static(resolve(distPath, 'assets'), {
+    maxAge: '365d',
+    immutable: true,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    },
+  }),
+)
+
+// Other static files (favicon, etc.)
+app.use(express.static(distPath, {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      // Never cache HTML — always fetch latest after deploy
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+    }
+  },
+}))
 
 // SPA fallback: all non-API routes → index.html
 app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
   res.sendFile(resolve(distPath, 'index.html'))
 })
 
