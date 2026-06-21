@@ -11,6 +11,7 @@ const weather = ref<{ weather: string; temperature: string; isRainy: boolean } |
 const loading = ref(false)
 const loadingStage = ref(0)
 const error = ref<ApiRequestError | null>(null)
+const lastResponse = ref<GenerateRoutesResponse | null>(null)
 let lastRequest: GenerateRoutesRequest | null = null
 let stageTimer: ReturnType<typeof setInterval> | null = null
 
@@ -34,6 +35,7 @@ export function useRouteRequest() {
       locationName.value = data.locationName
       weatherNote.value = data.weatherNote
       weather.value = data.weather || null
+      lastResponse.value = data
     } catch (e) {
       if (e instanceof ApiRequestError) {
         error.value = e
@@ -53,5 +55,5 @@ export function useRouteRequest() {
     }
   }
 
-  return { routes, locationName, weatherNote, weather, loading, loadingStage, error, fetchRoutes, retry }
+  return { routes, locationName, weatherNote, weather, loading, loadingStage, error, lastRequest, lastResponse, fetchRoutes, retry }
 }

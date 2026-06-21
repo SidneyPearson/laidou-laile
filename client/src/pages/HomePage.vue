@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useRouteRequest } from '../composables/useRouteRequest'
+import { useHistory } from '../composables/useHistory'
 import LocationGate from '../components/LocationGate.vue'
 import TimeSelector from '../components/TimeSelector.vue'
 import DistanceSelector from '../components/DistanceSelector.vue'
@@ -13,6 +14,7 @@ import type { TimeOption, DistanceOption, PreferenceTag, MealType, CuisineType, 
 const router = useRouter()
 const { coords, loading: locLoading, error: locError, isMock, requestLocation } = useGeolocation()
 const { routes, locationName, weather, weatherNote, loading: genLoading, loadingStage, error: genError, fetchRoutes } = useRouteRequest()
+const { addEntry } = useHistory()
 
 // ── Selections (all start empty — user must choose) ──
 const timeOption = ref<TimeOption | null>(null)
@@ -71,6 +73,24 @@ async function handleGenerate() {
     walkLevel: preferences.value.includes('less_walk') ? walkLevel.value ?? undefined : undefined,
   })
   if (routes.value.length > 0) {
+    // Save to history
+    addEntry({
+      locationName: locationName.value,
+      request: {
+        timeOption: timeOption.value!,
+        distance: distance.value!,
+        preferences: [...preferences.value],
+        mealTypes: mealTypes.value.length > 0 ? [...mealTypes.value] : undefined,
+        cuisineTypes: cuisineTypes.value.length > 0 ? [...cuisineTypes.value] : undefined,
+        photoTypes: photoTypes.value.length > 0 ? [...photoTypes.value] : undefined,
+        scenicTypes: scenicTypes.value.length > 0 ? [...scenicTypes.value] : undefined,
+        wanderTypes: wanderTypes.value.length > 0 ? [...wanderTypes.value] : undefined,
+        walkLevel: walkLevel.value ?? undefined,
+      },
+      routes: routes.value,
+      weather: weather.value,
+    })
+
     router.push({
       name: 'routes',
       query: {
@@ -89,9 +109,20 @@ async function handleGenerate() {
 
   <div class="h-full flex flex-col max-w-md mx-auto">
     <!-- Header -->
-    <header class="flex-shrink-0 pt-12 pb-6 px-5 text-center">
+    <header class="flex-shrink-0 pt-12 pb-6 px-5 text-center relative">
       <h1 class="text-3xl font-bold text-gray-900 mb-1">来都来了</h1>
       <p class="text-sm text-gray-400">不用做攻略，到了就会玩</p>
+      <button
+        class="absolute right-5 top-12 w-9 h-9 flex items-center justify-center rounded-full bg-white
+               shadow-sm border border-gray-100 text-gray-400 active:bg-gray-50 transition-colors"
+        aria-label="历史路线"
+        @click="router.push({ name: 'history' })"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </button>
     </header>
 
     <!-- Main content -->
