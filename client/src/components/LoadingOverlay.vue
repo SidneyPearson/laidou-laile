@@ -28,29 +28,48 @@ const tips = [
 
 const currentTip = ref(0)
 const elapsedSeconds = ref(0)
+// Smooth progress 0–100, driven by a timer
+const smoothProgress = ref(0)
+
 let tipTimer: ReturnType<typeof setInterval> | null = null
 let elapsedTimer: ReturnType<typeof setInterval> | null = null
+let progressTimer: ReturnType<typeof setInterval> | null = null
+
+// Each stage has a progress range, and we creep toward the ceiling of the current stage.
+// When the real stage advances, the ceiling jumps up and we keep creeping.
+const stageCeilings = [30, 70, 95]
 
 onMounted(() => {
   tipTimer = setInterval(() => {
     currentTip.value = (currentTip.value + 1) % tips.length
   }, 3000)
+
   elapsedTimer = setInterval(() => {
     elapsedSeconds.value++
   }, 1000)
+
+  // Smooth progress: creep ~2% per 500ms toward the current stage ceiling
+  progressTimer = setInterval(() => {
+    const target = stageCeilings[props.stage] ?? 95
+    if (smoothProgress.value < target) {
+      // Slow down as we approach the ceiling
+      const remaining = target - smoothProgress.value
+      const increment = Math.max(0.3, remaining * 0.06)
+      smoothProgress.value = Math.min(target, smoothProgress.value + increment)
+    }
+  }, 500)
 })
 
 onUnmounted(() => {
   if (tipTimer) clearInterval(tipTimer)
   if (elapsedTimer) clearInterval(elapsedTimer)
+  if (progressTimer) clearInterval(progressTimer)
 })
 
-const showSlowHint = computed(() => elapsedSeconds.value > 30)
+// Show slow hint during stage 2 (AI thinking is the slow part)
+const showSlowHint = computed(() => props.stage >= 1 && elapsedSeconds.value > 15)
 
-const progressWidth = computed(() => {
-  const base = (props.stage / 2) * 100
-  return `${Math.min(base + 10, 100)}%`
-})
+const progressWidth = computed(() => `${Math.round(smoothProgress.value)}%`)
 </script>
 
 <template>
@@ -59,21 +78,24 @@ const progressWidth = computed(() => {
     <div class="flex flex-col items-center mb-10">
       <transition-group name="stage" mode="out-in">
         <div :key="stage" class="flex flex-col items-center">
-          <span class="text-5xl mb-4 animate-bounce">{{ stages[stage]?.icon }}</span>
+          <span class="text-5xl mb-4" :class="stage === 0 ? 'animate-pulse' : 'animate-bounce'">{{ stages[stage]?.icon }}</span>
           <p class="text-lg font-semibold text-gray-800">{{ stages[stage]?.text }}</p>
         </div>
       </transition-group>
     </div>
 
-    <!-- Progress bar -->
-    <div class="w-full max-w-xs h-1.5 bg-gray-100 rounded-full overflow-hidden mb-8">
-      <div
-        class="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-700 ease-out"
-        :style="{ width: progressWidth }"
-      />
+    <!-- Progress bar with smooth width + percentage -->
+    <div class="w-full max-w-xs mb-2">
+      <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          class="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-500 ease-linear"
+          :style="{ width: progressWidth }"
+        />
+      </div>
+      <p class="text-xs text-gray-400 text-center mt-1.5">{{ progressWidth }}</p>
     </div>
 
-    <!-- Slow hint -->
+    <!-- Slow hint — show during stage 2 when AI is thinking -->
     <div v-if="showSlowHint" class="mb-6 text-center">
       <p class="text-sm text-amber-500 font-medium">AI 正在仔细规划，请耐心等待...</p>
       <p class="text-xs text-gray-400 mt-1">已等待 {{ elapsedSeconds }} 秒</p>

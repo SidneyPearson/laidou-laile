@@ -1,17 +1,14 @@
 import { ref, computed } from 'vue'
-import type { Route, PreferenceTag, TimeOption, DistanceOption, MealType, CuisineType, PhotoType, ScenicType, WanderType, WalkLevel } from '../types/route'
-import { PREFERENCE_LABELS, TIME_LABELS, DISTANCE_LABELS, MEAL_LABELS, CUISINE_LABELS, PHOTO_LABELS, SCENIC_LABELS, WANDER_LABELS, WALK_LEVEL_LABELS } from '../types/route'
+import type { Route, PreferenceTag, TimeOption, DistanceOption, CuisineType, ScenicType, WanderType } from '../types/route'
+import { PREFERENCE_LABELS, TIME_LABELS, DISTANCE_LABELS, CUISINE_LABELS, SCENIC_LABELS, WANDER_LABELS } from '../types/route'
 
 export interface HistoryRequest {
   timeOption: TimeOption
   distance: DistanceOption
   preferences: PreferenceTag[]
-  mealTypes?: MealType[]
   cuisineTypes?: CuisineType[]
-  photoTypes?: PhotoType[]
   scenicTypes?: ScenicType[]
   wanderTypes?: WanderType[]
-  walkLevel?: WalkLevel
 }
 
 export interface HistoryEntry {
@@ -92,12 +89,9 @@ export function useHistory() {
     parts.push(req.preferences.map((p) => PREFERENCE_LABELS[p]?.replace(/[^一-龥]/g, '') || p).join('·'))
 
     // Sub-preferences
-    if (req.mealTypes?.length) parts.push(req.mealTypes.map((m) => MEAL_LABELS[m]?.replace(/[^一-龥]/g, '') || m).join('/'))
     if (req.cuisineTypes?.length) parts.push(req.cuisineTypes.map((c) => CUISINE_LABELS[c]?.replace(/[^一-龥]/g, '') || c).join('/'))
-    if (req.photoTypes?.length) parts.push(req.photoTypes.map((p) => PHOTO_LABELS[p]?.replace(/[^一-龥]/g, '') || p).join('/'))
     if (req.scenicTypes?.length) parts.push(req.scenicTypes.map((s) => SCENIC_LABELS[s]?.replace(/[^一-龥]/g, '') || s).join('/'))
     if (req.wanderTypes?.length) parts.push(req.wanderTypes.map((w) => WANDER_LABELS[w]?.replace(/[^一-龥]/g, '') || w).join('/'))
-    if (req.walkLevel) parts.push(WALK_LEVEL_LABELS[req.walkLevel]?.replace(/[^一-龥]/g, '') || req.walkLevel)
 
     return parts.join(' · ')
   }

@@ -1,15 +1,16 @@
 import { z } from 'zod'
 
-// Stop schema — each stop in a route
+// Stop schema — LLM outputs name + notes, we fill lng/lat/address/amapPoiId via Amap verification
 const stopSchema = z.object({
   name: z.string().min(1).max(50),
-  address: z.string().min(1).max(200),
   visitDurationMinutes: z.number().int().min(5).max(180),
   notes: z.string().min(1).max(300),
-  amapPoiId: z.string().nullable(),
-  lng: z.number().min(-180).max(180),
-  lat: z.number().min(-90).max(90),
   photoTip: z.string().max(200).optional(),
+  // These fields are filled by Amap verification, not by LLM
+  address: z.string().max(200).optional(),
+  amapPoiId: z.string().nullable().optional(),
+  lng: z.number().min(-180).max(180).optional(),
+  lat: z.number().min(-90).max(90).optional(),
 })
 
 // Route schema
@@ -17,8 +18,8 @@ const routeSchema = z.object({
   name: z.string().min(2).max(20),
   tagline: z.string().min(2).max(50),
   stops: z.array(stopSchema).min(1).max(6),
-  totalDurationMinutes: z.number().int().min(10).max(300),
-  walkingDistanceMeters: z.number().int().min(0).max(10000),
+  totalDurationMinutes: z.number().int().min(10).max(540),
+  walkingDistanceMeters: z.number().int().min(0).max(50000),
   tips: z.string().min(1).max(200),
 })
 

@@ -1,127 +1,104 @@
-import type { AmapPOI } from '../../types/poi.js'
 import type { PreferenceTag } from '../../types/route.js'
 
 const PREFERENCE_CN: Record<PreferenceTag, string> = {
   food: '吃点东西',
   wander: '随便逛逛',
-  photo: '拍照出片',
-  less_walk: '少走路',
-  scenic: '本地景点',
-}
-
-const MEAL_CN: Record<string, string> = {
-  breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '下午茶',
+  scenic: '景点打卡',
 }
 
 const CUISINE_CN: Record<string, string> = {
   hotpot: '火锅', noodles: '面馆', pastries: '糕点', bbq: '烧烤',
-  local_cuisine: '本地菜', western: '西餐', coffee_tea: '咖啡茶饮',
-}
-
-const PHOTO_CN: Record<string, string> = {
-  landmark: '地标景点', street: '街拍打卡',
+  local_cuisine: '本地菜', western: '西餐', coffee_tea: '奶茶咖啡',
+  buffet: '自助餐',
 }
 
 const SCENIC_CN: Record<string, string> = {
-  popular: '热门景点', museum: '博物馆/文化', hidden: '小众秘境',
+  popular: '热门景点', street: '街拍打卡',
 }
 
 const WANDER_CN: Record<string, string> = {
-  shopping: '逛街购物', cafe: '咖啡茶馆', entertainment: '休闲娱乐', park: '公园散步',
-}
-
-const WALK_LEVEL_CN: Record<string, string> = {
-  minimal: '尽量少走（500m以内）', moderate: '可以走一段（1km以内）',
+  shopping: '逛街购物', cafe: '咖啡茶馆', entertainment: '休闲娱乐',
+  hidden: '小众秘境', museum: '博物馆/文化',
 }
 
 export const SYSTEM_PROMPT = `你是一个资深本地导游和旅行规划师，名叫"阿来"。
 你的风格接地气、懂行、热情，像一个熟悉这座城市的朋友。
 
 ## 核心原则
-1. 每条路线必须有明确的主题和节奏——不是把 POI 塞进列表，而是讲一个"逛吃"的小故事。
+1. 每条路线必须有明确的主题和节奏——不是把地点塞进列表，而是讲一个"逛吃"的小故事。
 2. 每个 stop 的 notes 必须具体、有人情味。想象你正带朋友逛：你会怎么介绍这个地方？
 3. 三条路线的主题要明显不同，不能三条都是同类型。
 4. 时间分配合理：步行时间按每 100 米 ≈ 1.5 分钟估算。
-5. 30 分钟时只做 1-2 站，优先最近 POI。
+5. 30 分钟做 1-2 站，半天（4小时）做 3-5 站，一天（8小时）做 5-8 站，节奏张弛有度。
 6. 根据当前天气调整推荐：晴天优先户外、雨天优先室内，tips 中根据天气给出建议。
 7. route name 简短有记忆点（3-8 个汉字）。
 8. tagline 简短说明路线特色。
-9. 路线对比：三条路线要有明显的差异化，让用户能根据自己的需求选择（如"最短步行""最多美食""最佳拍照"等）。
+9. 路线对比：三条路线要有明显的差异化，让用户能根据自身需求选择（如"最短步行""最多美食""最佳拍照"等）。
 
-## 饮食偏好规则
-- 如果用户指定了用餐时段（早餐/午餐/晚餐/下午茶），只推荐适合该时段的餐饮。
-- 如果用户指定了菜系类型，优先推荐匹配的餐厅。
-- "本地菜"指的是当地老字号、特色本帮菜馆，优先推荐有历史文化底蕴的老店。
-- 每个 food stop 的 notes 要提到推荐的招牌菜或特色。
+## 推荐地点的关键规则
+- **只推荐你确信真实存在的店铺和景点**，用准确的店名/地名（如"老吉士酒楼"而不是"附近有家本帮菜馆"）。
+- **每个 stop 的 name 必须是 Amap 高德地图上能搜到的准确名称**。不确定的店不要推荐。
+- 推荐的店铺和景点应位于用户所在区域附近（参考提供的城市和区信息）。
+- 如果对某家店的具体位置不确定，宁可少推荐一个 stop 也不要编造。
 
-## 拍照出片规则
-- 如果用户偏好"拍照出片"，每个 stop 的 notes 中必须包含具体的拍照建议。
-- 格式：【拍照点】+ 具体机位描述 + 最佳时间段 + 构图建议。
-- 不要只说"这个地方适合拍照"，要给出具体角度和位置。
-- 例如：【拍照点】主殿东侧回廊第三根柱子处，上午10点光线透过窗棂，适合逆光人像。
-- 如果指定了"地标景点"，优先推荐大型知名景点和标志性建筑。
-- 如果指定了"街拍打卡"，优先推荐特色街道、网红打卡点、文创园区、胡同小巷。
-- 推荐"隐藏机位"——不是所有人都知道的角度，避免千篇一律的游客照。
+## 停留时长参考（必须变化，不能所有stop一样）
+- 🍜 餐厅/小吃：25-40 分钟（快餐25，正餐40）
+- 🏛️ 博物馆/展览馆：60-90 分钟
+- 🏯 景点/地标（参观型）：30-50 分钟
+- 📸 拍照打卡点：10-20 分钟
+- ☕ 咖啡/茶馆：20-30 分钟
+- 🛍️ 商场/逛街：40-60 分钟
+- 🌿 公园/绿地：20-40 分钟
+- totalDurationMinutes = 步行时间 + 所有stop的visitDurationMinutes之和
 
-## 本地景点规则
+## 饮食偏好规则（重要！）
+- **每条路线只包含与饮食相关的 stop**。如果用户只选了"吃点东西"，所有 stop 都必须是餐厅/咖啡馆/茶馆/小吃店等，不要塞入社区中心、公园、商场等无关地点。
+- 各路线从不同维度各推荐 1 家店，比如：口碑最好的、人气最旺的、最有特色的。30 分钟只做 1 个 stop，60 分钟可做 1-2 个。
+- 如果用户选了菜系，只能推荐该菜系的店铺（如选了"奶茶咖啡"就只推咖啡馆/茶馆/奶茶店）。没选菜系则 3 条路线从 3 种不同菜系各推 1 家。
+- 每个 food stop 的 notes：一句话说明推荐理由 + 1-2 道招牌。
+
+## 景点打卡规则
+- "景点打卡"推荐大众熟知的著名景点、地标建筑、必去打卡地。
 - 如果指定了"热门景点"，推荐大众熟知的著名景点。
-- 如果指定了"博物馆/文化"，推荐博物馆、美术馆、展览馆、纪念馆等文化场所。
-- 如果指定了"小众秘境"，推荐故居、寺庙、园林、老街、小众打卡地。
+- 如果指定了"街拍打卡"，推荐特色街道、网红打卡点、文创园区、胡同小巷，notes 中给出拍照建议：【拍照点】+ 机位 + 时间 + 构图。
 - 每个 stop 的 notes 要包含该景点的历史或文化背景。
 
 ## 随便逛逛规则
 - 如果指定了"逛街购物"，推荐商场、购物中心、步行街、特色集市。
 - 如果指定了"咖啡茶馆"，推荐特色咖啡馆、茶馆、书吧等休闲场所。
 - 如果指定了"休闲娱乐"，推荐电影院、KTV、桌游、密室、演出场所等。
-- 如果指定了"公园散步"，推荐公园、绿地、植物园、湖畔步道等户外休闲处。
-
-## 少走路规则
-- 如果指定了"尽量少走"，所有 stop 必须集中在 500 米范围内，步行总距离不超过 500 米。
-- 如果指定了"可以走一段"，所有 stop 集中在 1 公里范围内。
+- 如果指定了"小众秘境"，推荐故居、寺庙、园林、老街、小众打卡地、特色街区。
+- 如果指定了"博物馆/文化"，推荐博物馆、美术馆、展览馆、纪念馆等文化场所。
 
 ## 天气规则
 - 当前天气信息已提供在上下文中，必须在 tips 中体现天气建议。
 - 雨天：提醒带伞、优先室内场所、推荐适合雨天的活动。
 - 晴天：推荐户外打卡点、注意防晒。
-- 根据天气情况灵活调整路线节奏。
+- 雾霾：建议室内为主。
+- 根据天气情况灵活调整路线节奏。`
 
-## ⚠️ 最重要规则：禁止编造 POI
-- 每个 stop 的 name、address、lng、lat、amapPoiId 必须从下方"POI 清单"中逐字复制。
-- 不得修改 POI 名称、不得添加不存在的 POI、不得虚构地址。
-- 如果 POI 清单不足以凑出 3 条路线，只返回你能做的数量。
-- 你唯一能创造的内容是：notes（介绍）、tips（贴士）、路线 name 和 tagline。`
-
-/** Build user prompt — strict, POI-locked */
+/** Build user prompt — LLM-first: no POI table, LLM recommends from knowledge */
 export function buildUserPrompt(input: {
   city: string
   weather: string
   timeMinutes: number
   distance: number
   preferences: PreferenceTag[]
-  pois: AmapPOI[]
-  mealTypes?: string[]
   cuisineTypes?: string[]
-  photoTypes?: string[]
   scenicTypes?: string[]
   wanderTypes?: string[]
-  walkLevel?: string
+  /** When true, generate 1 day-trip route instead of 3 competing routes */
+  singleRoute?: boolean
 }): string {
-  const { city, weather, timeMinutes, distance, preferences, pois, mealTypes, cuisineTypes, photoTypes, scenicTypes, wanderTypes, walkLevel } = input
+  const { city, weather, timeMinutes, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, singleRoute } = input
 
   const prefCN = preferences.map((p) => PREFERENCE_CN[p]).join('、')
 
   // Build sub-preference details
   const subDetails: string[] = []
 
-  if (preferences.includes('food') && (mealTypes?.length || cuisineTypes?.length)) {
-    const parts: string[] = []
-    if (mealTypes?.length) parts.push(`时段：${mealTypes.map((m: string) => MEAL_CN[m] || m).join('、')}`)
-    if (cuisineTypes?.length) parts.push(`类型：${cuisineTypes.map((c: string) => CUISINE_CN[c] || c).join('、')}`)
-    subDetails.push(`饮食偏好：${parts.join('；')}`)
-  }
-
-  if (preferences.includes('photo') && photoTypes?.length) {
-    subDetails.push(`拍照偏好：${photoTypes.map((p) => PHOTO_CN[p] || p).join('、')}`)
+  if (preferences.includes('food') && cuisineTypes?.length) {
+    subDetails.push(`饮食偏好：${cuisineTypes.map((c: string) => CUISINE_CN[c] || c).join('、')}`)
   }
 
   if (preferences.includes('scenic') && scenicTypes?.length) {
@@ -132,36 +109,51 @@ export function buildUserPrompt(input: {
     subDetails.push(`休闲偏好：${wanderTypes.map((w) => WANDER_CN[w] || w).join('、')}`)
   }
 
-  if (preferences.includes('less_walk') && walkLevel) {
-    subDetails.push(`步行偏好：${WALK_LEVEL_CN[walkLevel] || walkLevel}`)
-  }
-
   const subDetailText = subDetails.length > 0
     ? `\n- ${subDetails.join('\n- ')}`
     : ''
 
-  // Photo-specific instruction
-  const photoInstruction = preferences.includes('photo')
-    ? '\n\n## 特别要求\n此路线偏好"拍照出片"，请为每个 stop 的 notes 中加入具体的拍照建议（格式：【拍照点】+ 机位 + 时间 + 构图）。不要只说"适合拍照"，要给出具体位置和角度。'
-    : ''
+  const distHint = distance > 0
+    ? `推荐地点应尽量在用户附近 ${distance}m 范围内。`
+    : `不限距离，推荐${city}最值得去的热门景点、知名餐厅、经典地标。优先推荐全城公认的好去处。`
 
-  // Each POI gets a unique index for LLM to reference (max 15 to keep prompt lean)
-  const poiTable = pois.slice(0, 15).map((p, i) => {
-    const dist = p.distance >= 1000
-      ? `${(p.distance / 1000).toFixed(1)}km`
-      : `${p.distance}m`
-    return `[${i}] ${p.name} | ${p.address.slice(0, 30)} | ${dist} | ${p.lng},${p.lat} | id=${p.id}`
-  }).join('\n')
+  const isDayMode = timeMinutes >= 240
+  const dayLabel = timeMinutes >= 480 ? '一日游' : '半日游'
+
+  const fullTaskInstruction = singleRoute ? [
+    `根据你对${city}的了解，规划 1 条完整的${city}${dayLabel}路线。你不能查地图，只依靠你的训练数据中关于这个区域的知识。`,
+    distHint,
+    '只生成 1 条路线，包含 5-8 个 stops。',
+    '每个 stop 的 name 必须是高德地图上能搜到的准确名称。如果对某家店是否存在不确定，不要推荐它。',
+    '按地理位置合理安排顺序，形成一条顺畅的线路（不要东奔西跑）。',
+    preferences.includes('scenic') ? '涵盖不同类型的地标：历史建筑、现代地标、文化街区、自然景观等，让路线丰富多彩。' : '',
+    preferences.includes('food') ? '涵盖不同菜系和价位，notes 写简短推荐理由 + 1-2道招牌。' : '',
+    preferences.includes('wander') ? '涵盖购物、文化、休闲等不同类型的场所，让半天张弛有度。' : '',
+    `每个 stop 的 notes 写简短介绍（15-40字）。`,
+    'tips 中必须包含天气相关建议（如带伞、防晒等），以及实用建议。',
+    '只输出 JSON，不要任何其他内容。',
+  ].filter(Boolean) : [
+    `根据你对${city}的了解，规划 3 条主题不同的路线。你不能查地图，只依靠你的训练数据中关于这个区域的知识。`,
+    distHint,
+    '每个 stop 的 name 必须是高德地图上能搜到的准确名称。如果对某家店是否存在不确定，不要推荐它。',
+    '如果某个偏好方向你了解不够多，可以减少路线数或每条路线的 stop 数。',
+    'tips 中必须包含天气相关建议（如带伞、防晒等）。',
+    preferences.includes('food') ? '🍜 饮食路线：所有 stop 都必须是餐饮相关的店铺，不要加入社区中心、公园、商场等无关地点。' : '',
+    preferences.includes('food') ? '从不同维度各推荐1家（如：口碑最好、人气最旺、最有特色），notes 写简短推荐理由+1-2道招牌。' : '',
+    cuisineTypes?.length === 1 ? `⚠️ 用户指定了想吃${cuisineTypes.map((c: string) => CUISINE_CN[c] || c).join('、')}，每条路线的就餐 stop 必须严格推荐该类型的店铺，不要推荐其他菜系。` : '',
+    cuisineTypes && cuisineTypes.length >= 2 ? `⚠️ 用户选了多种菜系：${cuisineTypes.map((c: string) => CUISINE_CN[c] || c).join('、')}。3 条路线应分别覆盖不同菜系（如路线1推${CUISINE_CN[cuisineTypes[0]] || cuisineTypes[0]}，路线2推${CUISINE_CN[cuisineTypes[1]] || cuisineTypes[1]}，路线3选其中一类从新角度推荐），每条 stop 只属于一种菜系即可。` : '',
+    preferences.includes('scenic') && !scenicTypes?.length ? `🏯 ${city}最值得去的景点：推荐${city}公认的著名景点、地标建筑、必去打卡地。3 条路线的主题要覆盖不同类型（如经典地标线、文艺打卡线、自然风光线）。` : '',
+    preferences.includes('wander') && !wanderTypes?.length ? `🚶 ${city}休闲去处：推荐${city}值得逛的商场、特色街区、文化场馆、咖啡馆、娱乐场所。3 条路线各选一个方向（购物、文化、悠闲）。` : '',
+    '三条路线要明显差异化。',
+    '只输出 JSON，不要任何其他内容。',
+  ].filter(Boolean).map((s, i) => `- ${s}`).join('\n')
 
   return `## 上下文
-- 城市：${city}
+- 城市区域：${city}
 - 天气：${weather}
-- 可用时间：${timeMinutes} 分钟
-- 探索距离：${distance}m
+- 可用时间：${timeMinutes >= 480 ? '一天（约8小时）' : timeMinutes >= 240 ? '半天（约4小时）' : `${timeMinutes} 分钟`}
+- 探索距离：${distance > 0 ? `${distance}m 以内` : '当前城市范围'}
 - 偏好：${prefCN}${subDetailText}
-
-## POI 清单（只能使用以下地点，不得编造）
-${poiTable}${photoInstruction}
 
 ## 输出格式
 {
@@ -171,28 +163,28 @@ ${poiTable}${photoInstruction}
       "tagline": "一句话特色",
       "stops": [
         {
-          "name": "从POI清单复制的名称",
-          "address": "从POI清单复制的地址",
-          "visitDurationMinutes": 20,
+          "name": "准确的店名/地名（如'老吉士酒楼'，高德可搜到）",
+          "visitDurationMinutes": 35,
           "notes": "你写的个性化介绍",
-          "amapPoiId": "从POI清单复制的id",
-          "lng": 116.397,
-          "lat": 39.939,
           "photoTip": "拍照建议（仅拍照出片路线需要）"
+        },
+        {
+          "name": "另一个地点",
+          "visitDurationMinutes": 15,
+          "notes": "不同类型的stop时长必须不同，参考时长表"
         }
       ],
       "totalDurationMinutes": 60,
       "walkingDistanceMeters": 300,
-      "tips": "实用小贴士（含天气建议）"
+      "tips": "实用小贴士（含天气建议，可提1家备选餐厅）"
     }
   ]
 }
+注意：
+- stops 中不需要填 address/lng/lat/amapPoiId，我们会通过高德地图自动查询。
+- 但 name 必须是高德地图上能搜到的准确名称！
+- 每个 stop 的 visitDurationMinutes 要按"停留时长参考"给出不同类型的时长，不要全一样。
 
 ## 任务
-根据以上 POI 清单规划 3 条主题不同的路线。POI 不够就少做。
-- 所有 stop 的 name/address/lng/lat/amapPoiId 必须来自上方 POI 清单，绝对不许编造。
-- tips 中必须包含天气相关建议（如带伞、防晒等）。
-- 如果有拍照偏好，必须为每个 stop 添加 photoTip 字段。
-- 三条路线要明显差异化，让用户能根据自身情况选择。
-- 只输出 JSON，不要任何其他内容。`
+${fullTaskInstruction}`
 }

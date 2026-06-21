@@ -6,6 +6,7 @@ defineProps<{
   error: LocationError | null
   isMock: boolean
   hasCoords: boolean
+  manualLocationName?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -52,7 +53,12 @@ const emit = defineEmits<{
         <span class="text-2xl">✅</span>
       </div>
       <p class="text-gray-500 text-sm">
-        {{ isMock ? '已使用模拟位置（北京鼓楼）' : '已获取您的位置' }}
+        <template v-if="manualLocationName">
+          {{ manualLocationName }}
+        </template>
+        <template v-else>
+          {{ isMock ? '已使用模拟位置（北京鼓楼）' : '已获取您的位置' }}
+        </template>
       </p>
       <p v-if="isMock && error" class="text-gray-400 text-xs mt-1">
         {{ error.message }}

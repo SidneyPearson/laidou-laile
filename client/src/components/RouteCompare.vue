@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Route } from '../types/route'
+import StopCard from './StopCard.vue'
+import NavButton from './NavButton.vue'
 
 const props = defineProps<{
   routes: Route[]
+  selectedId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -23,16 +26,20 @@ const metaMap = computed<RouteMeta[]>(() => {
   // Determine differentiation
   const diversities = routes.map((r) => {
     const stops = Array.isArray(r.stops) ? r.stops : [];
-    const foodCount = stops.filter((s) => s.notes?.includes('吃') || s.name?.includes('餐') || s.name?.includes('店')).length
-    const photoCount = stops.filter((s) => s.notes?.includes('拍') || s.photoTip).length
+    const foodKeywords = ['餐厅', '饭馆', '酒楼', '面馆', '火锅', '小吃', '美食', '食堂', '饭店', '拉面', '米线', '烧烤', '点心', '烘焙', '面包', '茶饮', '咖啡']
+    const foodCount = stops.filter((s) => {
+      const name = s.name || ''
+      const notes = s.notes || ''
+      return notes.includes('吃') || notes.includes('招牌菜') || notes.includes('推荐菜') ||
+        foodKeywords.some(k => name.includes(k))
+    }).length
     const walkDist = r.walkingDistanceMeters ?? 0
     const stopCount = stops.length
-    return { foodCount, photoCount, walkDist, stopCount }
+    return { foodCount, walkDist, stopCount }
   })
 
   const minWalk = Math.min(...diversities.map((d) => d.walkDist))
   const maxFood = Math.max(...diversities.map((d) => d.foodCount))
-  const maxPhoto = Math.max(...diversities.map((d) => d.photoCount))
   const maxStops = Math.max(...diversities.map((d) => d.stopCount))
 
   return routes.map((_, i) => {
@@ -45,9 +52,6 @@ const metaMap = computed<RouteMeta[]>(() => {
     if (d.foodCount === maxFood && maxFood > 0) {
       candidates.push({ label: '最多美食', icon: '🍜', key: 'food', score: 1 })
     }
-    if (d.photoCount === maxPhoto && maxPhoto > 0) {
-      candidates.push({ label: '最佳拍照', icon: '📷', key: 'photo', score: 1 })
-    }
     if (d.stopCount === maxStops && maxStops > 1) {
       candidates.push({ label: '最多打卡', icon: '📍', key: 'stops', score: 0.5 })
     }
@@ -56,7 +60,7 @@ const metaMap = computed<RouteMeta[]>(() => {
     if (candidates.length === 0) {
       const name = routes[i].name
       if (name.includes('吃') || name.includes('食')) candidates.push({ label: '美食之旅', icon: '🍜', key: 'theme', score: 0 })
-      else if (name.includes('拍') || name.includes('景')) candidates.push({ label: '拍照之旅', icon: '📷', key: 'theme', score: 0 })
+      else if (name.includes('景') || name.includes('打卡')) candidates.push({ label: '景点打卡', icon: '🏯', key: 'theme', score: 0 })
       else if (name.includes('逛') || name.includes('闲')) candidates.push({ label: '休闲漫步', icon: '🚶', key: 'theme', score: 0 })
       else candidates.push({ label: '综合推荐', icon: '✨', key: 'theme', score: 0 })
     }
@@ -80,7 +84,12 @@ function handleSelect(route: Route) {
     <div
       v-for="(rt, i) in routes"
       :key="rt.id"
-      class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      :class="[
+        'bg-white rounded-2xl border shadow-sm overflow-hidden transition-all',
+        props.selectedId === rt.id
+          ? 'border-primary-300 ring-2 ring-primary-100 shadow-md'
+          : 'border-gray-100',
+      ]"
     >
       <!-- Header -->
       <div class="px-4 pt-4 pb-3">
@@ -95,42 +104,77 @@ function handleSelect(route: Route) {
 
       <!-- Metrics row -->
       <div class="flex gap-4 px-4 pb-3 text-xs text-gray-500">
-        <span class="flex items-center gap-1">⏱ {{ rt.totalDurationMinutes }}分钟</span>
-        <span class="flex items-center gap-1">🚶 {{ fmtDist(rt.walkingDistanceMeters) }}</span>
         <span class="flex items-center gap-1">📍 {{ rt.stops.length }}个地点</span>
       </div>
 
-      <!-- Stops preview -->
-      <div class="border-t border-gray-50 px-4 py-2">
-        <div class="space-y-1">
-          <div
+      <!-- Stops: preview when collapsed, detail when selected -->
+      <template v-if="props.selectedId === rt.id">
+        <!-- Expanded stops -->
+        <div class="border-t border-gray-50 px-4 pt-3 pb-1">
+          <StopCard
             v-for="(stop, j) in rt.stops"
-            :key="j"
-            class="flex items-center gap-2 text-sm"
-          >
-            <span class="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
-              {{ j + 1 }}
-            </span>
-            <span class="text-gray-700 truncate">{{ stop.name }}</span>
-            <span class="text-xs text-gray-400 ml-auto">{{ stop.visitDurationMinutes }}min</span>
+            :key="stop.name"
+            :stop="stop"
+            :index="j"
+          />
+        </div>
+
+        <!-- Tips -->
+        <div class="px-4 pt-2 pb-1">
+          <p class="text-xs text-amber-600 bg-amber-50 rounded-lg px-2.5 py-1.5 leading-relaxed">
+            💡 {{ rt.tips }}
+          </p>
+        </div>
+
+        <!-- Navigate -->
+        <div v-if="rt.stops.length > 0" class="px-4 pt-2 pb-3">
+          <NavButton
+            :name="rt.stops[0].name"
+            :lng="rt.stops[0].lng"
+            :lat="rt.stops[0].lat"
+            class="justify-center w-full py-2.5 bg-primary-500 text-white rounded-xl
+                   font-medium text-sm active:bg-primary-600 transition-colors inline-flex"
+          />
+        </div>
+      </template>
+      <template v-else>
+        <!-- Collapsed: simple stops preview -->
+        <div class="border-t border-gray-50 px-4 py-2">
+          <div class="space-y-1">
+            <div
+              v-for="(stop, j) in rt.stops"
+              :key="j"
+              class="flex items-center gap-2 text-sm"
+            >
+              <span class="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+                {{ j + 1 }}
+              </span>
+              <span class="text-gray-700 truncate">{{ stop.name }}</span>
+              <span v-if="stop.distanceMeters != null" class="text-xs text-gray-400 ml-auto flex-shrink-0">{{ fmtDist(stop.distanceMeters) }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Tips -->
-      <div class="px-4 pb-1">
-        <p class="text-xs text-amber-600 bg-amber-50 rounded-lg px-2.5 py-1.5">
-          💡 {{ rt.tips }}
-        </p>
-      </div>
+        <!-- Tips (short, collapsed) -->
+        <div class="px-4 pb-1">
+          <p class="text-xs text-amber-600 bg-amber-50 rounded-lg px-2.5 py-1.5 line-clamp-1">
+            💡 {{ rt.tips }}
+          </p>
+        </div>
+      </template>
 
       <!-- Select button -->
       <div class="px-4 pb-4 pt-2">
         <button
-          class="w-full py-2.5 rounded-xl bg-primary-500 text-white text-sm font-semibold active:bg-primary-600 transition-colors"
+          :class="[
+            'w-full py-2.5 rounded-xl text-sm font-semibold transition-colors',
+            props.selectedId === rt.id
+              ? 'bg-primary-50 text-primary-600 border border-primary-200'
+              : 'bg-primary-500 text-white active:bg-primary-600',
+          ]"
           @click="handleSelect(rt)"
         >
-          选这条
+          {{ props.selectedId === rt.id ? '✓ 已选择' : '选这条' }}
         </button>
       </div>
     </div>

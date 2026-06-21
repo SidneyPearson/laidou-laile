@@ -1,27 +1,20 @@
 export type PreferenceTag =
   | 'food'
   | 'wander'
-  | 'photo'
-  | 'less_walk'
   | 'scenic'
-
-export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
 export type CuisineType =
   | 'hotpot' | 'noodles' | 'pastries' | 'bbq'
   | 'local_cuisine' | 'western' | 'coffee_tea'
+  | 'buffet'
 
-export type PhotoType = 'landmark' | 'street'
+export type ScenicType = 'popular' | 'street'
 
-export type ScenicType = 'popular' | 'museum' | 'hidden'
+export type WanderType = 'shopping' | 'cafe' | 'entertainment' | 'hidden' | 'museum'
 
-export type WanderType = 'shopping' | 'cafe' | 'entertainment' | 'park'
+export type DistanceOption = 0 | 500 | 1000 | 2000 | 3000 | 5000
 
-export type WalkLevel = 'minimal' | 'moderate'
-
-export type DistanceOption = 500 | 1000 | 2000 | 3000 | 5000
-
-export type TimeOption = 30 | 60 | 120 | 240
+export type TimeOption = 30 | 60 | 120 | 240 | 480
 
 export interface Stop {
   name: string
@@ -32,6 +25,7 @@ export interface Stop {
   lng: number
   lat: number
   photoTip?: string
+  distanceMeters?: number
 }
 
 export interface Route {
@@ -50,12 +44,9 @@ export interface GenerateRoutesRequest {
   timeOption: TimeOption
   distance: DistanceOption
   preferences: PreferenceTag[]
-  mealTypes?: MealType[]
   cuisineTypes?: CuisineType[]
-  photoTypes?: PhotoType[]
   scenicTypes?: ScenicType[]
   wanderTypes?: WanderType[]
-  walkLevel?: WalkLevel
 }
 
 export interface GenerateRoutesResponse {

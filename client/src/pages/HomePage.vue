@@ -5,14 +5,16 @@ import { useGeolocation } from '../composables/useGeolocation'
 import { useRouteRequest } from '../composables/useRouteRequest'
 import { useHistory } from '../composables/useHistory'
 import LocationGate from '../components/LocationGate.vue'
+import CityPicker from '../components/CityPicker.vue'
 import TimeSelector from '../components/TimeSelector.vue'
 import DistanceSelector from '../components/DistanceSelector.vue'
 import PreferenceTags from '../components/PreferenceTags.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
-import type { TimeOption, DistanceOption, PreferenceTag, MealType, CuisineType, PhotoType, ScenicType, WanderType, WalkLevel } from '../types/route'
+import type { Attraction, City } from '../data/popularCities'
+import type { TimeOption, DistanceOption, PreferenceTag, CuisineType, ScenicType, WanderType } from '../types/route'
 
 const router = useRouter()
-const { coords, loading: locLoading, error: locError, isMock, requestLocation } = useGeolocation()
+const { coords, loading: locLoading, error: locError, isMock, manualLocationName, requestLocation, setManualLocation } = useGeolocation()
 const { routes, locationName, weather, weatherNote, loading: genLoading, loadingStage, error: genError, fetchRoutes, cancelRequest } = useRouteRequest()
 const { addEntry } = useHistory()
 
@@ -20,14 +22,18 @@ const { addEntry } = useHistory()
 const timeOption = ref<TimeOption | null>(null)
 const distance = ref<DistanceOption | null>(null)
 const preferences = ref<PreferenceTag[]>([])
-const mealTypes = ref<MealType[]>([])
 const cuisineTypes = ref<CuisineType[]>([])
-const photoTypes = ref<PhotoType[]>([])
 const scenicTypes = ref<ScenicType[]>([])
 const wanderTypes = ref<WanderType[]>([])
-const walkLevel = ref<WalkLevel | null>(null)
 
 const hasRequestedLocation = ref(false)
+const showCityPicker = ref(false)
+
+function handleCitySelect(attraction: Attraction, city: City) {
+  setManualLocation(attraction.lat, attraction.lng, `${city.name} · ${attraction.name}`)
+  showCityPicker.value = false
+  hasRequestedLocation.value = true
+}
 
 // ── Computed ──────────────────────────────────────────
 
@@ -43,8 +49,8 @@ const canGenerate = computed(() => {
 const missingHint = computed(() => {
   if (!coords.value) return null
   const missing: string[] = []
-  if (!timeOption.value) missing.push('可用时间')
-  if (!distance.value) missing.push('探索距离')
+  if (timeOption.value == null) missing.push('可用时间')
+  if (distance.value == null) missing.push('探索距离')
   if (preferences.value.length === 0) missing.push('怎么玩')
   if (missing.length === 0) return null
   return `请选择：${missing.join('、')}`
@@ -58,7 +64,7 @@ function handleRequestLocation(useMock: boolean) {
 }
 
 async function handleGenerate() {
-  if (!coords.value || !timeOption.value || !distance.value) return
+  if (!coords.value || timeOption.value == null || distance.value == null) return
 
   try {
     await fetchRoutes({
@@ -67,12 +73,9 @@ async function handleGenerate() {
       timeOption: timeOption.value,
       distance: distance.value,
       preferences: preferences.value,
-      mealTypes: preferences.value.includes('food') ? mealTypes.value : undefined,
       cuisineTypes: preferences.value.includes('food') ? cuisineTypes.value : undefined,
-      photoTypes: preferences.value.includes('photo') ? photoTypes.value : undefined,
       scenicTypes: preferences.value.includes('scenic') ? scenicTypes.value : undefined,
       wanderTypes: preferences.value.includes('wander') ? wanderTypes.value : undefined,
-      walkLevel: preferences.value.includes('less_walk') ? walkLevel.value ?? undefined : undefined,
     })
 
     // Defensive check: routes must be a non-empty array
@@ -88,12 +91,9 @@ async function handleGenerate() {
           timeOption: timeOption.value!,
           distance: distance.value!,
           preferences: [...preferences.value],
-          mealTypes: mealTypes.value.length > 0 ? [...mealTypes.value] : undefined,
           cuisineTypes: cuisineTypes.value.length > 0 ? [...cuisineTypes.value] : undefined,
-          photoTypes: photoTypes.value.length > 0 ? [...photoTypes.value] : undefined,
           scenicTypes: scenicTypes.value.length > 0 ? [...scenicTypes.value] : undefined,
           wanderTypes: wanderTypes.value.length > 0 ? [...wanderTypes.value] : undefined,
-          walkLevel: walkLevel.value ?? undefined,
         },
         routes: routes.value,
         weather: weather.value,
@@ -109,6 +109,8 @@ async function handleGenerate() {
         locationName: locationName.value,
         weatherNote: weatherNote.value || '',
         isRainy: weather.value?.isRainy ? '1' : '0',
+        timeOption: String(timeOption.value ?? ''),
+        preferences: preferences.value.join(','),
       },
     })
   } catch (unexpectedErr) {
@@ -144,7 +146,13 @@ async function handleGenerate() {
     <div class="flex-1 overflow-auto px-5">
       <!-- Location -->
       <section class="mb-6">
-        <div v-if="!hasRequestedLocation && !coords" class="text-center py-6">
+        <!-- City Picker (when activated) -->
+        <div v-if="showCityPicker && !coords" class="py-2">
+          <CityPicker @select="handleCitySelect" />
+        </div>
+
+        <!-- Location not yet set -->
+        <div v-else-if="!hasRequestedLocation && !coords" class="text-center py-6">
           <button
             class="btn-primary w-full py-3.5 text-base font-semibold"
             :disabled="locLoading"
@@ -153,18 +161,22 @@ async function handleGenerate() {
             {{ locLoading ? '获取中...' : '📍 获取当前位置' }}
           </button>
           <button
-            class="mt-3 text-gray-400 text-xs underline"
-            @click="handleRequestLocation(true)"
+            class="mt-3 w-full py-3 rounded-xl bg-white border border-gray-200
+                   text-sm font-medium text-gray-600 active:bg-gray-50 transition-colors"
+            @click="showCityPicker = true"
           >
-            使用模拟位置体验
+            🏙️ 热门旅游城市
           </button>
         </div>
+
+        <!-- Location set (via GPS or city picker) -->
         <LocationGate
           v-else
           :loading="locLoading"
           :error="locError"
           :is-mock="isMock"
           :has-coords="!!coords"
+          :manual-location-name="manualLocationName"
           @request="handleRequestLocation"
         />
       </section>
@@ -182,7 +194,7 @@ async function handleGenerate() {
         <section class="mb-6">
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
             可用时间
-            <span v-if="!timeOption" class="text-primary-400 animate-pulse ml-1">← 必选</span>
+            <span v-if="timeOption == null" class="text-primary-400 animate-pulse ml-1">← 必选</span>
           </h2>
           <TimeSelector v-model="timeOption" />
         </section>
@@ -190,7 +202,7 @@ async function handleGenerate() {
         <section class="mb-6">
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
             探索距离
-            <span v-if="!distance" class="text-primary-400 animate-pulse ml-1">← 必选</span>
+            <span v-if="distance == null" class="text-primary-400 animate-pulse ml-1">← 必选</span>
           </h2>
           <DistanceSelector v-model="distance" />
         </section>
@@ -202,12 +214,9 @@ async function handleGenerate() {
           </h2>
           <PreferenceTags
             v-model="preferences"
-            v-model:meal-types="mealTypes"
             v-model:cuisine-types="cuisineTypes"
-            v-model:photo-types="photoTypes"
             v-model:scenic-types="scenicTypes"
             v-model:wander-types="wanderTypes"
-            v-model:walk-level="walkLevel"
           />
         </section>
       </template>

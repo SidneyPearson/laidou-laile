@@ -9,7 +9,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: TimeOption]
 }>()
 
-const times: TimeOption[] = [30, 60, 120, 240]
+const times: TimeOption[] = [30, 60, 120, 240, 480]
 </script>
 
 <template>

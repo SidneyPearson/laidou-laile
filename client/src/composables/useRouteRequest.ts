@@ -13,7 +13,7 @@ const loadingStage = ref(0)
 const error = ref<ApiRequestError | null>(null)
 const lastResponse = ref<GenerateRoutesResponse | null>(null)
 let lastRequest: GenerateRoutesRequest | null = null
-let stageTimer: ReturnType<typeof setInterval> | null = null
+let stageTimer: ReturnType<typeof setTimeout> | null = null
 let abortController: AbortController | null = null
 
 // ── Helpers ─────────────────────────────────────────────
@@ -51,11 +51,19 @@ export function useRouteRequest() {
     }
     abortController = new AbortController()
 
-    // Progress stages on a timer
-    if (stageTimer) clearInterval(stageTimer)
-    stageTimer = setInterval(() => {
-      if (loadingStage.value < 2) loadingStage.value++
-    }, 2500)
+    // Progress stages — staged delays: search quick, AI slow
+    if (stageTimer) clearTimeout(stageTimer)
+    const runStages = () => {
+      // Stage 1: AI 规划 (from 3s ~ 18s)
+      stageTimer = setTimeout(() => {
+        if (loading.value) loadingStage.value = 1
+        // Stage 2: 即将出炉 (after 18s)
+        stageTimer = setTimeout(() => {
+          if (loading.value) loadingStage.value = 2
+        }, 15000)
+      }, 3000)
+    }
+    runStages()
 
     try {
       const data = await generateRoutes(req, abortController.signal)
@@ -90,7 +98,7 @@ export function useRouteRequest() {
         error.value = new ApiRequestError('UNKNOWN', '未知错误，请稍后重试')
       }
     } finally {
-      if (stageTimer) { clearInterval(stageTimer); stageTimer = null }
+      if (stageTimer) { clearTimeout(stageTimer); stageTimer = null }
       loading.value = false
       loadingStage.value = 0
       abortController = null
@@ -104,7 +112,7 @@ export function useRouteRequest() {
     }
     loading.value = false
     loadingStage.value = 0
-    if (stageTimer) { clearInterval(stageTimer); stageTimer = null }
+    if (stageTimer) { clearTimeout(stageTimer); stageTimer = null }
   }
 
   async function retry() {

@@ -2,9 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRouteRequest } from '../composables/useRouteRequest'
-import { useSwipe } from '../composables/useSwipe'
-import RouteCard from '../components/RouteCard.vue'
 import RouteCompare from '../components/RouteCompare.vue'
+import DayTripView from '../components/DayTripView.vue'
 import RouteSkeleton from '../components/RouteSkeleton.vue'
 import RouteError from '../components/RouteError.vue'
 import EmptyState from '../components/EmptyState.vue'
@@ -13,7 +12,19 @@ const router = useRouter()
 const route = useRoute()
 const { routes, locationName, weatherNote, weather, loading, error, retry } = useRouteRequest()
 
-const viewMode = ref<'compare' | 'swipe'>('compare')
+const selectedId = ref<string | null>(null)
+
+// Day-trip mode: 半天/一天 → single curated route, timeline UI
+const isDayTrip = computed(() => {
+  const timeOption = Number(route.query.timeOption)
+  return timeOption >= 240
+    && Array.isArray(routes.value)
+    && routes.value.length === 1
+})
+
+function handleRouteSelect(rt: import('../types/route').Route) {
+  selectedId.value = selectedId.value === rt.id ? null : rt.id
+}
 
 const displayLocation = computed(() => route.query.locationName as string || locationName.value || '')
 const displayWeather = computed(() => route.query.weatherNote as string || weatherNote.value || '')
@@ -30,31 +41,11 @@ watch(
   { immediate: true },
 )
 
-function onSwipeChange(_index: number) {
-  // handled by state
-}
-
 const routeCount = computed(() => Array.isArray(routes.value) ? routes.value.length : 0)
-
-const { state: swipeState, onTouchStart, onTouchMove, onTouchEnd, onPointerDown, onPointerMove, onPointerUp, goTo } = useSwipe(
-  routeCount.value,
-  onSwipeChange,
-)
 
 function goBack() {
   router.push({ name: 'home' })
 }
-
-const transitionStyle = computed(() => {
-  const s = swipeState.value
-  if (!s.isDragging && !s.isAnimating) return {}
-  return {
-    transform: `translateX(${s.offsetX}px)`,
-    transition: s.isDragging
-      ? 'none'
-      : `transform ${s.transitionDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
-  }
-})
 </script>
 
 <template>
@@ -95,85 +86,26 @@ const transitionStyle = computed(() => {
       <!-- Empty -->
       <EmptyState v-else-if="routeCount === 0" />
 
-      <!-- Routes -->
-      <!-- Compare mode -->
-      <RouteCompare
-        v-else-if="viewMode === 'compare'"
-        :routes="routes"
-        @select="() => {}"
+      <!-- DayTrip Timeline (半天/一天 + scenic) -->
+      <DayTripView
+        v-else-if="isDayTrip && routes[0]"
+        :route="routes[0]"
       />
 
-      <!-- Swipe mode -->
-      <div
+      <!-- Routes compare (normal mode) -->
+      <RouteCompare
         v-else
-        class="relative"
-        @touchstart.passive="onTouchStart"
-        @touchmove="onTouchMove"
-        @touchend="onTouchEnd"
-        @pointerdown="onPointerDown"
-        @pointermove="onPointerMove"
-        @pointerup="onPointerUp"
-        @pointercancel="onPointerUp"
-      >
-        <div
-          v-for="(rt, i) in routes"
-          :key="rt.id"
-          v-show="i === swipeState.currentIndex"
-          :style="i === swipeState.currentIndex ? transitionStyle : {}"
-        >
-          <RouteCard
-            :route="rt"
-            :index="i"
-            :total="routeCount"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Dot indicators (swipe mode only) -->
-    <div
-      v-if="routeCount > 1 && !loading && !error && viewMode === 'swipe'"
-      class="flex-shrink-0 flex justify-center gap-2 py-3"
-    >
-      <button
-        v-for="(_, i) in routes"
-        :key="i"
-        :class="[
-          'w-2 h-2 rounded-full transition-all',
-          i === swipeState.currentIndex
-            ? 'bg-primary-500 w-5'
-            : 'bg-gray-300',
-        ]"
-        @click="goTo(i)"
+        :routes="routes"
+        :selected-id="selectedId"
+        @select="handleRouteSelect"
       />
     </div>
 
     <!-- Bottom bar -->
     <div
       v-if="routeCount > 0 && !loading && !error"
-      class="flex-shrink-0 px-5 py-4 bg-white/80 backdrop-blur-lg border-t border-gray-100 space-y-2"
+      class="flex-shrink-0 px-5 py-4 bg-white/80 backdrop-blur-lg border-t border-gray-100"
     >
-      <!-- View toggle (only if multiple routes) -->
-      <div v-if="routeCount > 1" class="flex bg-gray-100 rounded-lg p-0.5">
-        <button
-          :class="[
-            'flex-1 py-2 text-xs font-medium rounded-md transition-colors',
-            viewMode === 'compare' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400',
-          ]"
-          @click="viewMode = 'compare'"
-        >
-          📋 对比
-        </button>
-        <button
-          :class="[
-            'flex-1 py-2 text-xs font-medium rounded-md transition-colors',
-            viewMode === 'swipe' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400',
-          ]"
-          @click="viewMode = 'swipe'"
-        >
-          🃏 滑动
-        </button>
-      </div>
       <button
         class="btn-primary w-full py-3.5 text-sm font-semibold"
         @click="goBack"

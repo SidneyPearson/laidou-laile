@@ -2,49 +2,38 @@
 import { computed } from 'vue'
 import {
   PREFERENCE_LABELS,
-  MEAL_LABELS, CUISINE_LABELS,
-  PHOTO_LABELS, SCENIC_LABELS,
-  WANDER_LABELS, WALK_LEVEL_LABELS,
+  CUISINE_LABELS,
+  SCENIC_LABELS,
+  WANDER_LABELS,
   type PreferenceTag,
-  type MealType, type CuisineType,
-  type PhotoType, type ScenicType,
-  type WanderType, type WalkLevel,
+  type CuisineType,
+  type ScenicType,
+  type WanderType,
 } from '../types/route'
 
 const props = defineProps<{
   modelValue: PreferenceTag[]
-  mealTypes: MealType[]
   cuisineTypes: CuisineType[]
-  photoTypes: PhotoType[]
   scenicTypes: ScenicType[]
   wanderTypes: WanderType[]
-  walkLevel: WalkLevel | null
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: PreferenceTag[]]
-  'update:mealTypes': [value: MealType[]]
   'update:cuisineTypes': [value: CuisineType[]]
-  'update:photoTypes': [value: PhotoType[]]
   'update:scenicTypes': [value: ScenicType[]]
   'update:wanderTypes': [value: WanderType[]]
-  'update:walkLevel': [value: WalkLevel | null]
 }>()
 
-const tags: PreferenceTag[] = ['food', 'wander', 'photo', 'less_walk', 'scenic']
+const tags: PreferenceTag[] = ['food', 'wander', 'scenic']
 
-const mealOptions: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
 const cuisineOptions: CuisineType[] = ['hotpot', 'noodles', 'pastries', 'bbq', 'local_cuisine', 'western', 'coffee_tea']
-const photoOptions: PhotoType[] = ['landmark', 'street']
-const scenicOptions: ScenicType[] = ['popular', 'museum', 'hidden']
-const wanderOptions: WanderType[] = ['shopping', 'cafe', 'entertainment', 'park']
-const walkLevelOptions: WalkLevel[] = ['minimal', 'moderate']
+const scenicOptions: ScenicType[] = ['popular', 'street']
+const wanderOptions: WanderType[] = ['shopping', 'cafe', 'entertainment', 'hidden', 'museum']
 
 const showFoodPanel = computed(() => props.modelValue.includes('food'))
-const showPhotoPanel = computed(() => props.modelValue.includes('photo'))
 const showScenicPanel = computed(() => props.modelValue.includes('scenic'))
 const showWanderPanel = computed(() => props.modelValue.includes('wander'))
-const showWalkPanel = computed(() => props.modelValue.includes('less_walk'))
 
 function toggle(tag: PreferenceTag, selected: PreferenceTag[]) {
   if (selected.includes(tag)) {
@@ -56,28 +45,12 @@ function toggle(tag: PreferenceTag, selected: PreferenceTag[]) {
   }
 }
 
-function toggleMeal(type: MealType) {
-  const arr = [...props.mealTypes]
-  const idx = arr.indexOf(type)
-  if (idx >= 0) arr.splice(idx, 1)
-  else arr.push(type)
-  emit('update:mealTypes', arr)
-}
-
 function toggleCuisine(type: CuisineType) {
   const arr = [...props.cuisineTypes]
   const idx = arr.indexOf(type)
   if (idx >= 0) arr.splice(idx, 1)
   else arr.push(type)
   emit('update:cuisineTypes', arr)
-}
-
-function togglePhoto(type: PhotoType) {
-  const arr = [...props.photoTypes]
-  const idx = arr.indexOf(type)
-  if (idx >= 0) arr.splice(idx, 1)
-  else arr.push(type)
-  emit('update:photoTypes', arr)
 }
 
 function toggleScenic(type: ScenicType) {
@@ -95,21 +68,17 @@ function toggleWander(type: WanderType) {
   else arr.push(type)
   emit('update:wanderTypes', arr)
 }
-
-function setWalkLevel(level: WalkLevel) {
-  emit('update:walkLevel', props.walkLevel === level ? null : level)
-}
 </script>
 
 <template>
   <div>
     <!-- Main tags -->
-    <div class="grid grid-cols-3 gap-2.5">
+    <div class="flex gap-2.5">
       <button
         v-for="tag in tags"
         :key="tag"
         :class="[
-          'tag text-center',
+          'tag text-center flex-1',
           modelValue.includes(tag) ? 'tag-active' : 'tag-inactive',
         ]"
         @click="toggle(tag, modelValue)"
@@ -120,24 +89,6 @@ function setWalkLevel(level: WalkLevel) {
 
     <!-- Food sub-panel -->
     <div v-if="showFoodPanel" class="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100 space-y-3">
-      <div>
-        <p class="text-xs font-semibold text-gray-500 mb-2">用餐时段（可多选）</p>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="m in mealOptions"
-            :key="m"
-            :class="[
-              'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
-              props.mealTypes.includes(m)
-                ? 'bg-orange-500 text-white'
-                : 'bg-white text-gray-600 border border-gray-200',
-            ]"
-            @click="toggleMeal(m)"
-          >
-            {{ MEAL_LABELS[m] }}
-          </button>
-        </div>
-      </div>
       <div>
         <p class="text-xs font-semibold text-gray-500 mb-2">想吃类型（可多选）</p>
         <div class="flex flex-wrap gap-1.5">
@@ -153,28 +104,6 @@ function setWalkLevel(level: WalkLevel) {
             @click="toggleCuisine(c)"
           >
             {{ CUISINE_LABELS[c] }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Photo sub-panel -->
-    <div v-if="showPhotoPanel" class="mt-3 p-3 bg-sky-50 rounded-xl border border-sky-100 space-y-3">
-      <div>
-        <p class="text-xs font-semibold text-gray-500 mb-2">拍摄场景（可多选）</p>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="pt in photoOptions"
-            :key="pt"
-            :class="[
-              'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
-              props.photoTypes.includes(pt)
-                ? 'bg-sky-500 text-white'
-                : 'bg-white text-gray-600 border border-gray-200',
-            ]"
-            @click="togglePhoto(pt)"
-          >
-            {{ PHOTO_LABELS[pt] }}
           </button>
         </div>
       </div>
@@ -221,26 +150,6 @@ function setWalkLevel(level: WalkLevel) {
             {{ WANDER_LABELS[wt] }}
           </button>
         </div>
-      </div>
-    </div>
-
-    <!-- Less-walk sub-panel -->
-    <div v-if="showWalkPanel" class="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
-      <p class="text-xs font-semibold text-gray-500 mb-2">步行距离（单选）</p>
-      <div class="flex flex-wrap gap-1.5">
-        <button
-          v-for="wl in walkLevelOptions"
-          :key="wl"
-          :class="[
-            'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
-            props.walkLevel === wl
-              ? 'bg-amber-500 text-white'
-              : 'bg-white text-gray-600 border border-gray-200',
-          ]"
-          @click="setWalkLevel(wl)"
-        >
-          {{ WALK_LEVEL_LABELS[wl] }}
-        </button>
       </div>
     </div>
   </div>

@@ -6,6 +6,10 @@ defineProps<{
   stop: Stop
   index: number
 }>()
+
+function fmtDist(m: number): string {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${m}m`
+}
 </script>
 
 <template>
@@ -20,8 +24,8 @@ defineProps<{
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-1">
         <h4 class="font-semibold text-gray-800 text-sm">{{ stop.name }}</h4>
-        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0">
-          {{ stop.visitDurationMinutes }}分钟
+        <span v-if="stop.distanceMeters != null" class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0">
+          {{ fmtDist(stop.distanceMeters) }}
         </span>
       </div>
       <p class="text-xs text-gray-400 mb-2">{{ stop.address }}</p>

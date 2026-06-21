@@ -9,25 +9,52 @@ const { entries, hasEntries, removeEntry, clearAll, formatPrefSummary, formatTim
 
 const expandedId = ref<string | null>(null)
 const showClearConfirm = ref(false)
+const selectedId = ref<string | null>(null)
+const deletePendingId = ref<string | null>(null)
+
+function handleRouteSelect(rt: import('../types/route').Route) {
+  selectedId.value = selectedId.value === rt.id ? null : rt.id
+}
 
 function goBack() {
   router.push({ name: 'home' })
 }
 
 function toggleExpand(id: string) {
-  expandedId.value = expandedId.value === id ? null : id
+  if (expandedId.value === id) {
+    expandedId.value = null
+    selectedId.value = null
+  } else {
+    expandedId.value = id
+    selectedId.value = null
+  }
 }
 
-function handleDelete(id: string, e: Event) {
+function requestDelete(id: string, e: Event) {
   e.stopPropagation()
+  deletePendingId.value = id
+}
+
+function confirmDelete(e: Event) {
+  e.stopPropagation()
+  const id = deletePendingId.value
+  if (!id) return
   if (expandedId.value === id) expandedId.value = null
+  selectedId.value = null
   removeEntry(id)
+  deletePendingId.value = null
+}
+
+function cancelDelete(e: Event) {
+  e.stopPropagation()
+  deletePendingId.value = null
 }
 
 function handleClear() {
   clearAll()
   showClearConfirm.value = false
   expandedId.value = null
+  selectedId.value = null
 }
 
 function formatDate(iso: string): string {
@@ -124,11 +151,27 @@ function formatWeather(entry: HistoryEntry): string {
             </div>
           </button>
 
-          <!-- Delete button -->
-          <div class="px-4 pb-2 flex justify-end">
+          <!-- Delete button / confirmation -->
+          <div class="px-4 pb-2 flex justify-end items-center gap-2">
+            <template v-if="deletePendingId === entry.id">
+              <span class="text-xs text-red-500 font-medium">确认删除？</span>
+              <button
+                class="text-xs px-2 py-0.5 rounded bg-red-500 text-white font-medium"
+                @click="confirmDelete($event)"
+              >
+                删除
+              </button>
+              <button
+                class="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-500"
+                @click="cancelDelete($event)"
+              >
+                取消
+              </button>
+            </template>
             <button
+              v-else
               class="text-xs text-gray-300 hover:text-red-400 transition-colors"
-              @click="handleDelete(entry.id, $event)"
+              @click="requestDelete(entry.id, $event)"
             >
               删除
             </button>
@@ -136,7 +179,7 @@ function formatWeather(entry: HistoryEntry): string {
 
           <!-- Expanded routes -->
           <div v-if="expandedId === entry.id" class="border-t border-gray-50 px-3 pb-3 pt-2">
-            <RouteCompare :routes="entry.routes" @select="() => {}" />
+            <RouteCompare :routes="entry.routes" :selected-id="selectedId" @select="handleRouteSelect" />
           </div>
         </div>
       </div>
