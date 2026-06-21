@@ -13,7 +13,7 @@ import type { TimeOption, DistanceOption, PreferenceTag, MealType, CuisineType, 
 
 const router = useRouter()
 const { coords, loading: locLoading, error: locError, isMock, requestLocation } = useGeolocation()
-const { routes, locationName, weather, weatherNote, loading: genLoading, loadingStage, error: genError, fetchRoutes } = useRouteRequest()
+const { routes, locationName, weather, weatherNote, loading: genLoading, loadingStage, error: genError, fetchRoutes, cancelRequest } = useRouteRequest()
 const { addEntry } = useHistory()
 
 // ── Selections (all start empty — user must choose) ──
@@ -59,37 +59,49 @@ function handleRequestLocation(useMock: boolean) {
 
 async function handleGenerate() {
   if (!coords.value || !timeOption.value || !distance.value) return
-  await fetchRoutes({
-    lat: coords.value.lat,
-    lng: coords.value.lng,
-    timeOption: timeOption.value,
-    distance: distance.value,
-    preferences: preferences.value,
-    mealTypes: preferences.value.includes('food') ? mealTypes.value : undefined,
-    cuisineTypes: preferences.value.includes('food') ? cuisineTypes.value : undefined,
-    photoTypes: preferences.value.includes('photo') ? photoTypes.value : undefined,
-    scenicTypes: preferences.value.includes('scenic') ? scenicTypes.value : undefined,
-    wanderTypes: preferences.value.includes('wander') ? wanderTypes.value : undefined,
-    walkLevel: preferences.value.includes('less_walk') ? walkLevel.value ?? undefined : undefined,
-  })
-  if (routes.value.length > 0) {
-    // Save to history
-    addEntry({
-      locationName: locationName.value,
-      request: {
-        timeOption: timeOption.value!,
-        distance: distance.value!,
-        preferences: [...preferences.value],
-        mealTypes: mealTypes.value.length > 0 ? [...mealTypes.value] : undefined,
-        cuisineTypes: cuisineTypes.value.length > 0 ? [...cuisineTypes.value] : undefined,
-        photoTypes: photoTypes.value.length > 0 ? [...photoTypes.value] : undefined,
-        scenicTypes: scenicTypes.value.length > 0 ? [...scenicTypes.value] : undefined,
-        wanderTypes: wanderTypes.value.length > 0 ? [...wanderTypes.value] : undefined,
-        walkLevel: walkLevel.value ?? undefined,
-      },
-      routes: routes.value,
-      weather: weather.value,
+
+  try {
+    await fetchRoutes({
+      lat: coords.value.lat,
+      lng: coords.value.lng,
+      timeOption: timeOption.value,
+      distance: distance.value,
+      preferences: preferences.value,
+      mealTypes: preferences.value.includes('food') ? mealTypes.value : undefined,
+      cuisineTypes: preferences.value.includes('food') ? cuisineTypes.value : undefined,
+      photoTypes: preferences.value.includes('photo') ? photoTypes.value : undefined,
+      scenicTypes: preferences.value.includes('scenic') ? scenicTypes.value : undefined,
+      wanderTypes: preferences.value.includes('wander') ? wanderTypes.value : undefined,
+      walkLevel: preferences.value.includes('less_walk') ? walkLevel.value ?? undefined : undefined,
     })
+
+    // Defensive check: routes must be a non-empty array
+    if (!Array.isArray(routes.value) || routes.value.length === 0) {
+      return
+    }
+
+    // Save to history (wrapped to prevent blocking navigation)
+    try {
+      addEntry({
+        locationName: locationName.value,
+        request: {
+          timeOption: timeOption.value!,
+          distance: distance.value!,
+          preferences: [...preferences.value],
+          mealTypes: mealTypes.value.length > 0 ? [...mealTypes.value] : undefined,
+          cuisineTypes: cuisineTypes.value.length > 0 ? [...cuisineTypes.value] : undefined,
+          photoTypes: photoTypes.value.length > 0 ? [...photoTypes.value] : undefined,
+          scenicTypes: scenicTypes.value.length > 0 ? [...scenicTypes.value] : undefined,
+          wanderTypes: wanderTypes.value.length > 0 ? [...wanderTypes.value] : undefined,
+          walkLevel: walkLevel.value ?? undefined,
+        },
+        routes: routes.value,
+        weather: weather.value,
+      })
+    } catch (historyErr) {
+      console.warn('Failed to save history entry:', historyErr)
+      // Non-blocking — still navigate even if history save fails
+    }
 
     router.push({
       name: 'routes',
@@ -99,13 +111,16 @@ async function handleGenerate() {
         isRainy: weather.value?.isRainy ? '1' : '0',
       },
     })
+  } catch (unexpectedErr) {
+    // Last-resort guard — prevent blank page
+    console.error('Unexpected error in handleGenerate:', unexpectedErr)
   }
 }
 </script>
 
 <template>
   <!-- Loading Overlay -->
-  <LoadingOverlay v-if="genLoading" :stage="loadingStage" />
+  <LoadingOverlay v-if="genLoading" :stage="loadingStage" @cancel="cancelRequest()" />
 
   <div class="h-full flex flex-col max-w-md mx-auto">
     <!-- Header -->
@@ -203,17 +218,46 @@ async function handleGenerate() {
       v-if="coords"
       class="flex-shrink-0 px-5 py-4 bg-white/80 backdrop-blur-lg border-t border-gray-100"
     >
-      <button
-        class="btn-primary w-full py-3.5 text-base font-semibold flex items-center justify-center gap-2"
-        :class="!canGenerate ? 'opacity-50 cursor-not-allowed' : ''"
-        :disabled="genLoading || !canGenerate"
-        @click="handleGenerate"
-      >
-        {{ genLoading ? '生成中...' : '✨ 生成路线' }}
-      </button>
-      <p v-if="genError" class="text-red-500 text-xs text-center mt-2">
-        {{ genError.message }}
-      </p>
+      <!-- Generate + Cancel buttons -->
+      <div v-if="genLoading" class="space-y-2">
+        <button
+          class="btn-primary w-full py-3.5 text-base font-semibold flex items-center justify-center gap-2 opacity-70"
+          disabled
+        >
+          <span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          生成中...
+        </button>
+        <button
+          class="w-full py-2 text-sm text-gray-400 active:text-gray-600 transition-colors"
+          @click="cancelRequest()"
+        >
+          取消
+        </button>
+      </div>
+      <div v-else>
+        <button
+          class="btn-primary w-full py-3.5 text-base font-semibold flex items-center justify-center gap-2"
+          :class="!canGenerate ? 'opacity-50 cursor-not-allowed' : ''"
+          :disabled="!canGenerate"
+          @click="handleGenerate"
+        >
+          ✨ 生成路线
+        </button>
+      </div>
+
+      <!-- Error display with retry hint -->
+      <div v-if="genError" class="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl text-center">
+        <p class="text-sm text-red-600 font-medium">{{ genError.message }}</p>
+        <p v-if="genError.code === 'NETWORK_ERROR'" class="text-xs text-red-400 mt-1">
+          服务器可能正在启动，请稍后重试
+        </p>
+        <button
+          class="mt-2 text-sm text-red-500 underline font-medium"
+          @click="handleGenerate"
+        >
+          重新生成
+        </button>
+      </div>
     </div>
   </div>
 </template>

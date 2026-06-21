@@ -5,6 +5,10 @@ const props = defineProps<{
   stage: number // 0, 1, 2
 }>()
 
+const emit = defineEmits<{
+  cancel: []
+}>()
+
 const stages = [
   { icon: '📍', text: '正在搜索附近地点...' },
   { icon: '🤖', text: 'AI 正在为你规划路线...' },
@@ -12,7 +16,7 @@ const stages = [
 ]
 
 const tips = [
-  '少走路可以让你有更多时间拍照',
+  'AI 正在根据你的偏好精挑细选',
   '本地人才知道的宝藏店铺往往藏在巷子里',
   '好的光线是拍照成功的一半，下午4-5点是黄金时间',
   '空腹逛美食街是对美食最大的尊重',
@@ -23,17 +27,25 @@ const tips = [
 ]
 
 const currentTip = ref(0)
+const elapsedSeconds = ref(0)
 let tipTimer: ReturnType<typeof setInterval> | null = null
+let elapsedTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   tipTimer = setInterval(() => {
     currentTip.value = (currentTip.value + 1) % tips.length
   }, 3000)
+  elapsedTimer = setInterval(() => {
+    elapsedSeconds.value++
+  }, 1000)
 })
 
 onUnmounted(() => {
   if (tipTimer) clearInterval(tipTimer)
+  if (elapsedTimer) clearInterval(elapsedTimer)
 })
+
+const showSlowHint = computed(() => elapsedSeconds.value > 30)
 
 const progressWidth = computed(() => {
   const base = (props.stage / 2) * 100
@@ -59,6 +71,18 @@ const progressWidth = computed(() => {
         class="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-700 ease-out"
         :style="{ width: progressWidth }"
       />
+    </div>
+
+    <!-- Slow hint -->
+    <div v-if="showSlowHint" class="mb-6 text-center">
+      <p class="text-sm text-amber-500 font-medium">AI 正在仔细规划，请耐心等待...</p>
+      <p class="text-xs text-gray-400 mt-1">已等待 {{ elapsedSeconds }} 秒</p>
+      <button
+        class="mt-3 text-xs text-gray-400 underline active:text-gray-600"
+        @click="emit('cancel')"
+      >
+        取消等待
+      </button>
     </div>
 
     <!-- Tips rotation -->

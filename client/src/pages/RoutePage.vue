@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRouteRequest } from '../composables/useRouteRequest'
 import { useSwipe } from '../composables/useSwipe'
@@ -19,12 +19,25 @@ const displayLocation = computed(() => route.query.locationName as string || loc
 const displayWeather = computed(() => route.query.weatherNote as string || weatherNote.value || '')
 const isRainy = computed(() => route.query.isRainy === '1' || weather.value?.isRainy || false)
 
+// Safety net: if we land here with no routes and no loading, redirect home
+watch(
+  () => ({ len: Array.isArray(routes.value) ? routes.value.length : 0, loading: loading.value }),
+  (state) => {
+    if (!state.loading && state.len === 0) {
+      router.replace({ name: 'home' })
+    }
+  },
+  { immediate: true },
+)
+
 function onSwipeChange(_index: number) {
   // handled by state
 }
 
+const routeCount = computed(() => Array.isArray(routes.value) ? routes.value.length : 0)
+
 const { state: swipeState, onTouchStart, onTouchMove, onTouchEnd, onPointerDown, onPointerMove, onPointerUp, goTo } = useSwipe(
-  computed(() => routes.value.length).value,
+  routeCount.value,
   onSwipeChange,
 )
 
@@ -80,7 +93,7 @@ const transitionStyle = computed(() => {
       />
 
       <!-- Empty -->
-      <EmptyState v-else-if="routes.length === 0" />
+      <EmptyState v-else-if="routeCount === 0" />
 
       <!-- Routes -->
       <!-- Compare mode -->
@@ -111,7 +124,7 @@ const transitionStyle = computed(() => {
           <RouteCard
             :route="rt"
             :index="i"
-            :total="routes.length"
+            :total="routeCount"
           />
         </div>
       </div>
@@ -119,7 +132,7 @@ const transitionStyle = computed(() => {
 
     <!-- Dot indicators (swipe mode only) -->
     <div
-      v-if="routes.length > 1 && !loading && !error && viewMode === 'swipe'"
+      v-if="routeCount > 1 && !loading && !error && viewMode === 'swipe'"
       class="flex-shrink-0 flex justify-center gap-2 py-3"
     >
       <button
@@ -137,11 +150,11 @@ const transitionStyle = computed(() => {
 
     <!-- Bottom bar -->
     <div
-      v-if="routes.length > 0 && !loading && !error"
+      v-if="routeCount > 0 && !loading && !error"
       class="flex-shrink-0 px-5 py-4 bg-white/80 backdrop-blur-lg border-t border-gray-100 space-y-2"
     >
       <!-- View toggle (only if multiple routes) -->
-      <div v-if="routes.length > 1" class="flex bg-gray-100 rounded-lg p-0.5">
+      <div v-if="routeCount > 1" class="flex bg-gray-100 rounded-lg p-0.5">
         <button
           :class="[
             'flex-1 py-2 text-xs font-medium rounded-md transition-colors',
