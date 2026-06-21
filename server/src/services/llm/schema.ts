@@ -29,9 +29,45 @@ export const llmOutputSchema = z.object({
 
 export type LLMOutput = z.infer<typeof llmOutputSchema>
 
+/** Try to repair truncated JSON by closing open structures */
+function tryRepairJson(raw: string): string | null {
+  let json = raw.trim()
+
+  // Strip markdown fences
+  if (json.startsWith('```')) {
+    json = json.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+  }
+
+  // If it parses as-is, return it
+  try { JSON.parse(json); return json } catch {}
+
+  // Count open/close brackets and braces
+  let braces = 0, brackets = 0
+  let inString = false, escaped = false
+  for (let i = 0; i < json.length; i++) {
+    const ch = json[i]
+    if (escaped) { escaped = false; continue }
+    if (ch === '\\') { escaped = true; continue }
+    if (ch === '"') { inString = !inString; continue }
+    if (inString) continue
+    if (ch === '{') braces++
+    if (ch === '}') braces--
+    if (ch === '[') brackets++
+    if (ch === ']') brackets--
+  }
+
+  // If we're inside a string, close it
+  if (inString) json += '"'
+
+  // Close any open structures
+  json += ']'.repeat(Math.max(0, brackets)) + '}'.repeat(Math.max(0, braces))
+
+  try { JSON.parse(json); return json } catch { return null }
+}
+
 /** Parse and validate LLM JSON output. Returns validated routes or null. */
 export function parseAndValidate(raw: string): LLMOutput | null {
-  // Strip markdown code fences if present
+  // Try direct parse first
   let json = raw.trim()
   if (json.startsWith('```')) {
     json = json.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
@@ -43,8 +79,24 @@ export function parseAndValidate(raw: string): LLMOutput | null {
     if (result.success) return result.data
     console.error('LLM output validation failed:', result.error.issues)
     return null
-  } catch (err) {
-    console.error('LLM output JSON parse failed:', err)
+  } catch {
+    // Try repair on parse failure
+    const repaired = tryRepairJson(json)
+    if (repaired) {
+      try {
+        const parsed = JSON.parse(repaired)
+        const result = llmOutputSchema.safeParse(parsed)
+        if (result.success) {
+          console.log('✅ Repaired truncated LLM JSON successfully')
+          return result.data
+        }
+        console.error('LLM output (repaired) validation failed:', result.error.issues)
+      } catch {
+        console.error('LLM output JSON repair also failed')
+      }
+    } else {
+      console.error('LLM output JSON parse failed: unterminated/invalid')
+    }
     return null
   }
 }

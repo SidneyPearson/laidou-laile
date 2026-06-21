@@ -145,12 +145,12 @@ export function buildUserPrompt(input: {
     ? '\n\n## 特别要求\n此路线偏好"拍照出片"，请为每个 stop 的 notes 中加入具体的拍照建议（格式：【拍照点】+ 机位 + 时间 + 构图）。不要只说"适合拍照"，要给出具体位置和角度。'
     : ''
 
-  // Each POI gets a unique index for LLM to reference
-  const poiTable = pois.slice(0, 20).map((p, i) => {
+  // Each POI gets a unique index for LLM to reference (max 15 to keep prompt lean)
+  const poiTable = pois.slice(0, 15).map((p, i) => {
     const dist = p.distance >= 1000
       ? `${(p.distance / 1000).toFixed(1)}km`
       : `${p.distance}m`
-    return `[${i}] ${p.name} | ${p.address.slice(0, 40)} | ${dist} | id=${p.id} | ${p.lng},${p.lat}`
+    return `[${i}] ${p.name} | ${p.address.slice(0, 30)} | ${dist} | ${p.lng},${p.lat} | id=${p.id}`
   }).join('\n')
 
   return `## 上下文

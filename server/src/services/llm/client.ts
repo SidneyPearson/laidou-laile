@@ -24,7 +24,7 @@ export async function chatCompletion(
     model: usedModel,
     messages: params.messages,
     temperature: params.temperature ?? 0.7,
-    max_tokens: params.maxTokens ?? 4096,
+    max_tokens: params.maxTokens ?? 8192,
     response_format: { type: 'json_object' },
   }
 
@@ -36,10 +36,19 @@ export async function chatCompletion(
     timeout: env.LLM_TIMEOUT_MS,
   })
 
-  const content = data?.choices?.[0]?.message?.content
+  const choice = data?.choices?.[0]
+  const content = choice?.message?.content
+  const finishReason = choice?.finish_reason
+
   if (!content) {
     throw new Error('LLM returned empty response')
   }
+
+  // Detect truncation — LLM stopped because it hit max_tokens
+  if (finishReason === 'length') {
+    console.warn('⚠️ LLM response truncated (finish_reason=length), output may be incomplete')
+  }
+
   return content
 }
 
