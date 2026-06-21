@@ -1,0 +1,84 @@
+// Amap API response types
+
+/** Raw POI from Amap around-search response */
+export interface AmapRawPOI {
+  id: string
+  name: string
+  type: string
+  typecode: string
+  address: string
+  location: string // "lng,lat"
+  distance: string // meters
+  tel: string
+  biz_ext?: {
+    rating?: string
+    cost?: string
+  }
+  photos?: Array<{
+    url: string
+    title: string
+  }>
+}
+
+/** Normalized POI */
+export interface AmapPOI {
+  id: string
+  name: string
+  type: string
+  typecode: string
+  address: string
+  lng: number
+  lat: number
+  distance: number
+  rating: string | null
+}
+
+/** Amap around-search response */
+export interface AmapAroundResponse {
+  status: string
+  info: string
+  count: string
+  suggestion: any
+  pois: AmapRawPOI[]
+}
+
+/** Amap text-search response */
+export interface AmapTextResponse {
+  status: string
+  info: string
+  count: string
+  suggestion: any
+  pois: AmapRawPOI[]
+}
+
+/** Amap reverse geocode response */
+export interface AmapRegeoResponse {
+  status: string
+  info: string
+  regeocode: {
+    formatted_address: string
+    addressComponent: {
+      province: string
+      city: string
+      district: string
+      township: string
+      streetNumber: { street: string; number: string }
+    }
+  }
+}
+
+/** Amap weather response */
+export interface AmapWeatherResponse {
+  status: string
+  info: string
+  lives: Array<{
+    province: string
+    city: string
+    weather: string
+    temperature: string
+    winddirection: string
+    windpower: string
+    humidity: string
+    reporttime: string
+  }>
+}

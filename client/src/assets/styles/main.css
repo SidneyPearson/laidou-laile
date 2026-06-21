@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue',
+      'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    height: 100%;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+    height: 100%;
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  #app {
+    height: 100%;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-500 text-white font-semibold rounded-2xl
+           active:bg-primary-600 transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .card {
+    @apply bg-white rounded-3xl shadow-sm border border-gray-100;
+  }
+
+  .tag {
+    @apply px-4 py-2 rounded-full text-sm font-medium border-2
+           transition-all duration-200 select-none;
+  }
+
+  .tag-inactive {
+    @apply border-gray-200 text-gray-500 bg-white active:bg-gray-50;
+  }
+
+  .tag-active {
+    @apply border-primary-400 text-primary-600 bg-primary-50;
+  }
+}
+
+/* Swipe animation */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease-out;
+}
+.slide-enter-from {
+  transform: translateX(40px);
+  opacity: 0;
+}
+.slide-leave-to {
+  transform: translateX(-40px);
+  opacity: 0;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
