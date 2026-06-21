@@ -6,14 +6,17 @@ import { useRouteRequest } from '../composables/useRouteRequest'
 import LocationGate from '../components/LocationGate.vue'
 import TimeSelector from '../components/TimeSelector.vue'
 import PreferenceTags from '../components/PreferenceTags.vue'
-import type { TimeOption, PreferenceTag } from '../types/route'
+import LoadingOverlay from '../components/LoadingOverlay.vue'
+import type { TimeOption, PreferenceTag, MealType, CuisineType } from '../types/route'
 
 const router = useRouter()
 const { coords, loading: locLoading, error: locError, isMock, requestLocation } = useGeolocation()
-const { routes, locationName, weatherNote, loading: genLoading, error: genError, fetchRoutes } = useRouteRequest()
+const { routes, locationName, weather, weatherNote, loading: genLoading, loadingStage, error: genError, fetchRoutes } = useRouteRequest()
 
 const timeOption = ref<TimeOption>(60)
 const preferences = ref<PreferenceTag[]>(['food'])
+const mealTypes = ref<MealType[]>([])
+const cuisineTypes = ref<CuisineType[]>([])
 
 const hasRequestedLocation = ref(false)
 
@@ -29,6 +32,8 @@ async function handleGenerate() {
     lng: coords.value.lng,
     timeOption: timeOption.value,
     preferences: preferences.value,
+    mealTypes: preferences.value.includes('food') ? mealTypes.value : undefined,
+    cuisineTypes: preferences.value.includes('food') ? cuisineTypes.value : undefined,
   })
   if (routes.value.length > 0) {
     router.push({
@@ -36,6 +41,7 @@ async function handleGenerate() {
       query: {
         locationName: locationName.value,
         weatherNote: weatherNote.value || '',
+        isRainy: weather.value?.isRainy ? '1' : '0',
       },
     })
   }
@@ -43,6 +49,9 @@ async function handleGenerate() {
 </script>
 
 <template>
+  <!-- Loading Overlay -->
+  <LoadingOverlay v-if="genLoading" :stage="loadingStage" />
+
   <div class="h-full flex flex-col max-w-md mx-auto">
     <!-- Header -->
     <header class="flex-shrink-0 pt-12 pb-6 px-5 text-center">
@@ -92,7 +101,7 @@ async function handleGenerate() {
           <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
             想怎么玩
           </h2>
-          <PreferenceTags v-model="preferences" />
+          <PreferenceTags v-model="preferences" v-model:meal-types="mealTypes" v-model:cuisine-types="cuisineTypes" />
         </section>
       </template>
     </div>
@@ -107,8 +116,7 @@ async function handleGenerate() {
         :disabled="genLoading || preferences.length === 0"
         @click="handleGenerate"
       >
-        <span v-if="genLoading" class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-        {{ genLoading ? 'AI正在生成路线...' : '✨ 生成路线' }}
+        {{ genLoading ? '生成中...' : '✨ 生成路线' }}
       </button>
       <p v-if="genError" class="text-red-500 text-xs text-center mt-2">
         {{ genError.message }}

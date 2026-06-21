@@ -18,6 +18,9 @@ export interface PlanInput {
   timeMinutes: number
   /** Selected preference tags */
   preferences: PreferenceTag[]
+  /** Food sub-preferences */
+  mealTypes?: string[]
+  cuisineTypes?: string[]
   /** POI list from Amap — the ONLY allowed data source */
   pois: AmapPOI[]
 }
@@ -79,6 +82,8 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
     timeMinutes,
     preferences,
     pois,
+    mealTypes: input.mealTypes,
+    cuisineTypes: input.cuisineTypes,
   })
 
   // Call LLM
@@ -157,7 +162,7 @@ function normalizeKey(s: string): string {
 
 /** Verify and fix a stop. Returns null if it can't be matched to any POI. */
 function sanitizeStop(
-  stop: { name: string; address: string; visitDurationMinutes: number; notes: string; amapPoiId: string | null; lng: number; lat: number },
+  stop: { name: string; address: string; visitDurationMinutes: number; notes: string; amapPoiId: string | null; lng: number; lat: number; photoTip?: string },
   poiIndex: Map<string, PoiRecord>,
 ): Stop | null {
   // 1. Match by amapPoiId
@@ -190,7 +195,7 @@ function sanitizeStop(
 
 const PREF_LABELS: Record<string, string> = {
   food: '美食', wander: '休闲', photo: '出片', less_walk: '轻松',
-  local: '本地', rainy_day: '室内',
+  scenic: '景点',
 }
 
 function buildFallbackRoutes(

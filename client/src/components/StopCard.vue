@@ -26,6 +26,11 @@ defineProps<{
       </div>
       <p class="text-xs text-gray-400 mb-2">{{ stop.address }}</p>
       <p class="text-xs text-gray-500 leading-relaxed mb-2">{{ stop.notes }}</p>
+      <!-- Photo tip -->
+      <div v-if="stop.photoTip" class="mb-2 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-2 flex items-start gap-1.5">
+        <span class="text-sm flex-shrink-0">📸</span>
+        <p class="text-xs text-amber-700 leading-relaxed">{{ stop.photoTip }}</p>
+      </div>
       <NavButton
         :name="stop.name"
         :lng="stop.lng"

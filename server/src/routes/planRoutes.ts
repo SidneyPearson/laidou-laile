@@ -15,7 +15,7 @@ function asyncHandler(
 router.post(
   '/generate',
   asyncHandler(async (req, res) => {
-    const { lat, lng, timeOption, preferences } = req.body
+    const { lat, lng, timeOption, preferences, mealTypes, cuisineTypes } = req.body
 
     if (lat == null || lng == null || !timeOption || !preferences?.length) {
       res.status(400).json({
@@ -24,7 +24,7 @@ router.post(
       return
     }
 
-    const result = await generateRoutes({ lat, lng, timeOption, preferences })
+    const result = await generateRoutes({ lat, lng, timeOption, preferences, mealTypes, cuisineTypes })
 
     if (result.routes.length === 0) {
       res.status(404).json({
@@ -37,6 +37,7 @@ router.post(
       routes: result.routes,
       generatedAt: new Date().toISOString(),
       weatherNote: result.weatherNote,
+      weather: result.weather,
       locationName: result.locationName,
       source: result.source,
       fallbackReason: result.fallbackReason,

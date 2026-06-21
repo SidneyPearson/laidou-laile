@@ -1,33 +1,38 @@
 import { searchNearbyPOIs } from './amap/poiSearch.js'
 import { reverseGeocode } from './amap/geocode.js'
-import { getWeather } from './amap/weather.js'
+import { getWeatherByCoords } from './amap/weather.js'
 import { generatePlan } from './aiPlannerService.js'
-import type { Route, PreferenceTag, TimeOption } from '../types/route.js'
+import type { Route, PreferenceTag, TimeOption, MealType, CuisineType } from '../types/route.js'
 
 interface GenerateParams {
   lat: number
   lng: number
   timeOption: TimeOption
   preferences: PreferenceTag[]
+  mealTypes?: MealType[]
+  cuisineTypes?: CuisineType[]
 }
 
 interface GenerateResult {
   routes: Route[]
   locationName: string
   weatherNote: string | null
+  weather: { weather: string; temperature: string; isRainy: boolean } | null
   source: 'ai' | 'fallback'
   fallbackReason: string | null
 }
 
 /** Fetch data from Amap, then delegate to aiPlannerService */
 export async function generateRoutes(params: GenerateParams): Promise<GenerateResult> {
-  const { lat, lng, timeOption, preferences } = params
+  const { lat, lng, timeOption, preferences, mealTypes, cuisineTypes } = params
 
-  // Fetch Amap data in parallel
-  const [pois, geoInfo, weatherInfo] = await Promise.all([
-    searchNearbyPOIs({ lat, lng, timeOption, preferences }),
-    reverseGeocode(lat, lng),
-    preferences.includes('rainy_day') ? getWeather(lat, lng) : Promise.resolve(null),
+  // Step 1: geocode first (we need adcode for weather)
+  const geoInfo = await reverseGeocode(lat, lng)
+
+  // Step 2: POI search + weather in parallel
+  const [pois, weatherInfo] = await Promise.all([
+    searchNearbyPOIs({ lat, lng, timeOption, preferences, mealTypes, cuisineTypes }),
+    getWeatherByCoords(lat, lng),
   ])
 
   const city = geoInfo.district
@@ -48,12 +53,19 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
     timeMinutes: timeOption,
     preferences,
     pois,
+    mealTypes,
+    cuisineTypes,
   })
 
   return {
     routes: plan.routes,
     locationName,
     weatherNote: weatherInfo?.note || null,
+    weather: weatherInfo ? {
+      weather: weatherInfo.weather,
+      temperature: weatherInfo.temperature,
+      isRainy: weatherInfo.isRainy,
+    } : null,
     source: plan.source,
     fallbackReason: plan.fallbackReason,
   }

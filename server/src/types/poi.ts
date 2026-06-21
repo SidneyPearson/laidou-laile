@@ -60,6 +60,8 @@ export interface AmapRegeoResponse {
     addressComponent: {
       province: string
       city: string
+      citycode: string
+      adcode: string
       district: string
       township: string
       streetNumber: { street: string; number: string }

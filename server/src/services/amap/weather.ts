@@ -8,19 +8,14 @@ interface WeatherInfo {
   note: string | null   // e.g. "当前小雨，已为您推荐室内路线"
 }
 
-/** Fetch live weather for given city code or coordinates */
-export async function getWeather(
-  lat: number,
-  lng: number,
-): Promise<WeatherInfo | null> {
+/** Fetch live weather for given adcode (city code) */
+export async function getWeather(adcode: string): Promise<WeatherInfo | null> {
   const client = getAmapClient()
 
   try {
-    // Amap weather takes adcode, but for simplicity use city from reverse geocode
-    // Since weather info is nice-to-have, catch errors gracefully
     const { data } = await client.get<AmapWeatherResponse>('/weather/weatherInfo', {
       params: {
-        city: `${lng},${lat}`,
+        city: adcode,
         extensions: 'base',
       },
     })
@@ -39,6 +34,29 @@ export async function getWeather(
     }
   } catch (err: any) {
     console.error('Weather query failed:', err.message)
+    return null
+  }
+}
+
+/** Try weather by coordinates — get adcode from regeo first, then weather */
+export async function getWeatherByCoords(
+  lat: number,
+  lng: number,
+): Promise<WeatherInfo | null> {
+  const client = getAmapClient()
+
+  try {
+    // First get adcode from reverse geocode
+    const { data: regeoData } = await client.get<{ status: string; regeocode: { addressComponent: { adcode: string } } }>(
+      '/geocode/regeo',
+      { params: { location: `${lng},${lat}`, extensions: 'base' } },
+    )
+    const adcode = regeoData.regeocode?.addressComponent?.adcode
+    if (!adcode) return null
+
+    return getWeather(adcode)
+  } catch (err: any) {
+    console.error('Weather by coords failed:', err.message)
     return null
   }
 }

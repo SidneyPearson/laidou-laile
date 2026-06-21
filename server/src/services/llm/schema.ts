@@ -5,10 +5,11 @@ const stopSchema = z.object({
   name: z.string().min(1).max(50),
   address: z.string().min(1).max(200),
   visitDurationMinutes: z.number().int().min(5).max(180),
-  notes: z.string().min(1).max(200),
+  notes: z.string().min(1).max(300),
   amapPoiId: z.string().nullable(),
   lng: z.number().min(-180).max(180),
   lat: z.number().min(-90).max(90),
+  photoTip: z.string().max(200).optional(),
 })
 
 // Route schema
