@@ -76,7 +76,7 @@ export async function generatePlan(input: PlanInput): Promise<PlanOutput> {
  * 3. Return as a single "美食清单" route with AI-scored stops
  */
 async function generateFoodList(input: PlanInput): Promise<Route[] | null> {
-  const { position, distance, timeMinutes, adcode } = input
+  const { position, distance, timeMinutes, adcode, cuisineTypes } = input
 
   // Step 1: Search Amap for nearby food
   const pois = await searchNearbyPOIs({
@@ -86,12 +86,52 @@ async function generateFoodList(input: PlanInput): Promise<Route[] | null> {
     timeOption: timeMinutes,
     preferences: ['food'],
     adcode,
+    cuisineTypes: cuisineTypes as string[] | undefined,
+    // Skip around-search: it returns ALL food types, we only want the specific cuisine
+    skipAroundSearch: (cuisineTypes?.length ?? 0) > 0,
   })
 
   if (pois.length === 0) return null
 
+  // Filter to user's actual distance.
+  // Use Haversine when Amap distance is 0 (text-search returns no distance field)
+  const withinDistance = distance > 0
+    ? pois.filter(p => {
+        const dist = p.distance > 0 ? p.distance
+          : Math.round(haversineDist(position.lat, position.lng, p.lat, p.lng))
+        return dist <= distance
+      })
+    : pois
+
+  if (withinDistance.length === 0) return null
+
+  // Pre-filter: for cuisine-specific searches, prioritize POIs whose name
+  // matches the cuisine keywords (e.g. 面/粉 for noodles). LLM scoring
+  // sometimes misses shops that don't have obvious names.
+  let filtered = withinDistance
+  if (cuisineTypes?.length) {
+    const cuisineKws: Record<string, RegExp> = {
+      noodles: /面|粉|米线/,
+      hotpot: /火锅|涮|串串/,
+      coffee_tea: /咖啡|奶茶|茶|饮/,
+      bbq: /烧烤|烤肉/,
+      pastries: /糕点|面包|烘焙|点/,
+      western: /西餐|牛排|披萨|意面|萨莉亚/,
+      local_cuisine: /本帮|老字号|本地|特色/,
+      buffet: /自助/,
+    }
+    const pattern = cuisineTypes.map(c => cuisineKws[c]).filter(Boolean)
+    if (pattern.length > 0) {
+      const re = new RegExp(pattern.map(p => p.source).join('|'))
+      const matching = withinDistance.filter(p => re.test(p.name))
+      // Use matching results first, then fill with non-matching to reach ~20
+      const nonMatching = withinDistance.filter(p => !re.test(p.name))
+      filtered = [...matching, ...nonMatching]
+    }
+  }
+
   // Take top candidates (max 20) for LLM to score
-  const candidates = pois.slice(0, 20)
+  const candidates = filtered.slice(0, 20)
 
   // Step 2: Build prompt for LLM scoring
   const poiTable = candidates.map((p, i) =>
@@ -428,8 +468,12 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
 
   // Short-time special paths (bypassed for 半天/一天 — go LLM-first instead)
   if (!isDayTrip) {
-    // Food-only without cuisine type → food list with AI scoring
+    // Food without cuisine type → food list with AI scoring
     if (preferences.length === 1 && preferences[0] === 'food' && !input.cuisineTypes?.length) {
+      return generateFoodList(input)
+    }
+    // Food with cuisine type → Amap search + LLM curation (LLM doesn't know local shops)
+    if (preferences.length === 1 && preferences[0] === 'food' && input.cuisineTypes?.length) {
       return generateFoodList(input)
     }
     // Scenic/wander without sub-types + local → POI search + LLM curation
@@ -498,9 +542,8 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
   }
 
   // Step 4: Verify each stop via Amap text-search, fill in coordinates
-  // Use max(distance, 3000) so verification doesn't over-filter when user picks a tight radius.
-  // The distance constraint is already communicated to the LLM via the prompt.
-  const verifyRadius = distance > 0 ? Math.max(distance, 3000) : 50000
+  // Use the user's actual distance. For 全城范围 (distance=0), use 50km.
+  const verifyRadius = distance > 0 ? distance : 50000
   // If only food is selected, only accept food-related POIs (typecode 05xxxx)
   const onlyFood = preferences.length === 1 && preferences[0] === 'food'
 

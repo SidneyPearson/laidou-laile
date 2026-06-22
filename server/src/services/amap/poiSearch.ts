@@ -12,7 +12,7 @@ const PREFERENCE_TYPECODES: Record<PreferenceTag, string> = {
 // Cuisine type → Amap keywords
 const CUISINE_KEYWORDS: Record<string, string> = {
   hotpot: '火锅|串串|涮肉',
-  noodles: '面馆|米线|拉面|粉',
+  noodles: '面馆|面庄|拉面|米线|粉',
   pastries: '糕点|点心|面包|烘焙',
   bbq: '烧烤|烤肉',
   local_cuisine: '本地菜|老字号|本帮菜|特色菜',
@@ -113,8 +113,8 @@ export async function searchNearbyPOIs(params: {
   const { lat, lng, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, adcode, wideMode, scenicKeywords, skipAroundSearch } = params
   const client = getAmapClient()
 
-  // 0 = unlimited → use max Amap radius (50km). Minimum 2000m to ensure enough results.
-  const radius = distance > 0 ? Math.max(distance, 2000) : 50000
+  // 0 = unlimited → use max Amap radius (50km)
+  const radius = distance > 0 ? distance : 50000
 
   // Build typecode union from preferences
   let typeFilter = preferences
@@ -173,7 +173,9 @@ export async function searchNearbyPOIs(params: {
 
   // Food text search — always do a broad food search, with keywords if specified
   if (preferences.includes('food')) {
-    const kwParts: string[] = ['美食|餐厅|饭馆']
+    // When cuisine type is specified, use only cuisine keywords (not generic "美食|餐厅")
+    // to avoid mixing in unrelated restaurants
+    const kwParts: string[] = cuisineTypes?.length ? [] : ['美食|餐厅|饭馆']
     if (cuisineTypes?.length) {
       for (const c of cuisineTypes) if (CUISINE_KEYWORDS[c]) kwParts.push(CUISINE_KEYWORDS[c])
     }
