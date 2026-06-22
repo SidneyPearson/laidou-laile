@@ -158,6 +158,7 @@ function goBack() {
         v-else-if="isDayTrip && routes[0]"
         :route="routes[0]"
         :removable="true"
+        :removed-indices="removedIndices"
         @remove-stop="handleRemoveStop"
       />
 
