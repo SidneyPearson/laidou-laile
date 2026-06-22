@@ -43,10 +43,10 @@ function fmtDist(m: number): string {
              transition-colors cursor-pointer relative"
       @click="toggle"
     >
-      <!-- Remove button (refinement mode) -->
+      <!-- Remove button (refinement mode) — positioned top-left to avoid covering distance -->
       <button
         v-if="removable"
-        class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center
+        class="absolute top-2 left-2 w-6 h-6 flex items-center justify-center
                rounded-full bg-red-50 text-red-400 active:bg-red-100 active:text-red-500
                transition-colors z-10"
         @click.stop="emit('remove', index)"
@@ -58,7 +58,10 @@ function fmtDist(m: number): string {
 
       <!-- Name + distance -->
       <div class="flex items-start justify-between gap-2">
-        <h3 class="text-[15px] font-semibold text-gray-800 leading-snug pr-5">
+        <h3
+          class="text-[15px] font-semibold text-gray-800 leading-snug"
+          :class="{ 'pl-5': removable }"
+        >
           {{ stop.name }}
         </h3>
         <span
