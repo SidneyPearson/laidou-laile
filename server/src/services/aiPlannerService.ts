@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid'
 import { chatCompletionWithFallback } from './llm/client.js'
-import { buildUserPrompt, SYSTEM_PROMPT } from './llm/prompt.js'
+import { buildUserPrompt, buildRefinePrompt, SYSTEM_PROMPT } from './llm/prompt.js'
 import { parseAndValidate, formatValidationErrors } from './llm/schema.js'
 import { verifyPlace, searchNearbyPOIs, CUISINE_KEYWORDS } from './amap/poiSearch.js'
 import { getAmapClient } from './amap/client.js'
@@ -64,6 +64,138 @@ export async function generatePlan(input: PlanInput): Promise<PlanOutput> {
     routes: [],
     source: 'fallback',
     fallbackReason: 'AI服务暂不可用，请重试',
+  }
+}
+
+// ── Route refinement ────────────────────────────────────
+
+export interface RefineInput {
+  route: Route
+  removeStopIndices: number[]
+  extraRequirements?: string
+  position: { lat: number; lng: number }
+  city: string
+  weather: string
+  timeMinutes: number
+  distance: number
+  adcode?: string
+}
+
+/**
+ * Refine an existing day-trip route: remove specified stops, optionally
+ * add new requirements, and have LLM regenerate the route.
+ * When only removing stops (no extra requirements), skips LLM entirely.
+ */
+export async function refinePlan(input: RefineInput): Promise<Route | null> {
+  const { route, removeStopIndices, extraRequirements, position, city, weather, timeMinutes, adcode } = input
+
+  // Filter out removed stops
+  const keptStops = route.stops.filter((_, i) => !removeStopIndices.includes(i))
+  const removedStops = route.stops.filter((_, i) => removeStopIndices.includes(i))
+
+  if (keptStops.length === 0) return null
+
+  // Frontend-only: no extra requirements → just return trimmed route
+  if (!extraRequirements) {
+    return {
+      ...route,
+      id: uuid(),
+      stops: keptStops,
+      totalDurationMinutes: keptStops.reduce((s, st) => s + st.visitDurationMinutes, 0) + 10,
+      walkingDistanceMeters: Math.max(0, route.walkingDistanceMeters - removedStops.length * 200),
+    }
+  }
+
+  // Compute max distance for verification: use the furthest existing stop * 1.5,
+  // or the input distance if provided.
+  const maxDist = input.distance > 0 ? input.distance
+    : Math.max(...keptStops.map(s => s.distanceMeters || 0), 1000) * 1.5
+
+  // Build refine prompt (include address/distance for spatial context)
+  const prompt = buildRefinePrompt({
+    city,
+    weather,
+    timeMinutes,
+    existingStops: keptStops.map(s => ({
+      name: s.name,
+      notes: s.notes || '',
+      address: s.address || '',
+      distanceMeters: s.distanceMeters || 0,
+      visitDurationMinutes: s.visitDurationMinutes,
+    })),
+    removedStops: removedStops.map(s => ({ name: s.name })),
+    extraRequirements,
+  })
+
+  // Call LLM
+  let raw: string
+  try {
+    raw = await chatCompletionWithFallback({
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.5,
+    })
+  } catch (err: any) {
+    console.error('Refine LLM call failed:', err.message)
+    return null
+  }
+
+  // Parse & validate
+  const parsed = parseAndValidate(raw)
+  if (!parsed || !parsed.routes?.length) {
+    console.warn('Refine: LLM output invalid, returning trimmed route')
+    return null
+  }
+
+  const refined = parsed.routes[0]
+  const keptNames = new Set(keptStops.map(s => s.name))
+
+  // Verify stops: keep existing (already verified), verify new ones
+  const enrichedStops: Stop[] = []
+  for (const llmStop of refined.stops) {
+    if (keptNames.has(llmStop.name)) {
+      // Reuse existing stop data (already verified, has coordinates)
+      const existing = keptStops.find(s => s.name === llmStop.name)
+      if (existing) {
+        enrichedStops.push({
+          ...existing,
+          visitDurationMinutes: llmStop.visitDurationMinutes || existing.visitDurationMinutes,
+        })
+        continue
+      }
+    }
+    // New stop → verify against Amap (within route distance range)
+    const verified = await verifyPlace(llmStop.name, position.lng, position.lat, adcode, maxDist)
+    if (verified) {
+      enrichedStops.push({
+        name: verified.name,
+        address: verified.address,
+        visitDurationMinutes: llmStop.visitDurationMinutes || 30,
+        notes: llmStop.notes || '',
+        amapPoiId: verified.id,
+        lng: verified.lng,
+        lat: verified.lat,
+        distanceMeters: verified.distance > 0 ? verified.distance
+          : Math.round(haversineDist(position.lat, position.lng, verified.lat, verified.lng)),
+        photoTip: llmStop.photoTip,
+      })
+    } else {
+      console.warn(`Refine: new stop "${llmStop.name}" not found on Amap, skipping`)
+    }
+  }
+
+  if (enrichedStops.length === 0) return null
+
+  return {
+    id: uuid(),
+    name: refined.name || route.name,
+    tagline: refined.tagline || route.tagline,
+    stops: enrichedStops,
+    totalDurationMinutes: refined.totalDurationMinutes || enrichedStops.reduce((s, st) => s + st.visitDurationMinutes, 0) + 10,
+    walkingDistanceMeters: refined.walkingDistanceMeters || route.walkingDistanceMeters,
+    tips: refined.tips || route.tips,
   }
 }
 

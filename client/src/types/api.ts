@@ -25,3 +25,17 @@ export interface ApiError {
     message: string
   }
 }
+
+export interface RefineRouteRequest {
+  route: import('./route').Route
+  removeStopIndices?: number[]
+  extraRequirements?: string
+  city: string
+  weather: string
+  timeMinutes: number
+  distance: number
+}
+
+export interface RefineRouteResponse {
+  routes: import('./route').Route[]
+}

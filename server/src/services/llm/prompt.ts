@@ -188,3 +188,69 @@ export function buildUserPrompt(input: {
 ## 任务
 ${fullTaskInstruction}`
 }
+
+/** Build prompt for route refinement: LLM receives the existing route + removed
+ *  stops + extra requirements, and fills in 1-3 new stops to replace removed ones. */
+export function buildRefinePrompt(input: {
+  city: string
+  weather: string
+  timeMinutes: number
+  existingStops: Array<{ name: string; notes: string; address: string; distanceMeters: number; visitDurationMinutes: number }>
+  removedStops: Array<{ name: string }>
+  extraRequirements?: string
+}): string {
+  const { city, weather, timeMinutes, existingStops, removedStops, extraRequirements } = input
+
+  const existingJson = JSON.stringify(existingStops.map(s => ({
+    name: s.name,
+    address: s.address,
+    distance: s.distanceMeters > 0 ? `${s.distanceMeters}m` : '未知',
+    visitDurationMinutes: s.visitDurationMinutes,
+    notes: s.notes,
+  })), null, 2)
+  const removedNames = removedStops.map(s => s.name).join('、')
+  const reqText = extraRequirements
+    ? `用户补充需求：${extraRequirements}`
+    : '无额外补充需求，请根据路线主题自行补充合适的地点。'
+
+  return `## 上下文
+- 城市区域：${city}
+- 天气：${weather}
+- 可用时间：${timeMinutes >= 480 ? '一天（约8小时）' : '半天（约4小时）'}
+- 这是一条已有路线的优化请求。
+
+## 现有路线中保留的地点（不要修改或删除）
+${existingJson}
+
+## 已删除的地点
+${removedNames || '无'}
+
+## 补充需求
+${reqText}
+
+## 任务
+在保留现有地点的基础上，补充 1-3 个新地点，使路线完整顺畅：
+1. 保留的地点全部保留，不要删除、不要改顺序、不要改 notes。
+2. 新地点插入到合适的位置（地理上顺路），与保留地点形成一条流畅的线路。
+3. 新地点的 name 必须是高德地图上能搜到的准确名称。
+4. 新地点的 visitDurationMinutes 按类型给出不同时长（参考：餐厅25-40min，景点30-50min，咖啡20-30min）。
+5. notes 写简短介绍（15-40字），有人情味。
+6. route 的 name 和 tagline 可根据优化后的内容适当调整。
+7. tips 包含天气建议。
+
+## 输出格式
+{
+  "routes": [
+    {
+      "name": "路线名（3-8字）",
+      "tagline": "一句话特色",
+      "stops": [所有地点（保留+新增），按顺序排列],
+      "totalDurationMinutes": 数字,
+      "walkingDistanceMeters": 数字,
+      "tips": "实用贴士（含天气建议）"
+    }
+  ]
+}
+
+只输出 JSON，不要任何其他内容。`
+}

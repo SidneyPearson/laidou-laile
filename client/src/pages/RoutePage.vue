@@ -2,6 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRouteRequest } from '../composables/useRouteRequest'
+import { refineRoute } from '../services/api'
+import { ApiRequestError } from '../services/api'
 import RouteCompare from '../components/RouteCompare.vue'
 import DayTripView from '../components/DayTripView.vue'
 import RouteSkeleton from '../components/RouteSkeleton.vue'
@@ -14,6 +16,14 @@ const { routes, locationName, weatherNote, weather, loading, error, retry } = us
 
 const selectedId = ref<string | null>(null)
 
+// ── Refinement state ────────────────────────────────────
+const removedIndices = ref<Set<number>>(new Set())
+const refineInput = ref('')
+const refining = ref(false)
+const refineError = ref('')
+const hasRemoved = computed(() => removedIndices.value.size > 0)
+const hasRefineInput = computed(() => refineInput.value.trim().length > 0)
+
 // Day-trip mode: 半天/一天 → single curated route, timeline UI
 const isDayTrip = computed(() => {
   const timeOption = Number(route.query.timeOption)
@@ -24,6 +34,63 @@ const isDayTrip = computed(() => {
 
 function handleRouteSelect(rt: import('../types/route').Route) {
   selectedId.value = selectedId.value === rt.id ? null : rt.id
+}
+
+function handleRemoveStop(index: number) {
+  const next = new Set(removedIndices.value)
+  if (next.has(index)) {
+    next.delete(index)
+  } else {
+    next.add(index)
+  }
+  removedIndices.value = next
+}
+
+async function handleRefine() {
+  const currentRoute = routes.value?.[0]
+  if (!currentRoute) return
+
+  const indices = [...removedIndices.value].sort((a, b) => b - a) // descending for splice
+  const requirements = refineInput.value.trim()
+
+  // Frontend-only: just remove stops, no extra requirements
+  if (!requirements && indices.length > 0) {
+    const newStops = currentRoute.stops.filter((_, i) => !removedIndices.value.has(i))
+    const newRoute = {
+      ...currentRoute,
+      id: crypto.randomUUID(),
+      stops: newStops,
+      totalDurationMinutes: newStops.reduce((s, st) => s + st.visitDurationMinutes, 0) + 10,
+      walkingDistanceMeters: Math.max(0, currentRoute.walkingDistanceMeters - 200),
+    }
+    routes.value = [newRoute]
+    removedIndices.value = new Set()
+    refineInput.value = ''
+    refineError.value = ''
+    return
+  }
+
+  // Need API: has extra requirements
+  refining.value = true
+  refineError.value = ''
+  try {
+    const res = await refineRoute({
+      route: currentRoute,
+      removeStopIndices: indices,
+      extraRequirements: requirements || undefined,
+      city: locationName.value,
+      weather: weatherNote.value || '晴',
+      timeMinutes: Number(route.query.timeOption) || 240,
+      distance: Number(route.query.distance) || 2000,
+    })
+    routes.value = res.routes
+    removedIndices.value = new Set()
+    refineInput.value = ''
+  } catch (err: any) {
+    refineError.value = err instanceof ApiRequestError ? err.message : '优化失败，请重试'
+  } finally {
+    refining.value = false
+  }
 }
 
 const displayLocation = computed(() => route.query.locationName as string || locationName.value || '')
@@ -72,7 +139,7 @@ function goBack() {
     <!-- Content -->
     <div class="flex-1 overflow-auto px-4 pb-4">
       <!-- Loading -->
-      <div v-if="loading">
+      <div v-if="loading || refining">
         <RouteSkeleton v-for="i in 3" :key="i" class="mb-4" />
       </div>
 
@@ -86,10 +153,12 @@ function goBack() {
       <!-- Empty -->
       <EmptyState v-else-if="routeCount === 0" />
 
-      <!-- DayTrip Timeline (半天/一天 + scenic) -->
+      <!-- DayTrip Timeline (半天/一天) -->
       <DayTripView
         v-else-if="isDayTrip && routes[0]"
         :route="routes[0]"
+        :removable="true"
+        @remove-stop="handleRemoveStop"
       />
 
       <!-- Routes compare (normal mode) -->
@@ -104,9 +173,44 @@ function goBack() {
     <!-- Bottom bar -->
     <div
       v-if="routeCount > 0 && !loading && !error"
-      class="flex-shrink-0 px-5 py-4 bg-white/80 backdrop-blur-lg border-t border-gray-100"
+      class="flex-shrink-0 px-5 py-3 bg-white/80 backdrop-blur-lg border-t border-gray-100 space-y-2"
     >
+      <!-- Refine bar (day-trip mode) -->
+      <div v-if="isDayTrip" class="space-y-2">
+        <!-- Refine input -->
+        <div class="flex gap-2">
+          <input
+            v-model="refineInput"
+            type="text"
+            class="flex-1 text-xs px-3 py-2 rounded-lg border border-gray-200
+                   focus:outline-none focus:border-primary-300 bg-gray-50
+                   placeholder-gray-400"
+            placeholder="补充需求，如：加一个咖啡馆"
+            :disabled="refining"
+          />
+          <button
+            class="flex-shrink-0 text-xs font-medium px-3 py-2 rounded-lg
+                   bg-primary-50 text-primary-600 active:bg-primary-100
+                   transition-colors disabled:opacity-40"
+            :disabled="(!hasRemoved && !hasRefineInput) || refining"
+            @click="handleRefine"
+          >
+            {{ refining ? '优化中...' : '✨ 重新优化' }}
+          </button>
+        </div>
+        <!-- Removed hint -->
+        <p v-if="hasRemoved" class="text-[11px] text-amber-600 text-center">
+          已标记 {{ removedIndices.size }} 个地点待删除
+        </p>
+        <!-- Refine error -->
+        <p v-if="refineError" class="text-[11px] text-red-400 text-center">
+          {{ refineError }}
+        </p>
+      </div>
+
+      <!-- Default: re-plan button -->
       <button
+        v-if="!isDayTrip"
         class="btn-primary w-full py-3.5 text-sm font-semibold"
         @click="goBack"
       >

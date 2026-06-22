@@ -1,6 +1,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express'
 import type { GenerateRoutesResponse } from '../types/route.js'
 import { generateRoutes } from '../services/routeGenerator.js'
+import { refinePlan } from '../services/aiPlannerService.js'
 
 const router = Router()
 
@@ -45,6 +46,43 @@ router.post(
 
     res.setHeader('Cache-Control', 'no-store')
     res.json(response)
+  }),
+)
+
+router.post(
+  '/refine',
+  asyncHandler(async (req, res) => {
+    const { route, removeStopIndices, extraRequirements, city, weather, timeMinutes, distance } = req.body
+
+    if (!route || !route.stops?.length) {
+      res.status(400).json({
+        error: { code: 'INVALID_PARAMS', message: '请提供需要优化的路线' },
+      })
+      return
+    }
+
+    const refined = await refinePlan({
+      route,
+      removeStopIndices: removeStopIndices || [],
+      extraRequirements,
+      position: route.stops[0]
+        ? { lat: route.stops[0].lat, lng: route.stops[0].lng }
+        : { lat: 0, lng: 0 },
+      city: city || '',
+      weather: weather || '晴',
+      timeMinutes: timeMinutes || 240,
+      distance: distance || 0,
+    })
+
+    if (!refined) {
+      res.status(404).json({
+        error: { code: 'REFINE_FAILED', message: '路线优化失败，请重试' },
+      })
+      return
+    }
+
+    res.setHeader('Cache-Control', 'no-store')
+    res.json({ routes: [refined] })
   }),
 )
 
