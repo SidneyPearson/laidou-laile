@@ -10,7 +10,7 @@ const PREFERENCE_TYPECODES: Record<PreferenceTag, string> = {
 }
 
 // Cuisine type → Amap keywords
-const CUISINE_KEYWORDS: Record<string, string> = {
+export const CUISINE_KEYWORDS: Record<string, string> = {
   hotpot: '火锅|串串|涮肉',
   noodles: '面馆|面庄|拉面|米线|粉',
   pastries: '糕点|点心|面包|烘焙',
@@ -60,6 +60,7 @@ function normalizePOI(raw: AmapAroundResponse['pois'][number]): AmapPOI | null {
     lat,
     distance: parseInt(raw.distance, 10) || 0,
     rating: raw.biz_ext?.rating || null,
+    cost: raw.biz_ext?.cost || null,
   }
 }
 

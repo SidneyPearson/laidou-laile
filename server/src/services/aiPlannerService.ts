@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid'
 import { chatCompletionWithFallback } from './llm/client.js'
 import { buildUserPrompt, SYSTEM_PROMPT } from './llm/prompt.js'
 import { parseAndValidate, formatValidationErrors } from './llm/schema.js'
-import { verifyPlace, searchNearbyPOIs } from './amap/poiSearch.js'
+import { verifyPlace, searchNearbyPOIs, CUISINE_KEYWORDS } from './amap/poiSearch.js'
 import { getAmapClient } from './amap/client.js'
 import type { AmapPOI, AmapTextResponse } from '../types/poi.js'
 import type { Route, Stop, PreferenceTag } from '../types/route.js'
@@ -110,17 +110,7 @@ async function generateFoodList(input: PlanInput): Promise<Route[] | null> {
   // sometimes misses shops that don't have obvious names.
   let filtered = withinDistance
   if (cuisineTypes?.length) {
-    const cuisineKws: Record<string, RegExp> = {
-      noodles: /面|粉|米线/,
-      hotpot: /火锅|涮|串串/,
-      coffee_tea: /咖啡|奶茶|茶|饮/,
-      bbq: /烧烤|烤肉/,
-      pastries: /糕点|面包|烘焙|点/,
-      western: /西餐|牛排|披萨|意面|萨莉亚/,
-      local_cuisine: /本帮|老字号|本地|特色/,
-      buffet: /自助/,
-    }
-    const pattern = cuisineTypes.map(c => cuisineKws[c]).filter(Boolean)
+    const pattern = cuisineTypes.map(c => CUISINE_NAME_RE[c]).filter(Boolean)
     if (pattern.length > 0) {
       const re = new RegExp(pattern.map(p => p.source).join('|'))
       const matching = withinDistance.filter(p => re.test(p.name))
@@ -273,6 +263,271 @@ function buildPlainFoodList(candidates: AmapPOI[], input: PlanInput): Route[] | 
     walkingDistanceMeters: walkDist,
     tips: '未获取 AI 评分，按距离排序',
   }]
+}
+
+// ── Cuisine comparison (multiple cuisine types) ──────────
+
+/** Cuisine name patterns for POI classification */
+const CUISINE_NAME_RE: Record<string, RegExp> = {
+  hotpot: /火锅|涮|串串/,
+  noodles: /面|粉|米线/,
+  coffee_tea: /咖啡|奶茶|茶|饮/,
+  bbq: /烧烤|烤肉/,
+  pastries: /糕点|面包|烘焙|点/,
+  western: /西餐|牛排|披萨|意面|萨莉亚/,
+  local_cuisine: /本帮|老字号|本地|特色/,
+  buffet: /自助/,
+}
+
+const CUISINE_LABEL: Record<string, string> = {
+  hotpot: '火锅', noodles: '面馆', pastries: '糕点', bbq: '烧烤',
+  local_cuisine: '本地菜', western: '西餐', coffee_tea: '奶茶咖啡', buffet: '自助餐',
+}
+
+/**
+ * When user selects food + multiple cuisine types, generate 3 comparison cards.
+ * Each card recommends one shop from each cuisine type, differentiated by dimension:
+ * 评分最高 / 距离最近 / 最多打卡 (or 最具性价比 if cost data available).
+ */
+async function generateCuisineComparison(input: PlanInput): Promise<Route[] | null> {
+  const { position, distance, adcode, cuisineTypes } = input
+  if (!cuisineTypes?.length) return null
+
+  // Step 1: Separate Amap text-search per cuisine type (combined keywords
+  // bias results toward the dominant cuisine, drowning out the others).
+  const client = getAmapClient()
+  const cuisinePOIs = new Map<string, AmapPOI[]>()
+
+  for (const ct of cuisineTypes) {
+    const kws = CUISINE_KEYWORDS[ct]
+    if (!kws) continue
+    try {
+      const res = await client.get<AmapTextResponse>('/place/text', {
+        params: {
+          location: `${position.lng},${position.lat}`,
+          keywords: kws,
+          types: '050000',
+          ...(adcode ? { city: adcode } : {}),
+          offset: 10,
+          page: 1,
+          extensions: 'all',
+        },
+      })
+      const pois = (res.data.pois || []).map((raw) => {
+        if (!raw.location?.includes(',')) return null
+        const [lng, lat] = raw.location.split(',').map(Number)
+        if (isNaN(lng) || isNaN(lat)) return null
+        return {
+          id: raw.id, name: raw.name, type: raw.type, typecode: raw.typecode || '',
+          address: raw.address || '', lng, lat,
+          distance: parseInt(raw.distance, 10) || 0,
+          rating: raw.biz_ext?.rating || null,
+          cost: raw.biz_ext?.cost || null,
+        }
+      }).filter((p): p is AmapPOI => p !== null)
+      if (pois.length > 0) cuisinePOIs.set(ct, pois)
+    } catch (err: any) {
+      console.error(`Cuisine search failed for ${ct}:`, err.message)
+    }
+  }
+
+  if (cuisinePOIs.size === 0) return null
+
+  // Step 2: Enrich with Haversine distance + per-cuisine search index
+  type ScoredPOI = AmapPOI & { _dist: number; _rating: number; _cost: number; _idx: number }
+  const allScored: ScoredPOI[] = []
+  for (const [ct, pois] of cuisinePOIs) {
+    for (let i = 0; i < pois.length; i++) {
+      const p = pois[i]
+      const dist = p.distance > 0 ? p.distance
+        : Math.round(haversineDist(position.lat, position.lng, p.lat, p.lng))
+      if (distance > 0 && dist > distance) continue
+      allScored.push({
+        ...p, _dist: dist,
+        _rating: p.rating ? parseFloat(p.rating) : 0,
+        _cost: p.cost ? parseFloat(p.cost) : 0,
+        _idx: i, // per-cuisine search rank
+      })
+    }
+  }
+
+  if (allScored.length === 0) return null
+
+  // Group by cuisine type (now using POIs from separate searches)
+  const separated = new Map<string, ScoredPOI[]>()
+  for (const ct of cuisineTypes) {
+    const matched = allScored.filter(p => cuisinePOIs.get(ct)?.some(pp => pp.id === p.id))
+    if (matched.length > 0) separated.set(ct, matched)
+  }
+  if (separated.size === 0) return null
+
+  // Step 4: Define dimension pickers
+  // "最多打卡": use rating + search-index as composite (no real check-in data from Amap).
+  // "最具性价比": use rating/cost ratio, fall back to "最多打卡" if cost data sparse.
+  const hasCost = allScored.filter(p => p._cost > 0).length >= Math.min(4, allScored.length * 0.4)
+
+  const dimensions: Array<{
+    key: string
+    label: string
+    tagline: string
+    scorer: (p: ScoredPOI) => number
+  }> = [
+    {
+      key: 'rating', label: '评分最高', tagline: '口碑之选，好评如潮',
+      scorer: (p) => p._rating,
+    },
+    {
+      key: 'distance', label: '距离最近', tagline: '步行可达，方便省时',
+      scorer: (p) => -p._dist,
+    },
+  ]
+
+  if (hasCost) {
+    dimensions.push({
+      key: 'value', label: '最具性价比', tagline: '好吃不贵，物超所值',
+      scorer: (p) => p._cost > 0 ? p._rating / p._cost * 100 : 0,
+    })
+  } else {
+    dimensions.push({
+      key: 'popularity', label: '最多打卡', tagline: '人气爆棚，必吃之选',
+      scorer: (p) => p._rating * 0.6 + (1 / (p._idx + 1)) * 4,
+    })
+  }
+
+  // Step 5: Build routes — for each dimension, pick 1 shop per cuisine
+  const routes: Route[] = []
+  const usedGlobally = new Set<string>() // cross-route dedup: each shop appears in at most 1 route
+
+  for (const dim of dimensions) {
+    const stops: Stop[] = []
+
+    for (const ct of cuisineTypes) {
+      const list = separated.get(ct)
+      if (!list || list.length === 0) continue
+
+      // Sort by dimension scorer, pick best unused
+      const sorted = [...list].sort((a, b) => dim.scorer(b) - dim.scorer(a))
+      let best = sorted.find(p => !usedGlobally.has(p.id))
+      if (!best) best = sorted[0] // All used → reuse best
+      if (!best) continue
+      usedGlobally.add(best.id)
+
+      const cuLabel = CUISINE_LABEL[ct] || ct
+      const distStr = fmtDist(best._dist)
+      const ratingStr = best._rating > 0 ? `，评分 ${best._rating.toFixed(1)}` : ''
+      const costStr = best._cost > 0 ? `，人均 ¥${Math.round(best._cost)}` : ''
+
+      stops.push({
+        name: best.name,
+        address: best.address,
+        visitDurationMinutes: 35,
+        notes: `【${cuLabel}】${best.address}，距您${distStr}${ratingStr}${costStr}`,
+        amapPoiId: best.id,
+        lng: best.lng,
+        lat: best.lat,
+        distanceMeters: best._dist,
+      })
+    }
+
+    if (stops.length === 0) continue
+
+    const cuNames = cuisineTypes.map(c => CUISINE_LABEL[c] || c).join('+')
+    routes.push({
+      id: uuid(),
+      name: dim.label,
+      tagline: `${cuNames} · ${dim.tagline}`,
+      stops,
+      totalDurationMinutes: stops.length * 35 + 10,
+      walkingDistanceMeters: estimateWalkDistFromStops(stops),
+      tips: dim.key === 'rating'
+        ? '评分来自高德地图用户评价，仅供参考'
+        : dim.key === 'value'
+          ? '性价比 = 评分 / 人均消费，数值越高越划算'
+          : dim.key === 'popularity'
+            ? '综合评分和搜索热度排序'
+            : '距离由近到远排列',
+    })
+  }
+
+  if (routes.length === 0) return null
+
+  // Step 6: LLM enhances notes with personalized recommendations
+  try {
+    return await enhanceComparisonNotes(routes, input)
+  } catch {
+    return routes
+  }
+}
+
+/** Use LLM to add personalized food notes to comparison routes */
+async function enhanceComparisonNotes(routes: Route[], input: PlanInput): Promise<Route[]> {
+  const { cuisineTypes, weather } = input
+  const cuNames = cuisineTypes?.map(c => CUISINE_LABEL[c] || c).join('和') || ''
+
+  // Build a compact list of all stops
+  const stopList = routes.flatMap((r, ri) =>
+    r.stops.map((s, si) => `[${r.name}] ${s.name} | ${s.address} | ${s.notes}`)
+  ).join('\n')
+
+  const prompt = `你是资深美食评论家"阿来"。用户想找${cuNames}，已按 3 个维度为你选出以下店铺：
+
+${stopList}
+
+## 任务
+为每家店写一句点评（12字以内），说明推荐理由或招牌菜。
+保持原有维度分类（评分最高/距离最近/最多打卡/最具性价比），不要改动店铺分配。
+人均价格和评分信息保持不变。
+
+只输出 JSON：
+{
+  "notes": {
+    "店名": "推荐理由",
+    ...
+  }
+}`
+
+  let raw: string
+  try {
+    raw = await chatCompletionWithFallback({
+      messages: [
+        { role: 'system', content: '你是资深美食评论家，对各地餐厅了如指掌。只输出 JSON。' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.5,
+    })
+  } catch {
+    return routes
+  }
+
+  // Parse LLM notes
+  let notesMap: Record<string, string> = {}
+  try {
+    let json = raw.trim()
+    if (json.startsWith('```')) json = json.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+    const parsed = JSON.parse(json)
+    if (parsed.notes) notesMap = parsed.notes
+  } catch {
+    return routes // Keep original notes if parsing fails
+  }
+
+  // Apply notes to stops
+  for (const r of routes) {
+    for (const s of r.stops) {
+      const enhanced = notesMap[s.name]
+      if (enhanced) {
+        // Replace generic notes with LLM-enhanced version
+        // Keep the cuisine label and distance, replace the address-based note
+        const prefix = s.notes.match(/^【.+?】/) // Keep cuisine label
+        const distMatch = s.notes.match(/距您[\d.]+(?:m|km)/)
+        const ratingMatch = s.notes.match(/，评分 [\d.]+/)
+        const costMatch = s.notes.match(/，人均 ¥\d+/)
+        const suffix = [distMatch?.[0], ratingMatch?.[0], costMatch?.[0]].filter(Boolean).join('')
+        s.notes = `${prefix ? prefix[0] : ''}${enhanced}${suffix ? '，' + suffix : ''}`
+      }
+    }
+  }
+
+  return routes
 }
 
 // ── Scenic / Wander list modes ─────────────────────────
@@ -472,9 +727,9 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
     if (preferences.length === 1 && preferences[0] === 'food' && !input.cuisineTypes?.length) {
       return generateFoodList(input)
     }
-    // Food with cuisine type → Amap search + LLM curation (LLM doesn't know local shops)
+    // Food with cuisine types → 3 comparison cards (评分/距离/打卡)
     if (preferences.length === 1 && preferences[0] === 'food' && input.cuisineTypes?.length) {
-      return generateFoodList(input)
+      return generateCuisineComparison(input)
     }
     // Scenic/wander without sub-types + local → POI search + LLM curation
     if (preferences.length === 1 && preferences[0] === 'scenic' && !input.scenicTypes?.length && distance > 0) {
@@ -639,6 +894,7 @@ async function fallbackSearchStop(
           lng, lat,
           distance: Math.round(dist),
           rating: raw.biz_ext?.rating || null,
+          cost: raw.biz_ext?.cost || null,
         }
       })
       .filter((p): p is AmapPOI => p !== null)
@@ -813,7 +1069,7 @@ async function verifyAndEnrichRoutes(
             const dist = haversineDist(userLat, userLng, lat, lng)
             return { id: raw.id, name: raw.name, type: raw.type, typecode: raw.typecode || '',
               address: raw.address || '', lng, lat, distance: Math.round(dist),
-              rating: raw.biz_ext?.rating || null }
+              rating: raw.biz_ext?.rating || null, cost: raw.biz_ext?.cost || null }
           })
           .filter((p): p is AmapPOI => p !== null)
           .filter((p) => {

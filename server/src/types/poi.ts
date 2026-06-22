@@ -31,6 +31,7 @@ export interface AmapPOI {
   lat: number
   distance: number
   rating: string | null
+  cost: string | null
 }
 
 /** Amap around-search response */
