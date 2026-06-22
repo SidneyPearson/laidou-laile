@@ -51,7 +51,7 @@ export const CUISINE_LABELS: Record<CuisineType, string> = {
   noodles: '🍜 面馆',
   pastries: '🥮 糕点',
   bbq: '🍖 烧烤',
-  local_cuisine: '🥢 本地菜',
+  local_cuisine: '🥢 地方菜',
   western: '🍝 西餐',
   coffee_tea: '🧋 奶茶咖啡',
   buffet: '🍽️ 自助餐',

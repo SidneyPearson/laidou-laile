@@ -281,7 +281,7 @@ const CUISINE_NAME_RE: Record<string, RegExp> = {
 
 const CUISINE_LABEL: Record<string, string> = {
   hotpot: '火锅', noodles: '面馆', pastries: '糕点', bbq: '烧烤',
-  local_cuisine: '本地菜', western: '西餐', coffee_tea: '奶茶咖啡', buffet: '自助餐',
+  local_cuisine: '地方菜', western: '西餐', coffee_tea: '奶茶咖啡', buffet: '自助餐',
 }
 
 /**
@@ -353,52 +353,50 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
 
   if (allScored.length === 0) return null
 
-  // Group by cuisine type (now using POIs from separate searches)
+  // Group by cuisine type (search source), then cross-check with name regex
+  // to prevent misclassification: e.g. "额尔敦传统涮" returned by local_cuisine
+  // search but its name contains "涮" → should be hotpot, not local_cuisine.
   const separated = new Map<string, ScoredPOI[]>()
   for (const ct of cuisineTypes) {
-    const matched = allScored.filter(p => cuisinePOIs.get(ct)?.some(pp => pp.id === p.id))
+    const ownRe = CUISINE_NAME_RE[ct]
+    const otherCts = cuisineTypes.filter(c => c !== ct)
+    const matched = allScored.filter(p => {
+      if (!cuisinePOIs.get(ct)?.some(pp => pp.id === p.id)) return false
+      // Cross-check: if this POI matches another cuisine's name regex AND
+      // doesn't match its own regex, it's likely misclassified → filter out
+      for (const otherCt of otherCts) {
+        const otherRe = CUISINE_NAME_RE[otherCt]
+        if (otherRe && otherRe.test(p.name) && (!ownRe || !ownRe.test(p.name))) {
+          return false
+        }
+      }
+      return true
+    })
     if (matched.length > 0) separated.set(ct, matched)
   }
   if (separated.size === 0) return null
 
-  // Step 4: Define dimension pickers
-  // "最多打卡": use rating + search-index as composite (no real check-in data from Amap).
-  // "最具性价比": use rating/cost ratio, fall back to "最多打卡" if cost data sparse.
-  const hasCost = allScored.filter(p => p._cost > 0).length >= Math.min(4, allScored.length * 0.4)
-
+  // Step 4: Define 3 permanent dimensions (评分/距离/打卡)
   const dimensions: Array<{
     key: string
-    label: string
-    tagline: string
+    label: string   // badge on card
+    slogan: string  // card title
     scorer: (p: ScoredPOI) => number
   }> = [
-    {
-      key: 'rating', label: '评分最高', tagline: '口碑之选，好评如潮',
-      scorer: (p) => p._rating,
-    },
-    {
-      key: 'distance', label: '距离最近', tagline: '步行可达，方便省时',
-      scorer: (p) => -p._dist,
-    },
+    { key: 'rating', label: '评分最高', slogan: '口碑之选，好评如潮',
+      scorer: (p) => p._rating },
+    { key: 'distance', label: '距离最近', slogan: '步行可达，方便省时',
+      scorer: (p) => -p._dist },
+    { key: 'popularity', label: '最多打卡', slogan: '最多打卡，人气爆棚',
+      scorer: (p) => p._rating * 0.6 + (1 / (p._idx + 1)) * 4 },
   ]
 
-  if (hasCost) {
-    dimensions.push({
-      key: 'value', label: '最具性价比', tagline: '好吃不贵，物超所值',
-      scorer: (p) => p._cost > 0 ? p._rating / p._cost * 100 : 0,
-    })
-  } else {
-    dimensions.push({
-      key: 'popularity', label: '最多打卡', tagline: '人气爆棚，必吃之选',
-      scorer: (p) => p._rating * 0.6 + (1 / (p._idx + 1)) * 4,
-    })
-  }
-
-  // Step 5: Build routes — for each dimension, pick 1 shop per cuisine
+  // Step 5: Build routes — for each dimension, pick 1 shop per cuisine.
+  // Shops CAN repeat across routes (a shop might be #1 in multiple dimensions).
   const routes: Route[] = []
-  const usedGlobally = new Set<string>() // cross-route dedup: each shop appears in at most 1 route
 
   for (const dim of dimensions) {
+    const used = new Set<string>() // per-route dedup only
     const stops: Stop[] = []
 
     for (const ct of cuisineTypes) {
@@ -407,10 +405,10 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
 
       // Sort by dimension scorer, pick best unused
       const sorted = [...list].sort((a, b) => dim.scorer(b) - dim.scorer(a))
-      let best = sorted.find(p => !usedGlobally.has(p.id))
+      let best = sorted.find(p => !used.has(p.id))
       if (!best) best = sorted[0] // All used → reuse best
       if (!best) continue
-      usedGlobally.add(best.id)
+      used.add(best.id)
 
       const cuLabel = CUISINE_LABEL[ct] || ct
       const distStr = fmtDist(best._dist)
@@ -434,18 +432,16 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
     const cuNames = cuisineTypes.map(c => CUISINE_LABEL[c] || c).join('+')
     routes.push({
       id: uuid(),
-      name: dim.label,
-      tagline: `${cuNames} · ${dim.tagline}`,
+      name: dim.slogan,                       // title: "口碑之选，好评如潮"
+      tagline: `${dim.label} · ${cuNames}`,   // badge: "评分最高 · 火锅+本地菜"
       stops,
       totalDurationMinutes: stops.length * 35 + 10,
       walkingDistanceMeters: estimateWalkDistFromStops(stops),
       tips: dim.key === 'rating'
         ? '评分来自高德地图用户评价，仅供参考'
-        : dim.key === 'value'
-          ? '性价比 = 评分 / 人均消费，数值越高越划算'
-          : dim.key === 'popularity'
-            ? '综合评分和搜索热度排序'
-            : '距离由近到远排列',
+        : dim.key === 'popularity'
+          ? '综合评分和搜索热度排序'
+          : '距离由近到远排列',
     })
   }
 

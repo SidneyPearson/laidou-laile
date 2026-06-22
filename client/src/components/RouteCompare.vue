@@ -23,6 +23,21 @@ const metaMap = computed<RouteMeta[]>(() => {
   const routes = props.routes
   if (!Array.isArray(routes) || routes.length === 0) return []
 
+  // Cuisine comparison mode: tagline is "评分最高 · 火锅+本地菜" etc.
+  // Use the dimension label directly as badge, skip auto-detection.
+  const DIM_LABELS = ['评分最高', '距离最近', '最多打卡']
+  const isCuisineComparison = routes.every(r => {
+    if (!r.tagline?.includes(' · ')) return false
+    return DIM_LABELS.some(l => r.tagline.startsWith(l))
+  })
+  if (isCuisineComparison) {
+    return routes.map(r => {
+      const label = DIM_LABELS.find(l => r.tagline.startsWith(l)) || ''
+      const icons: Record<string, string> = { '评分最高': '🏅', '距离最近': '📍', '最多打卡': '🔥' }
+      return { bestFor: label, icon: icons[label] || '✨', key: 'cuisine' }
+    })
+  }
+
   // Determine differentiation
   const diversities = routes.map((r) => {
     const stops = Array.isArray(r.stops) ? r.stops : [];
