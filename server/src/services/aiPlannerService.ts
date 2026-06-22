@@ -600,16 +600,36 @@ async function fallbackSearchStop(
       })
       .filter((p): p is AmapPOI => p !== null)
 
-    // Filter by distance, typecode, and already claimed
+    // False match regex — same as poiSearch.ts verifyPlace
+    const FALSE_MATCH_RE = /店|公司|派出所|警务室|居委会|街道办事处|服务站|中介|地产|房产|我爱我家|链家|贝壳|停车场|停车库|停车点|地铁站|出入口|入口|出口|厕所|卫生间|垃圾|配电|物业|管理处|收费/
+
+    // Filter by distance, typecode, already claimed, and false matches
     const candidates = pois.filter((p) => {
       if (maxDistance && maxDistance > 0 && p.distance > maxDistance) return false
       if (typeFilter && !typeFilter.test(p.typecode)) return false
       if (claimedIds.has(p.id)) return false
+      // Reject false matches: POI name that includes the search name but has
+      // extra text indicating it's not the actual place (e.g. parking, police)
+      const pName = p.name.replace(/[()（）]/g, '').trim()
+      const sName = name.replace(/[()（）]/g, '').trim()
+      if (pName !== sName && pName.includes(sName)) {
+        const extra = pName.replace(sName, '').trim()
+        if (FALSE_MATCH_RE.test(extra)) return false
+      }
       return true
     })
 
     if (candidates.length > 0) {
-      candidates.sort((a, b) => a.distance - b.distance)
+      // Sort by name similarity then distance for fallback matches
+      candidates.sort((a, b) => {
+        const aName = a.name.replace(/[()（）]/g, '').trim()
+        const bName = b.name.replace(/[()（）]/g, '').trim()
+        const sName = name.replace(/[()（）]/g, '').trim()
+        const aExact = aName === sName ? 1 : 0
+        const bExact = bName === sName ? 1 : 0
+        if (aExact !== bExact) return bExact - aExact
+        return a.distance - b.distance
+      })
       const best = candidates[0]
       console.log(`🔧 Fallback search: "${name}" → "${best.name}" (${best.distance}m, typecode=${best.typecode})`)
       return best
