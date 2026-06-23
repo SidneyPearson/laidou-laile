@@ -52,6 +52,8 @@ onMounted(async () => {
     selectedLat.value = gps.lat
   }
 
+  // Yield one frame so the browser completes layout (container must have non-zero dimensions)
+  await new Promise(r => requestAnimationFrame(r))
   const map = await createMap(containerId, [selectedLng.value, selectedLat.value], 15)
   if (map) {
     mapReady.value = true
@@ -199,7 +201,7 @@ function handleConfirm() {
 
     <!-- Map -->
     <div class="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-100" style="height: 240px;">
-      <div v-show="!mapFailed" :id="containerId" class="w-full h-full" />
+      <div v-show="!mapFailed" :id="containerId" style="position:absolute;top:0;left:0;right:0;bottom:0;" />
       <!-- Map error state -->
       <div
         v-if="mapFailed"
