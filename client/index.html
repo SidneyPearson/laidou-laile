@@ -16,13 +16,8 @@
       }
       window._amap_error = ''
       window._amap_script_loaded = false
-      window.addEventListener('error', function(e) {
-        if (e.target && (e.target as any).src && (e.target as any).src.includes('webapi.amap.com')) {
-          window._amap_error = 'Script load failed: ' + ((e.target as any).src)
-        }
-      }, true)
     </script>
-    <script src="https://webapi.amap.com/maps?v=2.0&key=a281efc44143fc4d3680ed164609a565&plugin=AMap.Geocoder,AMap.AutoComplete,AMap.PlaceSearch,AMap.Geolocation"
+    <script src="https://webapi.amap.com/loader.js"
             onload="window._amap_script_loaded=true"
             onerror="window._amap_error='Script network error'"></script>
     <script type="module" src="/src/main.ts"></script>

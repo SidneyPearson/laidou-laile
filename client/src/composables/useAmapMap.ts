@@ -1,5 +1,8 @@
 import { ref, shallowRef } from 'vue'
 
+const AMAP_KEY = 'a281efc44143fc4d3680ed164609a565'
+const AMAP_PLUGINS = ['AMap.Geocoder', 'AMap.AutoComplete', 'AMap.PlaceSearch', 'AMap.Geolocation']
+
 const sdkReady = ref(false)
 const sdkDiag = ref<{ loaded: boolean; attempts: number; hasAMap: boolean; scriptFound: boolean; error?: string }>({
   loaded: false,
@@ -15,30 +18,51 @@ export function useAmapMap() {
   function waitForSDK(): Promise<boolean> {
     if (sdkReady.value) return Promise.resolve(true)
 
-    return new Promise((resolve) => {
-      const win = window as any
+    const win = window as any
 
-      // Check if script tag exists
+    // Already loaded (e.g. via Loader or direct script)
+    if (win.AMap) {
+      sdkReady.value = true
+      sdkDiag.value = { loaded: true, attempts: 0, hasAMap: true, scriptFound: true }
+      return Promise.resolve(true)
+    }
+
+    // Use AMapLoader if available (official v2 approach)
+    if (win.AMapLoader) {
+      sdkDiag.value.scriptFound = true
+      return win.AMapLoader.load({
+        key: AMAP_KEY,
+        version: '2.0',
+        plugins: AMAP_PLUGINS,
+      }).then((AMap: any) => {
+        win.AMap = AMap
+        sdkReady.value = true
+        sdkDiag.value = { loaded: true, attempts: 0, hasAMap: true, scriptFound: true }
+        return true
+      }).catch((err: any) => {
+        console.error('AMapLoader.load failed:', err)
+        sdkDiag.value = { loaded: false, attempts: 0, hasAMap: false, scriptFound: true, error: 'Loader failed: ' + String(err) }
+        return false
+      })
+    }
+
+    // Fallback: poll for window.AMap (direct script approach)
+    return new Promise((resolve) => {
       const scripts = document.querySelectorAll('script[src]')
       sdkDiag.value.scriptFound = Array.from(scripts).some(s =>
         (s as HTMLScriptElement).src.includes('webapi.amap.com')
       )
 
-      if (win.AMap) {
-        sdkReady.value = true
-        sdkDiag.value = { ...sdkDiag.value, loaded: true, hasAMap: true }
-        resolve(true)
-        return
-      }
-
-      sdkDiag.value.hasAMap = false
-
       let attempts = 0
-      const maxAttempts = 100 // 10s
+      const maxAttempts = 100
       const check = setInterval(() => {
         attempts++
         sdkDiag.value.attempts = attempts
-        if (win.AMap) {
+        if (win.AMapLoader) {
+          clearInterval(check)
+          // Loader just appeared, use it
+          waitForSDK().then(resolve)
+        } else if (win.AMap) {
           clearInterval(check)
           sdkReady.value = true
           sdkDiag.value = { ...sdkDiag.value, loaded: true, hasAMap: true, attempts }
