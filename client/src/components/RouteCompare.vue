@@ -182,16 +182,12 @@ function handleSelect(route: Route) {
       <div class="px-4 pb-4 pt-2">
         <button
           v-if="props.selectedId === rt.id"
-          class="w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                 bg-gray-100 text-gray-500 border border-gray-200
-                 hover:bg-gray-200 active:bg-gray-300"
+          class="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+                 bg-primary-500 text-white shadow-sm active:bg-primary-600"
           @click="handleSelect(rt)"
         >
           <span class="inline-flex items-center gap-1.5">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-            取消选择
+            重新选择
           </span>
         </button>
         <button
