@@ -33,11 +33,8 @@ const searching = ref(false)
 const loading = ref(true)
 
 onMounted(async () => {
-  const gps = await getUserLocation()
-  if (gps) {
-    selectedLng.value = gps.lng
-    selectedLat.value = gps.lat
-  }
+  // Start GPS in background (don't block map creation)
+  const gpsPromise = getUserLocation()
 
   const sdkReady = await waitForSDK()
   if (!sdkReady) {
@@ -46,6 +43,13 @@ onMounted(async () => {
     mapFailReason.value = '地图 SDK 加载失败，请检查网络连接'
     loading.value = false
     return
+  }
+
+  // Apply GPS if already resolved, otherwise use default center
+  const gps = await Promise.race([gpsPromise, new Promise<null>(r => setTimeout(() => r(null), 1500))])
+  if (gps) {
+    selectedLng.value = gps.lng
+    selectedLat.value = gps.lat
   }
 
   const map = await createMap(containerId, [selectedLng.value, selectedLat.value], 15)
@@ -61,6 +65,16 @@ onMounted(async () => {
     })
     const addr = await reverseGeocode(selectedLng.value, selectedLat.value)
     if (addr) selectedAddress.value = addr
+
+    // If GPS arrived later, update position
+    const lateGps = await gpsPromise
+    if (lateGps && lateGps.lng !== selectedLng.value) {
+      selectedLng.value = lateGps.lng
+      selectedLat.value = lateGps.lat
+      setMarker(lateGps.lng, lateGps.lat)
+      const addr2 = await reverseGeocode(lateGps.lng, lateGps.lat)
+      if (addr2) selectedAddress.value = addr2
+    }
   } else {
     mapFailed.value = true
     diagInfo.value = getDiagInfo()
