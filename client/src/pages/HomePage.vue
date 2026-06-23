@@ -7,6 +7,7 @@ import { useHistory } from '../composables/useHistory'
 import LocationGate from '../components/LocationGate.vue'
 import CityPicker from '../components/CityPicker.vue'
 import AmapLocationPicker from '../components/AmapLocationPicker.vue'
+import LocationMap from '../components/LocationMap.vue'
 import TimeSelector from '../components/TimeSelector.vue'
 import DistanceSelector from '../components/DistanceSelector.vue'
 import PreferenceTags from '../components/PreferenceTags.vue'
@@ -208,15 +209,24 @@ async function handleGenerate() {
         </div>
 
         <!-- Location set (via GPS or city picker) -->
-        <LocationGate
-          v-else
-          :loading="locLoading"
-          :error="locError"
-          :is-mock="isMock"
-          :has-coords="!!coords"
-          :manual-location-name="manualLocationName"
-          @request="handleRequestLocation"
-        />
+        <template v-else>
+          <!-- Live map showing the current location -->
+          <LocationMap
+            v-if="coords"
+            :lng="coords.lng"
+            :lat="coords.lat"
+            :label="manualLocationName || (isMock ? '模拟位置（北京鼓楼）' : '已获取您的位置')"
+          />
+          <LocationGate
+            v-else
+            :loading="locLoading"
+            :error="locError"
+            :is-mock="isMock"
+            :has-coords="!!coords"
+            :manual-location-name="manualLocationName"
+            @request="handleRequestLocation"
+          />
+        </template>
         <p v-if="coords && !showAmapPicker" class="text-center mt-1">
           <button
             class="text-xs text-gray-400 underline active:text-gray-600"
