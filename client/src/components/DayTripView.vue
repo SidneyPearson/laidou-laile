@@ -13,6 +13,18 @@ const visibleStops = computed(() =>
   props.route.stops.filter((_, i) => !props.removedIndices?.has(i))
 )
 
+/** Stops with sequential display indices (no gaps when stops are removed) */
+const displayStops = computed(() => {
+  const result: Array<{ stop: typeof props.route.stops[0]; originalIndex: number; displayIndex: number }> = []
+  let idx = 0
+  props.route.stops.forEach((stop, i) => {
+    if (!props.removedIndices?.has(i)) {
+      result.push({ stop, originalIndex: i, displayIndex: idx++ })
+    }
+  })
+  return result
+})
+
 const emit = defineEmits<{
   'remove-stop': [index: number]
 }>()
@@ -88,13 +100,12 @@ function navigateAll() {
       <!-- Vertical line -->
       <div class="absolute left-[19px] top-3 bottom-3 w-0.5 bg-primary-100" />
 
-      <template v-for="(stop, i) in route.stops" :key="stop.name">
+      <template v-for="item in displayStops" :key="item.stop.name">
         <DayTripStop
-          v-if="!removedIndices?.has(i)"
-          :stop="stop"
-          :index="i"
+          :stop="item.stop"
+          :index="item.displayIndex"
           :removable="removable"
-          @remove="emit('remove-stop', $event)"
+          @remove="emit('remove-stop', item.originalIndex)"
         />
       </template>
     </div>

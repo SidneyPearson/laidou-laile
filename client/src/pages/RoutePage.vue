@@ -97,11 +97,12 @@ const displayLocation = computed(() => route.query.locationName as string || loc
 const displayWeather = computed(() => route.query.weatherNote as string || weatherNote.value || '')
 const isRainy = computed(() => route.query.isRainy === '1' || weather.value?.isRainy || false)
 
-// Safety net: if we land here with no routes and no loading, redirect home
+// Safety net: if we land here with no routes and no loading, redirect home.
+// Never redirect while a refine is in progress.
 watch(
   () => ({ len: Array.isArray(routes.value) ? routes.value.length : 0, loading: loading.value }),
   (state) => {
-    if (!state.loading && state.len === 0) {
+    if (!state.loading && !refining.value && state.len === 0) {
       router.replace({ name: 'home' })
     }
   },
@@ -139,7 +140,7 @@ function goBack() {
     <!-- Content -->
     <div class="flex-1 overflow-auto px-4 pb-4">
       <!-- Loading -->
-      <div v-if="loading || refining">
+      <div v-if="loading">
         <RouteSkeleton v-for="i in 3" :key="i" class="mb-4" />
       </div>
 
@@ -153,14 +154,29 @@ function goBack() {
       <!-- Empty -->
       <EmptyState v-else-if="routeCount === 0" />
 
-      <!-- DayTrip Timeline (半天/一天) -->
-      <DayTripView
-        v-else-if="isDayTrip && routes[0]"
-        :route="routes[0]"
-        :removable="true"
-        :removed-indices="removedIndices"
-        @remove-stop="handleRemoveStop"
-      />
+      <!-- DayTrip Timeline -->
+      <div v-else-if="isDayTrip && routes[0]" class="relative min-h-[300px]">
+        <DayTripView
+          :route="routes[0]"
+          :removable="true"
+          :removed-indices="removedIndices"
+          @remove-stop="handleRemoveStop"
+        />
+        <!-- Refine loading overlay -->
+        <Transition name="fade">
+          <div
+            v-if="refining"
+            class="absolute inset-0 bg-white/80 backdrop-blur-sm
+                   rounded-2xl flex flex-col items-center justify-center z-20
+                   min-h-[300px]"
+          >
+            <div class="w-8 h-8 border-[3px] border-primary-200 border-t-primary-500
+                        rounded-full animate-spin mb-3" />
+            <p class="text-sm text-gray-500 font-medium">AI 正在优化路线...</p>
+            <p class="text-xs text-gray-400 mt-1">加入新需求，重新规划中</p>
+          </div>
+        </Transition>
+      </div>
 
       <!-- Routes compare (normal mode) -->
       <RouteCompare
@@ -170,6 +186,14 @@ function goBack() {
         @select="handleRouteSelect"
       />
     </div>
+
+    <!-- AI disclaimer -->
+    <p
+      v-if="routeCount > 0 && !loading && !error"
+      class="flex-shrink-0 text-[11px] text-gray-400 text-center px-5 pb-1"
+    >
+      ⚠️ AI 生成结果仅供参考，请以实际情况为准
+    </p>
 
     <!-- Bottom bar -->
     <div
@@ -196,13 +220,9 @@ function goBack() {
             :disabled="(!hasRemoved && !hasRefineInput) || refining"
             @click="handleRefine"
           >
-            {{ refining ? '优化中...' : '✨ 重新优化' }}
+            {{ refining ? '优化中...' : '✨ 重新规划' }}
           </button>
         </div>
-        <!-- Removed hint -->
-        <p v-if="hasRemoved" class="text-[11px] text-amber-600 text-center">
-          已标记 {{ removedIndices.size }} 个地点待删除
-        </p>
         <!-- Refine error -->
         <p v-if="refineError" class="text-[11px] text-red-400 text-center">
           {{ refineError }}
@@ -220,3 +240,14 @@ function goBack() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

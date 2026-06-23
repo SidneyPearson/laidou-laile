@@ -106,10 +106,27 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
     }
   }
 
-  // Compute max distance for verification: use the furthest existing stop * 1.5,
-  // or the input distance if provided.
-  const maxDist = input.distance > 0 ? input.distance
-    : Math.max(...keptStops.map(s => s.distanceMeters || 0), 1000) * 1.5
+  // ── Compute search center & span from kept stops ────────
+  // Use the geographic center of all kept stops, not just the first one.
+  // A new stop placed by LLM near the end of the route might be >input.distance
+  // away from the first stop, causing verifyPlace to miss it.
+  const sumLat = keptStops.reduce((s, st) => s + st.lat, 0)
+  const sumLng = keptStops.reduce((s, st) => s + st.lng, 0)
+  const centerLat = sumLat / keptStops.length
+  const centerLng = sumLng / keptStops.length
+
+  // Span = max distance from center to any kept stop
+  const spanMeters = Math.max(
+    ...keptStops.map(s => haversineDist(centerLat, centerLng, s.lat, s.lng)),
+    500,
+  )
+
+  // Max verification distance: cover the full route span + buffer, at least the input distance
+  const maxDist = Math.max(input.distance > 0 ? input.distance : 2000, spanMeters * 2)
+
+  // ── Extract cuisine keywords from extraRequirements for fallback ──
+  const reqText = extraRequirements || ''
+  const cuisineFallbackKeyword = extractCuisineKeyword(reqText)
 
   // Build refine prompt (include address/distance for spatial context)
   const prompt = buildRefinePrompt({
@@ -150,26 +167,103 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   }
 
   const refined = parsed.routes[0]
-  const keptNames = new Set(keptStops.map(s => s.name))
+  const keptNamesNorm = new Map(keptStops.map(s => [normalizeStopName(s.name), s]))
+  const usedNames = new Set(keptStops.map(s => normalizeStopName(s.name)))
 
-  // Verify stops: keep existing (already verified), verify new ones
-  const enrichedStops: Stop[] = []
-  for (const llmStop of refined.stops) {
-    if (keptNames.has(llmStop.name)) {
-      // Reuse existing stop data (already verified, has coordinates)
-      const existing = keptStops.find(s => s.name === llmStop.name)
-      if (existing) {
-        enrichedStops.push({
-          ...existing,
-          visitDurationMinutes: llmStop.visitDurationMinutes || existing.visitDurationMinutes,
-        })
-        continue
+  /** Find a kept stop that matches the LLM stop name (fuzzy: normalize both sides).
+   *  Each kept stop can only be matched ONCE — after matching, it's removed from
+   *  the map so duplicate LLM outputs of the same stop don't create duplicates. */
+  function matchKeptStop(llmName: string): Stop | undefined {
+    const norm = normalizeStopName(llmName)
+    if (keptNamesNorm.has(norm)) {
+      const result = keptNamesNorm.get(norm)
+      keptNamesNorm.delete(norm)
+      return result
+    }
+    for (const [k, v] of keptNamesNorm) {
+      if (k.includes(norm) || norm.includes(k)) {
+        keptNamesNorm.delete(k)
+        return v
       }
     }
-    // New stop → verify against Amap (within route distance range)
-    const verified = await verifyPlace(llmStop.name, position.lng, position.lat, adcode, maxDist)
+    return undefined
+  }
+
+  // ── Step 1: Process LLM output — match kept stops, verify new ones ──
+  const mergedStops: Stop[] = []
+  const usedKeptNorm = new Set<string>()  // which kept stops were preserved by LLM
+  const usedPoiIds = new Set(keptStops.map(s => s.amapPoiId).filter(Boolean) as string[])
+  let newStopsDropped = 0
+  let newStopsAdded = 0  // how many truly new stops were successfully added
+  const droppedNames: string[] = []  // track dropped stop names for tips cleanup
+
+  // Cuisine relevance filter: if user asked for a specific cuisine, reject
+  // new stops that don't match (e.g. "世博源" mall when asking for 面馆)
+  const cuisineFilter = cuisineFallbackKeyword
+    ? cuisineFallbackKeyword.split('|').map(k => k.toLowerCase())
+    : null
+
+  for (const llmStop of refined.stops) {
+    const matched = matchKeptStop(llmStop.name)
+    if (matched) {
+      mergedStops.push({
+        ...matched,
+        visitDurationMinutes: llmStop.visitDurationMinutes || matched.visitDurationMinutes,
+      })
+      usedKeptNorm.add(normalizeStopName(matched.name))
+      continue
+    }
+
+    // Skip if this new stop's normalized name already appeared (LLM hallucinated duplicate)
+    const llmNorm = normalizeStopName(llmStop.name)
+    if (usedNames.has(llmNorm)) {
+      console.warn(`Refine: skipping duplicate "${llmStop.name}"`)
+      continue
+    }
+
+    // New stop → verify against Amap (use route center)
+    let verified = await verifyPlace(llmStop.name, centerLng, centerLat, adcode, maxDist)
+
+    // Fallback 1: cuisine keyword from extraRequirements
+    if (!verified && cuisineFallbackKeyword) {
+      console.log(`Refine: primary verify failed for "${llmStop.name}", trying cuisine fallback "${cuisineFallbackKeyword}"`)
+      verified = await searchSingleCuisinePOI(cuisineFallbackKeyword, centerLng, centerLat, adcode, maxDist, usedNames)
+      if (verified) console.log(`Refine: cuisine fallback found "${verified.name}"`)
+    }
+
+    // Fallback 2: keyword from stop name itself
+    if (!verified) {
+      const stopKw = extractCuisineKeyword(llmStop.name)
+      if (stopKw && stopKw !== cuisineFallbackKeyword) {
+        console.log(`Refine: trying stop-name keyword "${stopKw}" for "${llmStop.name}"`)
+        verified = await searchSingleCuisinePOI(stopKw, centerLng, centerLat, adcode, maxDist, usedNames)
+        if (verified) console.log(`Refine: stop-name fallback found "${verified.name}"`)
+      }
+    }
+
     if (verified) {
-      enrichedStops.push({
+      // Dedup by POI ID
+      if (usedPoiIds.has(verified.id)) {
+        console.warn(`Refine: skipping duplicate POI "${verified.name}" (${verified.id})`)
+        droppedNames.push(llmStop.name)
+        newStopsDropped++
+        continue
+      }
+      // Cuisine relevance filter: if user asked for 面馆, reject 世博源 mall
+      if (cuisineFilter) {
+        const verifiedNorm = normalizeStopName(verified.name)
+        const isRelevant = cuisineFilter.some(kw => verifiedNorm.includes(kw))
+        if (!isRelevant) {
+          console.warn(`Refine: rejecting irrelevant stop "${verified.name}" (cuisine filter: ${cuisineFallbackKeyword})`)
+          droppedNames.push(verified.name)
+          newStopsDropped++
+          continue
+        }
+      }
+      usedPoiIds.add(verified.id)
+      usedNames.add(normalizeStopName(verified.name))
+      newStopsAdded++
+      mergedStops.push({
         name: verified.name,
         address: verified.address,
         visitDurationMinutes: llmStop.visitDurationMinutes || 30,
@@ -178,25 +272,243 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
         lng: verified.lng,
         lat: verified.lat,
         distanceMeters: verified.distance > 0 ? verified.distance
-          : Math.round(haversineDist(position.lat, position.lng, verified.lat, verified.lng)),
+          : Math.round(haversineDist(centerLat, centerLng, verified.lat, verified.lng)),
         photoTip: llmStop.photoTip,
       })
     } else {
       console.warn(`Refine: new stop "${llmStop.name}" not found on Amap, skipping`)
+      droppedNames.push(llmStop.name)
+      newStopsDropped++
     }
   }
 
-  if (enrichedStops.length === 0) return null
+  // ── Step 2: FORCE back any kept stops the LLM dropped ──
+  // The LLM is unreliable — it often replaces kept stops despite instructions.
+  // We guarantee kept stops are always present by re-inserting any that went missing.
+  for (const kept of keptStops) {
+    if (!usedKeptNorm.has(normalizeStopName(kept.name))) {
+      console.log(`Refine: LLM dropped "${kept.name}" — forcing back into route`)
+      mergedStops.push(kept)
+    }
+  }
+
+  if (mergedStops.length === 0) return null
+
+  // ── Step 2.5: Force-add from cuisine search when LLM fails to add anything ──
+  // LLM often just mentions shops in tips instead of adding them as stops,
+  // or suggests mall names instead of specific restaurants. When the user
+  // asked for a cuisine type but no new stops were added, brute-force one
+  // from Amap around-search (which finds mall-internal shops too).
+  if (newStopsAdded === 0 && extraRequirements && cuisineFallbackKeyword) {
+    console.log(`Refine: LLM added 0 new stops, force-searching cuisine "${cuisineFallbackKeyword}"`)
+    const forceNames = new Set(mergedStops.map(s => normalizeStopName(s.name)))
+    const forced = await searchSingleCuisinePOI(
+      cuisineFallbackKeyword, centerLng, centerLat, adcode, maxDist, forceNames,
+    )
+    if (forced) {
+      mergedStops.push({
+        name: forced.name,
+        address: forced.address,
+        visitDurationMinutes: 30,
+        notes: forced.address
+          ? `${forced.address}${forced.rating ? `，评分 ${forced.rating}` : ''}`
+          : '',
+        amapPoiId: forced.id,
+        lng: forced.lng,
+        lat: forced.lat,
+        distanceMeters: forced.distance,
+      })
+      newStopsAdded++
+      console.log(`Refine: force-added "${forced.name}" (${forced.distance}m, rating=${forced.rating})`)
+    } else {
+      console.warn(`Refine: force-search also found nothing for "${cuisineFallbackKeyword}"`)
+    }
+  }
+
+  // ── Step 3: Sort geographically along the route axis ──
+  // Project each stop onto the line from first→last kept stop, sort by projection.
+  // This ensures a natural walking order regardless of LLM's whims.
+  const firstKept = keptStops[0]
+  const lastKept = keptStops[keptStops.length - 1]
+  const axisLat = lastKept.lat - firstKept.lat
+  const axisLng = lastKept.lng - firstKept.lng
+  const axisLen = Math.sqrt(axisLat * axisLat + axisLng * axisLng) || 1
+
+  mergedStops.sort((a, b) => {
+    const projA = ((a.lat - firstKept.lat) * axisLat + (a.lng - firstKept.lng) * axisLng) / axisLen
+    const projB = ((b.lat - firstKept.lat) * axisLat + (b.lng - firstKept.lng) * axisLng) / axisLen
+    return projA - projB
+  })
+
+  // ── Step 4: Recompute metrics from actual stops ──
+  const actualDuration = mergedStops.reduce((s, st) => s + st.visitDurationMinutes, 0) + 10
+  let actualWalking = 0
+  for (let i = 1; i < mergedStops.length; i++) {
+    actualWalking += haversineDist(
+      mergedStops[i - 1].lat, mergedStops[i - 1].lng,
+      mergedStops[i].lat, mergedStops[i].lng,
+    )
+  }
+  actualWalking = Math.round(actualWalking)
+
+  // Route name: only use LLM's name if new stops were actually added
+  const routeName = newStopsAdded > 0 ? (refined.name || route.name) : route.name
+  const routeTagline = newStopsAdded > 0 ? (refined.tagline || route.tagline) : route.tagline
+
+  // Clean up tips: remove sentences referencing dropped/irrelevant stops
+  let tips = refined.tips || route.tips || ''
+  if (droppedNames.length > 0 && tips) {
+    // Split by Chinese/English sentence boundaries
+    const sentences = tips.split(/(?<=[。！？.!?])/)
+    const filtered = sentences.filter(s => {
+      const keep = !droppedNames.some(dn => s.includes(dn))
+      if (!keep) console.log(`Refine: stripping tip referencing "${s.trim()}"`)
+      return keep
+    })
+    tips = filtered.join('').trim()
+    // If tips became too short or empty, fall back to original
+    if (tips.length < 10) tips = route.tips || ''
+  }
 
   return {
     id: uuid(),
-    name: refined.name || route.name,
-    tagline: refined.tagline || route.tagline,
-    stops: enrichedStops,
-    totalDurationMinutes: refined.totalDurationMinutes || enrichedStops.reduce((s, st) => s + st.visitDurationMinutes, 0) + 10,
-    walkingDistanceMeters: refined.walkingDistanceMeters || route.walkingDistanceMeters,
-    tips: refined.tips || route.tips,
+    name: routeName,
+    tagline: routeTagline,
+    stops: mergedStops,
+    totalDurationMinutes: actualDuration,
+    walkingDistanceMeters: actualWalking,
+    tips,
   }
+}
+
+// ── Refine helpers ──────────────────────────────────────
+
+/** Map of keywords → Amap text-search keyword string */
+const CUISINE_FALLBACK_MAP: Record<string, string> = {
+  '面馆': '面馆|面庄|拉面|米线|粉',
+  '面': '面馆|面庄|拉面|米线|粉',
+  '面条': '面馆|面庄|拉面|米线|粉',
+  '拉面': '拉面|面馆',
+  '火锅': '火锅|串串|涮肉',
+  '涮肉': '火锅|涮肉',
+  '烧烤': '烧烤|烤肉',
+  '烤肉': '烤肉|烧烤',
+  '咖啡': '咖啡馆|咖啡厅',
+  '奶茶': '奶茶|茶饮',
+  '茶': '茶馆|茶室|茶饮',
+  '糕点': '糕点|面包|蛋糕|烘焙',
+  '面包': '面包|烘焙|糕点',
+  '西餐': '西餐|牛排|意面|披萨',
+  '自助': '自助餐|自助',
+  '串串': '串串|火锅',
+  '小吃': '小吃|快餐|美食',
+  '美食': '美食|餐厅',
+}
+
+/** Extract a cuisine keyword from text, matching against known categories */
+function extractCuisineKeyword(text: string): string | null {
+  // Sort by key length (descending) so longer matches win (e.g. "自助餐" before "自助")
+  const keys = Object.keys(CUISINE_FALLBACK_MAP).sort((a, b) => b.length - a.length)
+  for (const key of keys) {
+    if (text.includes(key)) {
+      return CUISINE_FALLBACK_MAP[key]
+    }
+  }
+  return null
+}
+
+/** Normalize a stop name for dedup comparison */
+function normalizeStopName(name: string): string {
+  return name.replace(/[（）()\s·.\-—,，、/\\[\]【】《》"']/g, '').toLowerCase()
+}
+
+/**
+ * Search Amap for a single POI matching cuisine keywords near the route center.
+ * Returns the best match not already used in the route.
+ * Tries two strategies: text search first (good for standalone shops), then
+ * around-search (finds shops inside malls that text search misses, like
+ * "芳圆阁面馆(世博源2区店)" that lives inside 世博源 mall).
+ */
+async function searchSingleCuisinePOI(
+  keywordAmap: string,
+  lng: number,
+  lat: number,
+  adcode: string | undefined,
+  maxDist: number,
+  usedNames: Set<string>,
+): Promise<AmapPOI | null> {
+  const client = getAmapClient()
+  const FALSE_RE = /派出所|警务室|居委会|街道办事处|服务站|中介|地产|房产|停车场|停车库|停车点|地铁站|出入口|厕所|卫生间|垃圾|配电|物业|管理处|收费/
+
+  /** Parse Amap raw POI list into typed & filtered candidates */
+  function pickBest(rawPois: any[]): AmapPOI | null {
+    const pois = rawPois
+      .map((raw): AmapPOI | null => {
+        if (!raw.location || !raw.location.includes(',')) return null
+        const [poiLng, poiLat] = raw.location.split(',').map(Number)
+        if (isNaN(poiLng) || isNaN(poiLat)) return null
+        const dist = haversineDist(lat, lng, poiLat, poiLng)
+        return {
+          id: raw.id, name: raw.name, type: raw.type, typecode: raw.typecode || '',
+          address: raw.address || '', lng: poiLng, lat: poiLat,
+          distance: Math.round(dist),
+          rating: raw.biz_ext?.rating || null,
+          cost: raw.biz_ext?.cost || null,
+        }
+      })
+      .filter((p): p is AmapPOI => p !== null)
+
+    const candidates = pois
+      .filter((p) => {
+        if (maxDist > 0 && p.distance > maxDist) return false
+        if (usedNames.has(normalizeStopName(p.name))) return false
+        if (FALSE_RE.test(p.name)) return false
+        return true
+      })
+      .sort((a, b) => a.distance - b.distance)
+
+    return candidates[0] || null
+  }
+
+  // Strategy 1: text search (location-biased, good for standalone shops)
+  try {
+    const res = await client.get<AmapTextResponse>('/place/text', {
+      params: {
+        keywords: keywordAmap,
+        location: `${lng},${lat}`,
+        ...(adcode ? { city: adcode } : {}),
+        offset: 10, page: 1, extensions: 'all',
+      },
+    })
+    const found = pickBest(res.data.pois || [])
+    if (found) return found
+  } catch (err: any) {
+    console.warn(`searchSingleCuisinePOI text-search failed for "${keywordAmap}":`, err.message)
+  }
+
+  // Strategy 2: around-search within radius (finds mall-internal shops that
+  // text-search misses — e.g. "芳圆阁面馆(世博源2区店)" inside 世博源 mall)
+  try {
+    const radius = Math.min(maxDist > 0 ? maxDist : 3000, 3000)
+    const res = await client.get<AmapTextResponse>('/place/around', {
+      params: {
+        keywords: keywordAmap,
+        location: `${lng},${lat}`,
+        radius,
+        types: '050000', // food-related only
+        offset: 10, page: 1, extensions: 'all',
+      },
+    })
+    const found = pickBest(res.data.pois || [])
+    if (found) {
+      console.log(`Refine: around-search found "${found.name}" (${found.distance}m, rating=${found.rating})`)
+      return found
+    }
+  } catch (err: any) {
+    console.warn(`searchSingleCuisinePOI around-search failed for "${keywordAmap}":`, err.message)
+  }
+
+  return null
 }
 
 // ── Food list (no cuisine type) ────────────────────────
@@ -417,13 +729,20 @@ const CUISINE_LABEL: Record<string, string> = {
 }
 
 /**
- * When user selects food + multiple cuisine types, generate 3 comparison cards.
- * Each card recommends one shop from each cuisine type, differentiated by dimension:
- * 评分最高 / 距离最近 / 最多打卡 (or 最具性价比 if cost data available).
+ * When user selects food + cuisine types, generate 3 comparison cards by dimension
+ * (评分最高 / 距离最近 / 最多打卡).
+ *
+ * Single cuisine type (e.g. just 火锅): each card has TOP 3 shops of that type.
+ * Multiple cuisine types: each card has 1 shop per type (cross-cuisine comparison).
  */
 async function generateCuisineComparison(input: PlanInput): Promise<Route[] | null> {
   const { position, distance, adcode, cuisineTypes } = input
   if (!cuisineTypes?.length) return null
+
+  // Single-cuisine: 3 stops per card; multi-cuisine: 1 stop per type
+  const STOPS_PER_TYPE = cuisineTypes.length === 1 ? 3 : 1
+  // Need more POIs when picking top 3
+  const SEARCH_OFFSET = cuisineTypes.length === 1 ? 20 : 10
 
   // Step 1: Separate Amap text-search per cuisine type (combined keywords
   // bias results toward the dominant cuisine, drowning out the others).
@@ -440,7 +759,7 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
           keywords: kws,
           types: '050000',
           ...(adcode ? { city: adcode } : {}),
-          offset: 10,
+          offset: SEARCH_OFFSET,
           page: 1,
           extensions: 'all',
         },
@@ -523,9 +842,11 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
       scorer: (p) => p._rating * 0.6 + (1 / (p._idx + 1)) * 4 },
   ]
 
-  // Step 5: Build routes — for each dimension, pick 1 shop per cuisine.
+  // Step 5: Build routes — for each dimension, pick top N shops per cuisine.
+  // Single cuisine → 3 stops (competing shops), multi cuisine → 1 per type.
   // Shops CAN repeat across routes (a shop might be #1 in multiple dimensions).
   const routes: Route[] = []
+  const rankEmoji = ['🥇', '🥈', '🥉']
 
   for (const dim of dimensions) {
     const used = new Set<string>() // per-route dedup only
@@ -535,37 +856,42 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
       const list = separated.get(ct)
       if (!list || list.length === 0) continue
 
-      // Sort by dimension scorer, pick best unused
+      // Sort by dimension scorer, pick top N unused
       const sorted = [...list].sort((a, b) => dim.scorer(b) - dim.scorer(a))
-      let best = sorted.find(p => !used.has(p.id))
-      if (!best) best = sorted[0] // All used → reuse best
-      if (!best) continue
-      used.add(best.id)
+      const picks = sorted.filter(p => !used.has(p.id)).slice(0, STOPS_PER_TYPE)
 
-      const cuLabel = CUISINE_LABEL[ct] || ct
-      const distStr = fmtDist(best._dist)
-      const ratingStr = best._rating > 0 ? `，评分 ${best._rating.toFixed(1)}` : ''
-      const costStr = best._cost > 0 ? `，人均 ¥${Math.round(best._cost)}` : ''
+      for (let pi = 0; pi < picks.length; pi++) {
+        const best = picks[pi]
+        used.add(best.id)
 
-      stops.push({
-        name: best.name,
-        address: best.address,
-        visitDurationMinutes: 35,
-        notes: `【${cuLabel}】${best.address}，距您${distStr}${ratingStr}${costStr}`,
-        amapPoiId: best.id,
-        lng: best.lng,
-        lat: best.lat,
-        distanceMeters: best._dist,
-      })
+        const cuLabel = CUISINE_LABEL[ct] || ct
+        const distStr = fmtDist(best._dist)
+        const ratingStr = best._rating > 0 ? `，评分 ${best._rating.toFixed(1)}` : ''
+        const costStr = best._cost > 0 ? `，人均 ¥${Math.round(best._cost)}` : ''
+        // Show ranking for single-cuisine top-3 cards
+        const rankPrefix = STOPS_PER_TYPE > 1 ? `${rankEmoji[pi] || ''} ` : ''
+
+        stops.push({
+          name: best.name,
+          address: best.address,
+          visitDurationMinutes: 35,
+          notes: `${rankPrefix}【${cuLabel}】${best.address}，距您${distStr}${ratingStr}${costStr}`,
+          amapPoiId: best.id,
+          lng: best.lng,
+          lat: best.lat,
+          distanceMeters: best._dist,
+        })
+      }
     }
 
     if (stops.length === 0) continue
 
     const cuNames = cuisineTypes.map(c => CUISINE_LABEL[c] || c).join('+')
+    const topSuffix = STOPS_PER_TYPE > 1 ? ` TOP${STOPS_PER_TYPE}` : ''
     routes.push({
       id: uuid(),
       name: dim.slogan,                       // title: "口碑之选，好评如潮"
-      tagline: `${dim.label} · ${cuNames}`,   // badge: "评分最高 · 火锅+本地菜"
+      tagline: `${dim.label} · ${cuNames}${topSuffix}`,   // badge: "评分最高 · 火锅 TOP3"
       stops,
       totalDurationMinutes: stops.length * 35 + 10,
       walkingDistanceMeters: estimateWalkDistFromStops(stops),

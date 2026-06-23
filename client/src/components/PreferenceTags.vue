@@ -88,69 +88,104 @@ function toggleWander(type: WanderType) {
     </div>
 
     <!-- Food sub-panel -->
-    <div v-if="showFoodPanel" class="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100 space-y-3">
-      <div>
-        <p class="text-xs font-semibold text-gray-500 mb-2">想吃类型（可多选）</p>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="c in cuisineOptions"
-            :key="c"
-            :class="[
-              'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
-              props.cuisineTypes.includes(c)
-                ? 'bg-orange-500 text-white'
-                : 'bg-white text-gray-600 border border-gray-200',
-            ]"
-            @click="toggleCuisine(c)"
-          >
-            {{ CUISINE_LABELS[c] }}
-          </button>
+    <Transition name="sub-panel">
+      <div v-if="showFoodPanel" class="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100 space-y-3">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">想吃类型（可多选，不选则不限）</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="c in cuisineOptions"
+              :key="c"
+              :class="[
+                'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
+                props.cuisineTypes.includes(c)
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-white text-gray-600 border border-gray-200',
+              ]"
+              @click="toggleCuisine(c)"
+            >
+              {{ CUISINE_LABELS[c] }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- Scenic sub-panel -->
-    <div v-if="showScenicPanel" class="mt-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100 space-y-3">
-      <div>
-        <p class="text-xs font-semibold text-gray-500 mb-2">景点类型（可多选）</p>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="st in scenicOptions"
-            :key="st"
-            :class="[
-              'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
-              props.scenicTypes.includes(st)
-                ? 'bg-emerald-500 text-white'
-                : 'bg-white text-gray-600 border border-gray-200',
-            ]"
-            @click="toggleScenic(st)"
-          >
-            {{ SCENIC_LABELS[st] }}
-          </button>
+    <Transition name="sub-panel">
+      <div v-if="showScenicPanel" class="mt-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100 space-y-3">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">景点类型（可多选，不选则不限）</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="st in scenicOptions"
+              :key="st"
+              :class="[
+                'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
+                props.scenicTypes.includes(st)
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-white text-gray-600 border border-gray-200',
+              ]"
+              @click="toggleScenic(st)"
+            >
+              {{ SCENIC_LABELS[st] }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- Wander sub-panel -->
-    <div v-if="showWanderPanel" class="mt-3 p-3 bg-purple-50 rounded-xl border border-purple-100 space-y-3">
-      <div>
-        <p class="text-xs font-semibold text-gray-500 mb-2">休闲方式（可多选）</p>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="wt in wanderOptions"
-            :key="wt"
-            :class="[
-              'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
-              props.wanderTypes.includes(wt)
-                ? 'bg-purple-500 text-white'
-                : 'bg-white text-gray-600 border border-gray-200',
-            ]"
-            @click="toggleWander(wt)"
-          >
-            {{ WANDER_LABELS[wt] }}
-          </button>
+    <Transition name="sub-panel">
+      <div v-if="showWanderPanel" class="mt-3 p-3 bg-purple-50 rounded-xl border border-purple-100 space-y-3">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-2">休闲方式（可多选，不选则不限）</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="wt in wanderOptions"
+              :key="wt"
+              :class="[
+                'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
+                props.wanderTypes.includes(wt)
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-white text-gray-600 border border-gray-200',
+              ]"
+              @click="toggleWander(wt)"
+            >
+              {{ WANDER_LABELS[wt] }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.sub-panel-enter-active {
+  transition: all 0.25s ease-out;
+}
+.sub-panel-leave-active {
+  transition: all 0.15s ease-in;
+}
+.sub-panel-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+  max-height: 0;
+}
+.sub-panel-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 300px;
+}
+.sub-panel-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 300px;
+}
+.sub-panel-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+  max-height: 0;
+}
+</style>

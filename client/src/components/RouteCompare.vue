@@ -181,15 +181,27 @@ function handleSelect(route: Route) {
       <!-- Select button -->
       <div class="px-4 pb-4 pt-2">
         <button
-          :class="[
-            'w-full py-2.5 rounded-xl text-sm font-semibold transition-colors',
-            props.selectedId === rt.id
-              ? 'bg-primary-50 text-primary-600 border border-primary-200'
-              : 'bg-primary-500 text-white active:bg-primary-600',
-          ]"
+          v-if="props.selectedId === rt.id"
+          class="w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                 bg-gray-100 text-gray-500 border border-gray-200
+                 hover:bg-gray-200 active:bg-gray-300"
           @click="handleSelect(rt)"
         >
-          {{ props.selectedId === rt.id ? '✓ 已选择' : '选这条' }}
+          <span class="inline-flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+            取消选择
+          </span>
+        </button>
+        <button
+          v-else
+          class="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+                 bg-white text-primary-500 border-2 border-primary-200
+                 hover:border-primary-400 active:bg-primary-50"
+          @click="handleSelect(rt)"
+        >
+          选这条
         </button>
       </div>
     </div>
