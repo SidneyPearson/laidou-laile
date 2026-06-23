@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAmapMap } from '../composables/useAmapMap'
 
 const emit = defineEmits<{
@@ -13,7 +13,7 @@ const {
   setMarker,
   onClickMap,
   reverseGeocode,
-  searchAddress,
+  searchPOI,
   getUserLocation,
   destroyMap,
   getDiagInfo,
@@ -29,28 +29,16 @@ const selectedLat = ref(31.20256)
 const selectedAddress = ref('')
 const searchText = ref('')
 const suggestions = ref<Array<{ name: string; address: string; lng: number; lat: number }>>([])
-const showSuggestions = ref(false)
 const searching = ref(false)
 const loading = ref(true)
 
-let searchTimer: ReturnType<typeof setTimeout> | null = null
-let blurTimer: ReturnType<typeof setTimeout> | null = null
-
-function onBlur() {
-  // Delay hiding so click on suggestion can fire first
-  if (blurTimer) clearTimeout(blurTimer)
-  blurTimer = setTimeout(() => { showSuggestions.value = false }, 200)
-}
-
 onMounted(async () => {
-  // Try GPS first
   const gps = await getUserLocation()
   if (gps) {
     selectedLng.value = gps.lng
     selectedLat.value = gps.lat
   }
 
-  // Check if SDK is available at all
   const sdkReady = await waitForSDK()
   if (!sdkReady) {
     mapFailed.value = true
@@ -60,7 +48,6 @@ onMounted(async () => {
     return
   }
 
-  // Create map
   const map = await createMap(containerId, [selectedLng.value, selectedLat.value], 15)
   if (map) {
     mapReady.value = true
@@ -72,7 +59,6 @@ onMounted(async () => {
       const addr = await reverseGeocode(lng, lat)
       if (addr) selectedAddress.value = addr
     })
-    // Get initial address
     const addr = await reverseGeocode(selectedLng.value, selectedLat.value)
     if (addr) selectedAddress.value = addr
   } else {
@@ -85,41 +71,35 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (searchTimer) clearTimeout(searchTimer)
-  if (blurTimer) clearTimeout(blurTimer)
   destroyMap()
 })
 
-function onSearchInput() {
-  if (searchTimer) clearTimeout(searchTimer)
+async function handleSearch() {
   const val = searchText.value.trim()
-  if (!val) {
-    suggestions.value = []
-    showSuggestions.value = false
-    return
+  if (!val || searching.value) return
+  searching.value = true
+  suggestions.value = []
+  try {
+    const res = await searchPOI(val)
+    suggestions.value = res
+  } catch (err) {
+    console.error('Search failed:', err)
+  } finally {
+    searching.value = false
   }
-  searchTimer = setTimeout(async () => {
-    searching.value = true
-    try {
-      const res = await searchAddress(val)
-      suggestions.value = res
-      showSuggestions.value = res.length > 0
-    } finally {
-      searching.value = false
-    }
-  }, 400)
+}
+
+function handleSearchKeyup(e: KeyboardEvent) {
+  if (e.key === 'Enter') handleSearch()
 }
 
 function selectSuggestion(item: { name: string; address: string; lng: number; lat: number }) {
-  console.log('selectSuggestion called:', item)
-  if (blurTimer) { clearTimeout(blurTimer); blurTimer = null }
+  console.log('selectSuggestion:', item)
   selectedLng.value = item.lng
   selectedLat.value = item.lat
   selectedAddress.value = item.address || item.name
-  searchText.value = ''
-  showSuggestions.value = false
+  searchText.value = item.name
   suggestions.value = []
-  // Use nextTick to ensure DOM updates before map interaction
   setMarker(item.lng, item.lat)
 }
 
@@ -160,35 +140,42 @@ function handleConfirm() {
       </button>
     </div>
 
-    <!-- Address search -->
-    <div class="relative">
-      <div class="flex items-center gap-2 px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200">
-        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input
-          v-model="searchText"
-          type="text"
-          class="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
-          placeholder="搜索地址或地标..."
-          @input="onSearchInput"
-          @focus="searchText && suggestions.length && (showSuggestions = true)"
-          @blur="onBlur"
-        />
-        <div v-if="searching" class="w-4 h-4 border-2 border-gray-300 border-t-primary-400 rounded-full animate-spin"/>
+    <!-- Search bar with button -->
+    <div class="space-y-2">
+      <div class="flex gap-2">
+        <div class="flex-1 flex items-center gap-2 px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200">
+          <svg class="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input
+            v-model="searchText"
+            type="text"
+            class="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+            placeholder="搜索地址或地标..."
+            @keyup="handleSearchKeyup"
+          />
+        </div>
+        <button
+          class="flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary-500 text-white
+                 active:bg-primary-600 transition-colors disabled:opacity-50"
+          :disabled="!searchText.trim() || searching"
+          @click="handleSearch"
+        >
+          {{ searching ? '...' : '搜索' }}
+        </button>
       </div>
 
-      <!-- Suggestions dropdown -->
+      <!-- Search results -->
       <div
-        v-if="showSuggestions && suggestions.length"
-        class="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-30 max-h-48 overflow-auto"
+        v-if="suggestions.length"
+        class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-h-48 overflow-auto"
       >
         <button
           v-for="(item, i) in suggestions"
           :key="i"
           class="w-full text-left px-3 py-2.5 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-50 last:border-0"
-          @mousedown.prevent="selectSuggestion(item)"
+          @click="selectSuggestion(item)"
         >
           <p class="text-sm text-gray-800 truncate">{{ item.name }}</p>
           <p class="text-xs text-gray-400 truncate mt-0.5">{{ item.address }}</p>

@@ -212,6 +212,47 @@ export function useAmapMap() {
     })
   }
 
+  /**
+   * Search POI by keyword using PlaceSearch.
+   * Returns array of { name, address, lng, lat }
+   */
+  async function searchPOI(keyword: string): Promise<
+    Array<{ name: string; address: string; lng: number; lat: number }>
+  > {
+    await waitForSDK()
+    const AMap = (window as any).AMap
+    return new Promise((resolve) => {
+      AMap.plugin('AMap.PlaceSearch', () => {
+        try {
+          const ps = new AMap.PlaceSearch({
+            city: '全国',
+            citylimit: false,
+            pageSize: 10,
+          })
+          ps.search(keyword, (status: string, result: any) => {
+            console.log('Amap PlaceSearch result:', status, result)
+            if (status === 'complete' && result.poiList) {
+              const pois = result.poiList.pois || []
+              const mapped = pois.map((p: any) => ({
+                name: p.name,
+                address: [p.adname, p.address].filter(Boolean).join(' ') || p.name,
+                lng: p.location.lng,
+                lat: p.location.lat,
+              }))
+              console.log('PlaceSearch mapped:', mapped)
+              resolve(mapped)
+            } else {
+              resolve([])
+            }
+          })
+        } catch (err) {
+          console.error('Amap PlaceSearch error:', err)
+          resolve([])
+        }
+      })
+    })
+  }
+
   /** Geolocate the user via browser GPS */
   function getUserLocation(): Promise<{ lng: number; lat: number } | null> {
     return new Promise((resolve) => {
@@ -245,6 +286,7 @@ export function useAmapMap() {
     onClickMap,
     reverseGeocode,
     searchAddress,
+    searchPOI,
     getUserLocation,
     destroyMap,
     getDiagInfo,
