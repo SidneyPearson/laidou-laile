@@ -26,6 +26,9 @@ const preferences = ref<PreferenceTag[]>([])
 const cuisineTypes = ref<CuisineType[]>([])
 const scenicTypes = ref<ScenicType[]>([])
 const wanderTypes = ref<WanderType[]>([])
+const customCuisine = ref<string[]>([])
+const customScenic = ref<string[]>([])
+const customWander = ref<string[]>([])
 
 const hasRequestedLocation = ref(false)
 const showCityPicker = ref(false)
@@ -84,6 +87,9 @@ async function handleGenerate() {
       cuisineTypes: preferences.value.includes('food') ? cuisineTypes.value : undefined,
       scenicTypes: preferences.value.includes('scenic') ? scenicTypes.value : undefined,
       wanderTypes: preferences.value.includes('wander') ? wanderTypes.value : undefined,
+      customCuisine: preferences.value.includes('food') ? customCuisine.value : undefined,
+      customScenic: preferences.value.includes('scenic') ? customScenic.value : undefined,
+      customWander: preferences.value.includes('wander') ? customWander.value : undefined,
     })
 
     // Defensive check: routes must be a non-empty array
@@ -256,6 +262,9 @@ async function handleGenerate() {
             v-model:cuisine-types="cuisineTypes"
             v-model:scenic-types="scenicTypes"
             v-model:wander-types="wanderTypes"
+            v-model:custom-cuisine="customCuisine"
+            v-model:custom-scenic="customScenic"
+            v-model:custom-wander="customWander"
           />
         </section>
       </template>

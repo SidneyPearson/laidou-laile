@@ -16,7 +16,7 @@ function asyncHandler(
 router.post(
   '/generate',
   asyncHandler(async (req, res) => {
-    const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes } = req.body
+    const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, customCuisine, customScenic, customWander } = req.body
 
     if (lat == null || lng == null || timeOption == null || distance == null || !preferences?.length) {
       res.status(400).json({
@@ -25,7 +25,12 @@ router.post(
       return
     }
 
-    const result = await generateRoutes({ lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes })
+    // Merge custom strings into type arrays so the backend treats them as additional keywords
+    const mergedCuisine = [...(cuisineTypes || []), ...(customCuisine || [])]
+    const mergedScenic = [...(scenicTypes || []), ...(customScenic || [])]
+    const mergedWander = [...(wanderTypes || []), ...(customWander || [])]
+
+    const result = await generateRoutes({ lat, lng, timeOption, distance, preferences, cuisineTypes: mergedCuisine, scenicTypes: mergedScenic, wanderTypes: mergedWander })
 
     if (result.routes.length === 0) {
       res.status(404).json({

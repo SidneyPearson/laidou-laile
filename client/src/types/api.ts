@@ -9,6 +9,9 @@ export interface GenerateRoutesRequest {
   cuisineTypes?: CuisineType[]
   scenicTypes?: ScenicType[]
   wanderTypes?: WanderType[]
+  customCuisine?: string[]
+  customScenic?: string[]
+  customWander?: string[]
 }
 
 export interface GenerateRoutesResponse {
