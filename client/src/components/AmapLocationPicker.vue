@@ -16,12 +16,14 @@ const {
   searchAddress,
   getUserLocation,
   destroyMap,
+  getDiagInfo,
 } = useAmapMap()
 
 const containerId = 'amap-container-' + Math.random().toString(36).slice(2, 8)
 const mapReady = ref(false)
 const mapFailed = ref(false)
 const mapFailReason = ref('')
+const diagInfo = ref<any>(null)
 const selectedLng = ref(121.505863)
 const selectedLat = ref(31.20256)
 const selectedAddress = ref('')
@@ -49,6 +51,7 @@ onMounted(async () => {
   const sdkReady = await waitForSDK()
   if (!sdkReady) {
     mapFailed.value = true
+    diagInfo.value = getDiagInfo()
     mapFailReason.value = '地图 SDK 加载失败，请检查网络连接'
     loading.value = false
     return
@@ -71,7 +74,9 @@ onMounted(async () => {
     if (addr) selectedAddress.value = addr
   } else {
     mapFailed.value = true
-    mapFailReason.value = '地图初始化失败，请确认高德 Key 已授权当前域名'
+    diagInfo.value = getDiagInfo()
+    const amapErr = (window as any)._amap_error || ''
+    mapFailReason.value = '地图初始化失败，请确认高德 Key 已授权当前域名' + (amapErr ? ' [' + amapErr + ']' : '')
   }
   loading.value = false
 })
@@ -188,13 +193,20 @@ function handleConfirm() {
       <!-- Map error state -->
       <div
         v-if="mapFailed"
-        class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50"
+        class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 overflow-auto p-3"
       >
-        <svg class="w-8 h-8 text-gray-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg class="w-8 h-8 text-gray-300 mb-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="10"/>
           <path d="M12 8v4M12 16h.01"/>
         </svg>
-        <p class="text-xs text-gray-400 text-center px-4">{{ mapFailReason }}</p>
+        <p class="text-xs text-gray-400 text-center px-2 flex-shrink-0">{{ mapFailReason }}</p>
+        <div v-if="diagInfo" class="mt-2 w-full text-[10px] text-gray-400 space-y-0.5 bg-gray-100 rounded-lg p-2 font-mono">
+          <div>AMap: {{ diagInfo.hasAMap ? '✓ v' + diagInfo.amapVersion : '✗ 未加载' }}</div>
+          <div>Script: {{ diagInfo.scriptFound ? '✓' : '✗' }}</div>
+          <div>Attempts: {{ diagInfo.attempts }}/100</div>
+          <div class="truncate">URL: {{ diagInfo.location }}</div>
+          <div v-if="diagInfo.error" class="text-red-400">Error: {{ diagInfo.error }}</div>
+        </div>
       </div>
       <!-- Loading overlay -->
       <div

@@ -1,6 +1,12 @@
-import { ref, shallowRef, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef } from 'vue'
 
 const sdkReady = ref(false)
+const sdkDiag = ref<{ loaded: boolean; attempts: number; hasAMap: boolean; scriptFound: boolean; error?: string }>({
+  loaded: false,
+  attempts: 0,
+  hasAMap: false,
+  scriptFound: false,
+})
 
 export function useAmapMap() {
   const mapInstance = shallowRef<any>(null)
@@ -11,27 +17,62 @@ export function useAmapMap() {
 
     return new Promise((resolve) => {
       const win = window as any
+
+      // Check if script tag exists
+      const scripts = document.querySelectorAll('script[src]')
+      sdkDiag.value.scriptFound = Array.from(scripts).some(s =>
+        (s as HTMLScriptElement).src.includes('webapi.amap.com')
+      )
+
       if (win.AMap) {
         sdkReady.value = true
+        sdkDiag.value = { ...sdkDiag.value, loaded: true, hasAMap: true }
         resolve(true)
         return
       }
+
+      sdkDiag.value.hasAMap = false
 
       let attempts = 0
       const maxAttempts = 100 // 10s
       const check = setInterval(() => {
         attempts++
+        sdkDiag.value.attempts = attempts
         if (win.AMap) {
           clearInterval(check)
           sdkReady.value = true
+          sdkDiag.value = { ...sdkDiag.value, loaded: true, hasAMap: true, attempts }
           resolve(true)
         } else if (attempts >= maxAttempts) {
           clearInterval(check)
-          console.warn('Amap SDK load timeout')
+          sdkDiag.value = { ...sdkDiag.value, loaded: false, hasAMap: false, attempts, error: 'SDK 10s timeout' }
           resolve(false)
         }
       }, 100)
     })
+  }
+
+  function getDiagInfo() {
+    // Also check for common Amap error messages injected into the page
+    const win = window as any
+    const hasAMap = !!win.AMap
+    const amapVersion = hasAMap ? (win.AMap.version || 'unknown') : 'N/A'
+
+    // Check if the SDK script failed to load (network error)
+    const scripts = document.querySelectorAll('script[src]')
+    const amapScript = Array.from(scripts).find(s =>
+      (s as HTMLScriptElement).src.includes('webapi.amap.com')
+    ) as HTMLScriptElement | undefined
+
+    return {
+      ...sdkDiag.value,
+      amapVersion,
+      hasAMap,
+      scriptSrc: amapScript?.src || 'NOT FOUND',
+      scriptLoaded: amapScript ? true : false,
+      userAgent: navigator.userAgent.substring(0, 100),
+      location: window.location.href,
+    }
   }
 
   /**
@@ -188,5 +229,6 @@ export function useAmapMap() {
     searchAddress,
     getUserLocation,
     destroyMap,
+    getDiagInfo,
   }
 }
