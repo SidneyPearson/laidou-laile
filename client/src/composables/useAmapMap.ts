@@ -161,20 +161,22 @@ export function useAmapMap() {
     await waitForSDK()
     const AMap = (window as any).AMap
     return new Promise((resolve) => {
-      const geocoder = new AMap.Geocoder({})
-      geocoder.getAddress([lng, lat], (status: string, result: any) => {
-        if (status === 'complete' && result.regeocode) {
-          resolve(result.regeocode.formattedAddress || '')
-        } else {
-          resolve('')
-        }
+      AMap.plugin('AMap.Geocoder', () => {
+        const geocoder = new AMap.Geocoder({})
+        geocoder.getAddress([lng, lat], (status: string, result: any) => {
+          if (status === 'complete' && result.regeocode) {
+            resolve(result.regeocode.formattedAddress || '')
+          } else {
+            resolve('')
+          }
+        })
       })
     })
   }
 
   /**
    * Search for address suggestions (autocomplete).
-   * Returns array of { name, address, location: {lng, lat} }
+   * Returns array of { name, address, lng, lat }
    */
   async function searchAddress(keyword: string): Promise<
     Array<{ name: string; address: string; lng: number; lat: number }>
@@ -182,29 +184,31 @@ export function useAmapMap() {
     await waitForSDK()
     const AMap = (window as any).AMap
     return new Promise((resolve) => {
-      try {
-        const auto = new AMap.AutoComplete({ city: '全国', citylimit: false })
-        auto.search(keyword, (status: string, result: any) => {
-          console.log('Amap AutoComplete result:', status, result)
-          if (status === 'complete' && result.tips) {
-            const mapped = result.tips
-              .filter((t: any) => t.location && t.location.lng)
-              .map((t: any) => ({
-                name: t.name,
-                address: (t.district || '') + (t.address || '') || t.name,
-                lng: t.location.lng,
-                lat: t.location.lat,
-              }))
-            console.log('Mapped suggestions:', mapped)
-            resolve(mapped)
-          } else {
-            resolve([])
-          }
-        })
-      } catch (err) {
-        console.error('Amap AutoComplete error:', err)
-        resolve([])
-      }
+      AMap.plugin('AMap.AutoComplete', () => {
+        try {
+          const auto = new AMap.AutoComplete({ city: '全国', citylimit: false })
+          auto.search(keyword, (status: string, result: any) => {
+            console.log('Amap AutoComplete result:', status, result)
+            if (status === 'complete' && result.tips) {
+              const mapped = result.tips
+                .filter((t: any) => t.location && t.location.lng)
+                .map((t: any) => ({
+                  name: t.name,
+                  address: (t.district || '') + (t.address || '') || t.name,
+                  lng: t.location.lng,
+                  lat: t.location.lat,
+                }))
+              console.log('Mapped suggestions:', mapped)
+              resolve(mapped)
+            } else {
+              resolve([])
+            }
+          })
+        } catch (err) {
+          console.error('Amap AutoComplete error:', err)
+          resolve([])
+        }
+      })
     })
   }
 

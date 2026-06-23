@@ -34,9 +34,12 @@ const searching = ref(false)
 const loading = ref(true)
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
+let blurTimer: ReturnType<typeof setTimeout> | null = null
 
 function onBlur() {
-  setTimeout(() => { showSuggestions.value = false }, 200)
+  // Delay hiding so click on suggestion can fire first
+  if (blurTimer) clearTimeout(blurTimer)
+  blurTimer = setTimeout(() => { showSuggestions.value = false }, 200)
 }
 
 onMounted(async () => {
@@ -82,6 +85,8 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer)
+  if (blurTimer) clearTimeout(blurTimer)
   destroyMap()
 })
 
@@ -107,11 +112,14 @@ function onSearchInput() {
 
 function selectSuggestion(item: { name: string; address: string; lng: number; lat: number }) {
   console.log('selectSuggestion called:', item)
+  if (blurTimer) { clearTimeout(blurTimer); blurTimer = null }
   selectedLng.value = item.lng
   selectedLat.value = item.lat
   selectedAddress.value = item.address || item.name
   searchText.value = ''
   showSuggestions.value = false
+  suggestions.value = []
+  // Use nextTick to ensure DOM updates before map interaction
   setMarker(item.lng, item.lat)
 }
 
