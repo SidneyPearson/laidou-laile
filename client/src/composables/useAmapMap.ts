@@ -182,23 +182,29 @@ export function useAmapMap() {
     await waitForSDK()
     const AMap = (window as any).AMap
     return new Promise((resolve) => {
-      const auto = new AMap.AutoComplete({ city: '全国', citylimit: false })
-      auto.search(keyword, (status: string, result: any) => {
-        if (status === 'complete' && result.tips) {
-          resolve(
-            result.tips
+      try {
+        const auto = new AMap.AutoComplete({ city: '全国', citylimit: false })
+        auto.search(keyword, (status: string, result: any) => {
+          console.log('Amap AutoComplete result:', status, result)
+          if (status === 'complete' && result.tips) {
+            const mapped = result.tips
               .filter((t: any) => t.location && t.location.lng)
               .map((t: any) => ({
                 name: t.name,
-                address: t.district + t.address || t.name,
+                address: (t.district || '') + (t.address || '') || t.name,
                 lng: t.location.lng,
                 lat: t.location.lat,
-              })),
-          )
-        } else {
-          resolve([])
-        }
-      })
+              }))
+            console.log('Mapped suggestions:', mapped)
+            resolve(mapped)
+          } else {
+            resolve([])
+          }
+        })
+      } catch (err) {
+        console.error('Amap AutoComplete error:', err)
+        resolve([])
+      }
     })
   }
 

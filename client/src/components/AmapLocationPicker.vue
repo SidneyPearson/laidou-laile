@@ -106,6 +106,7 @@ function onSearchInput() {
 }
 
 function selectSuggestion(item: { name: string; address: string; lng: number; lat: number }) {
+  console.log('selectSuggestion called:', item)
   selectedLng.value = item.lng
   selectedLat.value = item.lat
   selectedAddress.value = item.address || item.name
