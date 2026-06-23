@@ -10,7 +10,12 @@
   </head>
   <body>
     <div id="app"></div>
-    <script async src="https://webapi.amap.com/v2/map?v=2.0&key=5a9b72928a415d8196900b75b26ffee5&plugin=AMap.Geocoder,AMap.AutoComplete,AMap.PlaceSearch,AMap.Geolocation"></script>
+    <script>
+      window._AMapSecurityConfig = {
+        securityJsCode: 'f581ad95104bd9dd92aaaf3cd983ecb9',
+      }
+    </script>
+    <script src="https://webapi.amap.com/v2/map?v=2.0&key=a281efc44143fc4d3680ed164609a565&plugin=AMap.Geocoder,AMap.AutoComplete,AMap.PlaceSearch,AMap.Geolocation"></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
