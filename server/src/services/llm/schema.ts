@@ -17,7 +17,7 @@ const stopSchema = z.object({
 const routeSchema = z.object({
   name: z.string().min(2).max(20),
   tagline: z.string().min(2).max(50),
-  stops: z.array(stopSchema).min(1).max(6),
+  stops: z.array(stopSchema).min(1).max(8),
   totalDurationMinutes: z.number().int().min(10).max(540),
   walkingDistanceMeters: z.number().int().min(0).max(50000),
   tips: z.string().min(1).max(200),

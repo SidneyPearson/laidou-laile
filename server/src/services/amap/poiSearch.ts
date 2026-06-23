@@ -1,4 +1,6 @@
 import { getAmapClient } from './client.js'
+import { haversineDist } from '../../utils/geo.js'
+import { normalizeName } from '../../utils/text.js'
 import type { AmapAroundResponse, AmapTextResponse, AmapPOI } from '../../types/poi.js'
 import type { PreferenceTag } from '../../types/route.js'
 
@@ -370,18 +372,3 @@ export async function verifyPlace(
   return null
 }
 
-/** Normalize name for comparison: lowercase, remove punctuation and whitespace */
-function normalizeName(s: string): string {
-  return s.replace(/[（）()\s·.\-—,，、/\\[\]【】《》"']/g, '').toLowerCase()
-}
-
-/** Haversine distance in meters between two lat/lng points */
-function haversineDist(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}

@@ -65,7 +65,16 @@
       "Bash(git checkout *)",
       "Bash(git commit -m 'feat: interactive day-trip stops + route refinement *)",
       "Bash(git commit *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(echo \"exited: $?\")",
+      "Bash(npx tsc *)",
+      "Bash(npx --no-install tsc --noEmit)",
+      "Bash(/Users/chentao/Desktop/citywalk/server/node_modules/.bin/tsc --noEmit -p /Users/chentao/Desktop/citywalk/server/tsconfig.json)",
+      "Bash(/Users/chentao/Desktop/citywalk/client/node_modules/.bin/vue-tsc --noEmit)",
+      "Bash(/Users/chentao/Desktop/citywalk/node_modules/.bin/tsc --noEmit -p /Users/chentao/Desktop/citywalk/server/tsconfig.json)",
+      "Bash(/Users/chentao/Desktop/citywalk/node_modules/.bin/vue-tsc --noEmit -p /Users/chentao/Desktop/citywalk/client/tsconfig.json)",
+      "Bash(/Users/chentao/Desktop/citywalk/node_modules/.bin/tsc -p /Users/chentao/Desktop/citywalk/server/tsconfig.json --outDir /tmp/citywalk-build-test)",
+      "Bash(/Users/chentao/Desktop/citywalk/node_modules/.bin/tsc -p /Users/chentao/Desktop/citywalk/server/tsconfig.json)"
     ]
   }
 }

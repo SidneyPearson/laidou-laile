@@ -33,7 +33,7 @@ const emit = defineEmits<{
 
 const tags: PreferenceTag[] = ['food', 'wander', 'scenic']
 
-const cuisineOptions: CuisineType[] = ['hotpot', 'noodles', 'pastries', 'bbq', 'local_cuisine', 'western', 'coffee_tea']
+const cuisineOptions: CuisineType[] = ['hotpot', 'noodles', 'pastries', 'bbq', 'local_cuisine', 'western', 'coffee_tea', 'buffet']
 const scenicOptions: ScenicType[] = ['popular', 'street']
 const wanderOptions: WanderType[] = ['shopping', 'cafe', 'entertainment', 'hidden', 'museum']
 

@@ -124,6 +124,7 @@ async function handleGenerate() {
         weatherNote: weatherNote.value || '',
         isRainy: weather.value?.isRainy ? '1' : '0',
         timeOption: String(timeOption.value ?? ''),
+        distance: String(distance.value ?? ''),
         preferences: preferences.value.join(','),
       },
     })

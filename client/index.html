@@ -16,10 +16,36 @@
       }
       window._amap_error = ''
       window._amap_script_loaded = false
+      window._amap_sdk_ready = false
     </script>
     <script src="https://webapi.amap.com/loader.js"
             onload="window._amap_script_loaded=true"
             onerror="window._amap_error='Script network error'"></script>
+    <!-- Eager-load the full Amap SDK so it's ready when the map component mounts -->
+    <script>
+      (function preloadAmap() {
+        var key = 'a281efc44143fc4d3680ed164609a565'
+        var plugins = ['AMap.Geocoder','AMap.AutoComplete','AMap.PlaceSearch','AMap.Geolocation']
+        function tryLoad() {
+          if (window.AMapLoader) {
+            window.AMapLoader.load({ key: key, version: '2.0', plugins: plugins })
+              .then(function(AMap) {
+                window.AMap = AMap
+                window._amap_sdk_ready = true
+                console.log('🗺️ Amap SDK preloaded')
+              })
+              .catch(function(err) {
+                window._amap_error = 'SDK preload: ' + String(err)
+                console.error('Amap preload failed:', err)
+              })
+          } else {
+            // loader.js hasn't executed yet, retry
+            setTimeout(tryLoad, 50)
+          }
+        }
+        tryLoad()
+      })()
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

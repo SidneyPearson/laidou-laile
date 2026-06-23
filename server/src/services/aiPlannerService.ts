@@ -4,6 +4,8 @@ import { buildUserPrompt, buildRefinePrompt, SYSTEM_PROMPT } from './llm/prompt.
 import { parseAndValidate, formatValidationErrors } from './llm/schema.js'
 import { verifyPlace, searchNearbyPOIs, CUISINE_KEYWORDS } from './amap/poiSearch.js'
 import { getAmapClient } from './amap/client.js'
+import { haversineDist } from '../utils/geo.js'
+import { normalizeName } from '../utils/text.js'
 import type { AmapPOI, AmapTextResponse } from '../types/poi.js'
 import type { Route, Stop, PreferenceTag } from '../types/route.js'
 
@@ -167,14 +169,14 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   }
 
   const refined = parsed.routes[0]
-  const keptNamesNorm = new Map(keptStops.map(s => [normalizeStopName(s.name), s]))
-  const usedNames = new Set(keptStops.map(s => normalizeStopName(s.name)))
+  const keptNamesNorm = new Map(keptStops.map(s => [normalizeName(s.name), s]))
+  const usedNames = new Set(keptStops.map(s => normalizeName(s.name)))
 
   /** Find a kept stop that matches the LLM stop name (fuzzy: normalize both sides).
    *  Each kept stop can only be matched ONCE — after matching, it's removed from
    *  the map so duplicate LLM outputs of the same stop don't create duplicates. */
   function matchKeptStop(llmName: string): Stop | undefined {
-    const norm = normalizeStopName(llmName)
+    const norm = normalizeName(llmName)
     if (keptNamesNorm.has(norm)) {
       const result = keptNamesNorm.get(norm)
       keptNamesNorm.delete(norm)
@@ -210,12 +212,12 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
         ...matched,
         visitDurationMinutes: llmStop.visitDurationMinutes || matched.visitDurationMinutes,
       })
-      usedKeptNorm.add(normalizeStopName(matched.name))
+      usedKeptNorm.add(normalizeName(matched.name))
       continue
     }
 
     // Skip if this new stop's normalized name already appeared (LLM hallucinated duplicate)
-    const llmNorm = normalizeStopName(llmStop.name)
+    const llmNorm = normalizeName(llmStop.name)
     if (usedNames.has(llmNorm)) {
       console.warn(`Refine: skipping duplicate "${llmStop.name}"`)
       continue
@@ -251,7 +253,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
       }
       // Cuisine relevance filter: if user asked for 面馆, reject 世博源 mall
       if (cuisineFilter) {
-        const verifiedNorm = normalizeStopName(verified.name)
+        const verifiedNorm = normalizeName(verified.name)
         const isRelevant = cuisineFilter.some(kw => verifiedNorm.includes(kw))
         if (!isRelevant) {
           console.warn(`Refine: rejecting irrelevant stop "${verified.name}" (cuisine filter: ${cuisineFallbackKeyword})`)
@@ -261,7 +263,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
         }
       }
       usedPoiIds.add(verified.id)
-      usedNames.add(normalizeStopName(verified.name))
+      usedNames.add(normalizeName(verified.name))
       newStopsAdded++
       mergedStops.push({
         name: verified.name,
@@ -286,7 +288,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   // The LLM is unreliable — it often replaces kept stops despite instructions.
   // We guarantee kept stops are always present by re-inserting any that went missing.
   for (const kept of keptStops) {
-    if (!usedKeptNorm.has(normalizeStopName(kept.name))) {
+    if (!usedKeptNorm.has(normalizeName(kept.name))) {
       console.log(`Refine: LLM dropped "${kept.name}" — forcing back into route`)
       mergedStops.push(kept)
     }
@@ -301,7 +303,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   // from Amap around-search (which finds mall-internal shops too).
   if (newStopsAdded === 0 && extraRequirements && cuisineFallbackKeyword) {
     console.log(`Refine: LLM added 0 new stops, force-searching cuisine "${cuisineFallbackKeyword}"`)
-    const forceNames = new Set(mergedStops.map(s => normalizeStopName(s.name)))
+    const forceNames = new Set(mergedStops.map(s => normalizeName(s.name)))
     const forced = await searchSingleCuisinePOI(
       cuisineFallbackKeyword, centerLng, centerLat, adcode, maxDist, forceNames,
     )
@@ -417,9 +419,47 @@ function extractCuisineKeyword(text: string): string | null {
   return null
 }
 
-/** Normalize a stop name for dedup comparison */
-function normalizeStopName(name: string): string {
-  return name.replace(/[（）()\s·.\-—,，、/\\[\]【】《》"']/g, '').toLowerCase()
+/** Estimate walk distance between verified stops using Haversine, sorted geographically */
+function estimateWalkDistFromStops(stops: Stop[]): number {
+  if (stops.length <= 1) return 0
+  // Sort geographically: project onto the line from first to last stop
+  const first = stops[0]
+  const last = stops[stops.length - 1]
+  const axisLat = last.lat - first.lat
+  const axisLng = last.lng - first.lng
+  const axisLen = Math.sqrt(axisLat * axisLat + axisLng * axisLng) || 1
+  const sorted = [...stops].sort((a, b) => {
+    const projA = ((a.lat - first.lat) * axisLat + (a.lng - first.lng) * axisLng) / axisLen
+    const projB = ((b.lat - first.lat) * axisLat + (b.lng - first.lng) * axisLng) / axisLen
+    return projA - projB
+  })
+  let total = 0
+  for (let i = 1; i < sorted.length; i++) {
+    total += haversineDist(
+      sorted[i - 1].lat, sorted[i - 1].lng,
+      sorted[i].lat, sorted[i].lng,
+    )
+  }
+  return Math.round(total)
+}
+
+function estimateWalkDist(pois: AmapPOI[]): number {
+  if (pois.length <= 1) return 0
+  const first = pois[0]
+  const last = pois[pois.length - 1]
+  const axisLat = last.lat - first.lat
+  const axisLng = last.lng - first.lng
+  const axisLen = Math.sqrt(axisLat * axisLat + axisLng * axisLng) || 1
+  const sorted = [...pois].sort((a, b) => {
+    const projA = ((a.lat - first.lat) * axisLat + (a.lng - first.lng) * axisLng) / axisLen
+    const projB = ((b.lat - first.lat) * axisLat + (b.lng - first.lng) * axisLng) / axisLen
+    return projA - projB
+  })
+  let total = 0
+  for (let i = 1; i < sorted.length; i++) {
+    total += haversineDist(sorted[i - 1].lat, sorted[i - 1].lng, sorted[i].lat, sorted[i].lng)
+  }
+  return Math.round(total)
 }
 
 /**
@@ -461,7 +501,7 @@ async function searchSingleCuisinePOI(
     const candidates = pois
       .filter((p) => {
         if (maxDist > 0 && p.distance > maxDist) return false
-        if (usedNames.has(normalizeStopName(p.name))) return false
+        if (usedNames.has(normalizeName(p.name))) return false
         if (FALSE_RE.test(p.name)) return false
         return true
       })
@@ -1653,37 +1693,6 @@ function estimateDuration(poi: AmapPOI): number {
   return 20
 }
 
-/** Estimate walk distance between verified stops based on their distances from user */
-function estimateWalkDistFromStops(stops: Stop[]): number {
-  if (stops.length <= 1) return 0
-  // Sort by distance from user, then estimate path between consecutive ones
-  const sorted = [...stops].sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
-  let total = 0
-  for (let i = 1; i < sorted.length; i++) {
-    total += Math.abs((sorted[i].distanceMeters || 0) - (sorted[i - 1].distanceMeters || 0))
-  }
-  return total
-}
-
-function estimateWalkDist(pois: AmapPOI[]): number {
-  let total = 0
-  for (let i = 1; i < pois.length; i++) {
-    total += Math.abs(pois[i].distance - pois[i - 1].distance)
-  }
-  return total
-}
-
 function fmtDist(m: number): string {
   return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${m}m`
-}
-
-/** Haversine distance in meters between two lat/lng points */
-function haversineDist(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000 // Earth radius in meters
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
