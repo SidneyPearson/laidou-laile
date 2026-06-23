@@ -57,6 +57,8 @@ export function useAmapMap() {
     const win = window as any
     const hasAMap = !!win.AMap
     const amapVersion = hasAMap ? (win.AMap.version || 'unknown') : 'N/A'
+    const scriptOnload = win._amap_script_loaded === true
+    const scriptError = win._amap_error || ''
 
     // Check if the SDK script failed to load (network error)
     const scripts = document.querySelectorAll('script[src]')
@@ -64,12 +66,18 @@ export function useAmapMap() {
       (s as HTMLScriptElement).src.includes('webapi.amap.com')
     ) as HTMLScriptElement | undefined
 
+    // Try to extract key from script URL for debugging
+    const keyMatch = amapScript?.src.match(/key=([^&]+)/)
+    const keyPreview = keyMatch ? keyMatch[1].substring(0, 8) + '...' : 'N/A'
+
     return {
       ...sdkDiag.value,
       amapVersion,
       hasAMap,
+      scriptOnload,
+      scriptError,
+      keyPreview,
       scriptSrc: amapScript?.src || 'NOT FOUND',
-      scriptLoaded: amapScript ? true : false,
       userAgent: navigator.userAgent.substring(0, 100),
       location: window.location.href,
     }

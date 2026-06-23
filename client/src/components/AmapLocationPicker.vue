@@ -202,10 +202,12 @@ function handleConfirm() {
         <p class="text-xs text-gray-400 text-center px-2 flex-shrink-0">{{ mapFailReason }}</p>
         <div v-if="diagInfo" class="mt-2 w-full text-[10px] text-gray-400 space-y-0.5 bg-gray-100 rounded-lg p-2 font-mono">
           <div>AMap: {{ diagInfo.hasAMap ? '✓ v' + diagInfo.amapVersion : '✗ 未加载' }}</div>
-          <div>Script: {{ diagInfo.scriptFound ? '✓' : '✗' }}</div>
+          <div>Script: {{ diagInfo.scriptFound ? '✓' : '✗' }} | onload: {{ diagInfo.scriptOnload ? '✓' : '✗' }}</div>
+          <div>Key: {{ diagInfo.keyPreview }}</div>
           <div>Attempts: {{ diagInfo.attempts }}/100</div>
           <div class="truncate">URL: {{ diagInfo.location }}</div>
           <div v-if="diagInfo.error" class="text-red-400">Error: {{ diagInfo.error }}</div>
+          <div v-if="diagInfo.scriptError" class="text-red-400">ScriptErr: {{ diagInfo.scriptError }}</div>
         </div>
       </div>
       <!-- Loading overlay -->
