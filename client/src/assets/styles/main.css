@@ -66,6 +66,24 @@
   opacity: 0;
 }
 
+/* Hide Amap branding (logo + copyright watermark) on embedded maps */
+.amap-logo,
+.amap-copyright {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* iOS-native momentum scroll with a hidden scrollbar */
+.scroll-smooth-ios {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none; /* Firefox */
+}
+.scroll-smooth-ios::-webkit-scrollbar {
+  display: none; /* WebKit / iOS Safari */
+}
+
 /* Skeleton shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }

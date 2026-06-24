@@ -26,6 +26,11 @@ export interface Stop {
   lat: number
   photoTip?: string
   distanceMeters?: number
+  /** Opening hours (reserved for business-hours feature; not yet populated) */
+  openTime?: string
+  closeTime?: string
+  /** Whether the place is open at planning time (reserved; not yet populated) */
+  openNow?: boolean
 }
 
 export interface Route {
@@ -36,6 +41,14 @@ export interface Route {
   totalDurationMinutes: number
   walkingDistanceMeters: number
   tips: string
+  /** Structural direction shown to user, e.g. "深度 · 一处慢逛" (≥30° divergence) */
+  direction?: string
+  /** Why this route differs from the others (divergence rationale) */
+  reason?: string
+  /** Three-axis structural labels, used for divergence validation */
+  axes?: { goal: string; behavior: string; info: string }
+  /** Routes exempt from divergence check (e.g. gourmet comparison cards) */
+  divergenceExempt?: boolean
 }
 
 export interface GenerateRoutesRequest {

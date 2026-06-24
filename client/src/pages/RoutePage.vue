@@ -2,13 +2,16 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRouteRequest } from '../composables/useRouteRequest'
-import { refineRoute } from '../services/api'
+import { refineRoute, replaceStop } from '../services/api'
 import { ApiRequestError } from '../services/api'
+import { walkingDistanceOf } from '../utils/geo'
 import RouteCompare from '../components/RouteCompare.vue'
 import DayTripView from '../components/DayTripView.vue'
+import TimeBudgetBar from '../components/TimeBudgetBar.vue'
 import RouteSkeleton from '../components/RouteSkeleton.vue'
 import RouteError from '../components/RouteError.vue'
 import EmptyState from '../components/EmptyState.vue'
+import type { Route, Stop } from '../types/route'
 
 const router = useRouter()
 const route = useRoute()
@@ -32,7 +35,7 @@ const isDayTrip = computed(() => {
     && routes.value.length === 1
 })
 
-function handleRouteSelect(rt: import('../types/route').Route) {
+function handleRouteSelect(rt: Route) {
   selectedId.value = selectedId.value === rt.id ? null : rt.id
 }
 
@@ -93,6 +96,56 @@ async function handleRefine() {
   }
 }
 
+// ── Replace single stop ─────────────────────────────────
+const replacingIndex = ref<number | null>(null)
+
+const preferences = computed(() =>
+  String(route.query.preferences || '')
+    .split(',')
+    .filter(Boolean) as import('../types/route').PreferenceTag[]
+)
+
+async function handleReplaceStop(index: number) {
+  const currentRoute = routes.value?.[0]
+  if (!currentRoute || replacingIndex.value !== null) return
+
+  replacingIndex.value = index
+  refineError.value = ''
+  try {
+    const res = await replaceStop({
+      route: currentRoute,
+      stopIndex: index,
+      preferences: preferences.value.length ? preferences.value : ['food'],
+      distance: Number(route.query.distance) || 0,
+    })
+    routes.value = [res.route]
+    removedIndices.value = new Set() // indices shifted after re-sort
+  } catch (err: any) {
+    refineError.value = err instanceof ApiRequestError ? err.message : '换一家失败，请重试'
+  } finally {
+    replacingIndex.value = null
+  }
+}
+
+// ── Reorder stops (drag) ────────────────────────────────
+function handleReorder(newStops: Stop[]) {
+  const currentRoute = routes.value?.[0]
+  if (!currentRoute) return
+  const walk = walkingDistanceOf(newStops)
+  const visitSum = newStops.reduce((s, st) => s + st.visitDurationMinutes, 0)
+  routes.value = [{
+    ...currentRoute,
+    stops: newStops,
+    walkingDistanceMeters: walk,
+    totalDurationMinutes: visitSum + Math.ceil(walk / 100 * 1.5),
+  }]
+  removedIndices.value = new Set() // indices no longer valid after reorder
+}
+
+// Time budget: route's total time vs the user's available time
+const availableMinutes = computed(() => Number(route.query.timeOption) || 0)
+const usedMinutes = computed(() => routes.value?.[0]?.totalDurationMinutes || 0)
+
 const displayLocation = computed(() => route.query.locationName as string || locationName.value || '')
 const displayWeather = computed(() => route.query.weatherNote as string || weatherNote.value || '')
 const isRainy = computed(() => route.query.isRainy === '1' || weather.value?.isRainy || false)
@@ -138,9 +191,9 @@ function goBack() {
     </header>
 
     <!-- Content -->
-    <div class="flex-1 overflow-auto px-4 pb-4">
+    <div class="flex-1 min-h-0 flex flex-col px-4 pb-4">
       <!-- Loading -->
-      <div v-if="loading">
+      <div v-if="loading" class="flex-1 min-h-0 overflow-y-auto scroll-smooth-ios">
         <RouteSkeleton v-for="i in 3" :key="i" class="mb-4" />
       </div>
 
@@ -155,12 +208,23 @@ function goBack() {
       <EmptyState v-else-if="routeCount === 0" />
 
       <!-- DayTrip Timeline -->
-      <div v-else-if="isDayTrip && routes[0]" class="relative min-h-[300px]">
+      <div v-else-if="isDayTrip && routes[0]" class="relative flex-1 min-h-0 flex flex-col">
+        <TimeBudgetBar
+          v-if="availableMinutes > 0"
+          class="flex-shrink-0"
+          :used-minutes="usedMinutes"
+          :available-minutes="availableMinutes"
+          :stops="routes[0].stops"
+        />
         <DayTripView
+          class="flex-1 min-h-0"
           :route="routes[0]"
           :removable="true"
           :removed-indices="removedIndices"
+          :replacing-index="replacingIndex"
           @remove-stop="handleRemoveStop"
+          @replace-stop="handleReplaceStop"
+          @reorder="handleReorder"
         />
         <!-- Refine loading overlay -->
         <Transition name="fade">
@@ -179,12 +243,13 @@ function goBack() {
       </div>
 
       <!-- Routes compare (normal mode) -->
-      <RouteCompare
-        v-else
-        :routes="routes"
-        :selected-id="selectedId"
-        @select="handleRouteSelect"
-      />
+      <div v-else class="flex-1 min-h-0 overflow-y-auto scroll-smooth-ios">
+        <RouteCompare
+          :routes="routes"
+          :selected-id="selectedId"
+          @select="handleRouteSelect"
+        />
+      </div>
     </div>
 
     <!-- AI disclaimer -->

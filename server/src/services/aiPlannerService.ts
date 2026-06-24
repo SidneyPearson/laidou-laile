@@ -6,6 +6,7 @@ import { verifyPlace, searchNearbyPOIs, CUISINE_KEYWORDS } from './amap/poiSearc
 import { getAmapClient } from './amap/client.js'
 import { haversineDist } from '../utils/geo.js'
 import { normalizeName } from '../utils/text.js'
+import { enforceDivergence } from './structuralDivergence.js'
 import type { AmapPOI, AmapTextResponse } from '../types/poi.js'
 import type { Route, Stop, PreferenceTag } from '../types/route.js'
 
@@ -55,6 +56,23 @@ export async function generatePlan(input: PlanInput): Promise<PlanOutput> {
   try {
     const aiRoutes = await tryAIGeneration(input)
     if (aiRoutes && aiRoutes.length > 0) {
+      // Enforce ≥30° structural divergence on multi-route results.
+      // Single-route (day-trip) needs no divergence. Exempt routes (gourmet
+      // comparison) pass through untouched inside enforceDivergence.
+      if (aiRoutes.length > 1) {
+        const { kept, dropped } = enforceDivergence(aiRoutes, { preferences: input.preferences })
+        if (dropped.length > 0) {
+          for (const d of dropped) {
+            console.log(`📐 Divergence drop: "${d.route.name}" — ${d.reason}`)
+          }
+          return {
+            routes: kept,
+            source: 'ai',
+            fallbackReason: `为保证方案结构差异（≥30°），已从 ${aiRoutes.length} 条精简为 ${kept.length} 条`,
+          }
+        }
+        return { routes: kept, source: 'ai', fallbackReason: null }
+      }
       return { routes: aiRoutes, source: 'ai', fallbackReason: null }
     }
   } catch (err: any) {
@@ -383,6 +401,98 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   }
 }
 
+// ── Single-stop replacement ─────────────────────────────
+
+export interface ReplaceStopInput {
+  route: Route
+  stopIndex: number
+  preferences: PreferenceTag[]
+  distance: number
+  adcode?: string
+}
+
+/** Preference → fallback Amap keywords when the stop name yields no cuisine hint */
+const PREFERENCE_REPLACE_KEYWORDS: Record<PreferenceTag, string> = {
+  food: '餐厅|美食|小吃|饭店',
+  scenic: '景点|地标|博物馆|公园|名胜',
+  wander: '商场|咖啡|书店|文创|步行街',
+}
+
+/**
+ * Replace a single stop with a different nearby place of the same type.
+ * Searches around the replaced stop's coordinates, excludes all places already
+ * in the route, re-sorts the route geographically, and recomputes metrics.
+ * Returns null if no suitable replacement is found.
+ */
+export async function replaceStop(input: ReplaceStopInput): Promise<Route | null> {
+  const { route, stopIndex, preferences, distance, adcode } = input
+  const target = route.stops[stopIndex]
+  if (!target) return null
+
+  // Derive search keyword: prefer cuisine hint from the stop name, else
+  // fall back to the user's preference category.
+  const cuisineKw = extractCuisineKeyword(target.name)
+  const prefKw = preferences.map(p => PREFERENCE_REPLACE_KEYWORDS[p]).filter(Boolean).join('|')
+  const keyword = cuisineKw || prefKw || '餐厅|景点'
+
+  // Exclude every place already in the route (by normalized name) so the
+  // replacement is genuinely new.
+  const usedNames = new Set(route.stops.map(s => normalizeName(s.name)))
+  const usedPoiIds = new Set(route.stops.map(s => s.amapPoiId).filter(Boolean) as string[])
+
+  // Search radius around the replaced stop: at least 800m, up to half the
+  // user's exploration distance (so we stay in the same area).
+  const maxDist = Math.max(800, distance > 0 ? Math.round(distance / 2) : 2000)
+
+  const found = await searchSingleCuisinePOI(
+    keyword, target.lng, target.lat, adcode, maxDist, usedNames,
+  )
+  if (!found || usedPoiIds.has(found.id)) return null
+
+  // Build the replacement stop, keeping the original visit duration.
+  const newStop: Stop = {
+    name: found.name,
+    address: found.address,
+    visitDurationMinutes: target.visitDurationMinutes,
+    notes: found.address
+      ? `${found.address}${found.rating ? `，评分 ${found.rating}` : ''}`
+      : '',
+    amapPoiId: found.id,
+    lng: found.lng,
+    lat: found.lat,
+    distanceMeters: found.distance > 0 ? found.distance
+      : Math.round(haversineDist(target.lat, target.lng, found.lat, found.lng)),
+  }
+
+  const newStops = route.stops.map((s, i) => (i === stopIndex ? newStop : s))
+
+  // Re-sort geographically along the first→last axis (same approach as refine).
+  if (newStops.length >= 2) {
+    const first = newStops[0]
+    const last = newStops[newStops.length - 1]
+    const axisLat = last.lat - first.lat
+    const axisLng = last.lng - first.lng
+    const axisLen = Math.sqrt(axisLat * axisLat + axisLng * axisLng) || 1
+    newStops.sort((a, b) => {
+      const projA = ((a.lat - first.lat) * axisLat + (a.lng - first.lng) * axisLng) / axisLen
+      const projB = ((b.lat - first.lat) * axisLat + (b.lng - first.lng) * axisLng) / axisLen
+      return projA - projB
+    })
+  }
+
+  const walkDist = estimateWalkDistFromStops(newStops)
+  const totalDur = newStops.reduce((s, st) => s + st.visitDurationMinutes, 0)
+    + Math.ceil(walkDist / 100 * 1.5)
+
+  return {
+    ...route,
+    id: uuid(),
+    stops: newStops,
+    walkingDistanceMeters: walkDist,
+    totalDurationMinutes: totalDur,
+  }
+}
+
 // ── Refine helpers ──────────────────────────────────────
 
 /** Map of keywords → Amap text-search keyword string */
@@ -408,7 +518,7 @@ const CUISINE_FALLBACK_MAP: Record<string, string> = {
 }
 
 /** Extract a cuisine keyword from text, matching against known categories */
-function extractCuisineKeyword(text: string): string | null {
+export function extractCuisineKeyword(text: string): string | null {
   // Sort by key length (descending) so longer matches win (e.g. "自助餐" before "自助")
   const keys = Object.keys(CUISINE_FALLBACK_MAP).sort((a, b) => b.length - a.length)
   for (const key of keys) {
@@ -420,7 +530,7 @@ function extractCuisineKeyword(text: string): string | null {
 }
 
 /** Estimate walk distance between verified stops using Haversine, sorted geographically */
-function estimateWalkDistFromStops(stops: Stop[]): number {
+export function estimateWalkDistFromStops(stops: Stop[]): number {
   if (stops.length <= 1) return 0
   // Sort geographically: project onto the line from first to last stop
   const first = stops[0]
@@ -935,6 +1045,15 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
       stops,
       totalDurationMinutes: stops.length * 35 + 10,
       walkingDistanceMeters: estimateWalkDistFromStops(stops),
+      // Gourmet comparison is a dedicated "same-cuisine, ranked by metric" product
+      // surface — exempt from the ≥30° divergence rule, but still annotated for UI.
+      divergenceExempt: true,
+      direction: dim.label,                   // "评分最高" / "距离最近" / "最多打卡"
+      reason: dim.key === 'rating'
+        ? '同品类按口碑评分排序，帮你挑最稳的一家'
+        : dim.key === 'distance'
+          ? '同品类按步行距离排序，省时省脚'
+          : '同品类按人气热度排序，跟着大家走',
       tips: dim.key === 'rating'
         ? '评分来自高德地图用户评价，仅供参考'
         : dim.key === 'popularity'
@@ -1086,12 +1205,20 @@ ${poiTable}
 - 路线名简短有记忆点（3-8字），符合${city}本地特色
 - 每个 stop 的 notes 写简短介绍（15字以内）
 - tips 中体现天气建议（当前天气：${weather}）
+- ⚠️ 结构分化：各路线必须在「用户行为/信息组织」上不同，不能只是换地点。每条 route 给出 axes 三轴(goal/behavior/info)、direction、reason 三个字段。
+  - goal: eat|sightsee|culture|shop|relax|nature|nightlife
+  - behavior: deep_single(深度泡一处)|hop_multi(多点连逛)|efficient_route(高效顺路)|free_wander(随机漫游)
+  - info: by_theme|by_ranking|by_geography|by_time
+  - 任意两条路线 axes 至少两轴不同。
 
 只输出 JSON，格式：
 {
   "routes": [
-    { "name": "路线名", "tagline": "一句话特色", "stops": [
-      { "name": "地点名", "visitDurationMinutes": 40, "notes": "简短介绍" }
+    { "name": "路线名", "tagline": "一句话特色",
+      "axes": { "goal": "sightsee", "behavior": "deep_single", "info": "by_theme" },
+      "direction": "深度 · 一处慢逛", "reason": "为什么与其它不同",
+      "stops": [
+        { "name": "地点名", "visitDurationMinutes": 40, "notes": "简短介绍" }
     ], "tips": "实用小贴士" }
   ]
 }`
@@ -1154,6 +1281,9 @@ ${poiTable}
           totalDurationMinutes: stops.reduce((s, st) => s + st.visitDurationMinutes, 0) + Math.ceil(walkDist / 100 * 1.5),
           walkingDistanceMeters: walkDist,
           tips: r.tips || '祝你玩得开心',
+          direction: r.direction,
+          reason: r.reason,
+          axes: r.axes,
         })
       }
     }
@@ -1455,6 +1585,9 @@ async function verifyAndEnrichRoutes(
     totalDurationMinutes: number
     walkingDistanceMeters: number
     tips: string
+    direction?: string
+    reason?: string
+    axes?: { goal: string; behavior: string; info: string }
   }>,
   userLng: number,
   userLat: number,
@@ -1616,6 +1749,9 @@ async function verifyAndEnrichRoutes(
         totalDurationMinutes: recalcTotalDur,
         walkingDistanceMeters: recalcWalkDist,
         tips: r.tips,
+        direction: r.direction,
+        reason: r.reason,
+        axes: r.axes,
       })
     }
   }

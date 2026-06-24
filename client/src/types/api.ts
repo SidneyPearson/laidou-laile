@@ -42,3 +42,15 @@ export interface RefineRouteRequest {
 export interface RefineRouteResponse {
   routes: import('./route').Route[]
 }
+
+export interface ReplaceStopRequest {
+  route: import('./route').Route
+  stopIndex: number
+  preferences: PreferenceTag[]
+  distance: number
+  adcode?: string
+}
+
+export interface ReplaceStopResponse {
+  route: import('./route').Route
+}

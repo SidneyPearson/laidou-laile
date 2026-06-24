@@ -1,4 +1,5 @@
 import type { PreferenceTag } from '../../types/route.js'
+import { AXIS_PROMPT_FRAGMENT } from '../structuralDivergence.js'
 
 const PREFERENCE_CN: Record<PreferenceTag, string> = {
   food: '吃点东西',
@@ -145,6 +146,7 @@ export function buildUserPrompt(input: {
     preferences.includes('scenic') && !scenicTypes?.length ? `🏯 ${city}最值得去的景点：推荐${city}公认的著名景点、地标建筑、必去打卡地。3 条路线的主题要覆盖不同类型（如经典地标线、文艺打卡线、自然风光线）。` : '',
     preferences.includes('wander') && !wanderTypes?.length ? `🚶 ${city}休闲去处：推荐${city}值得逛的商场、特色街区、文化场馆、咖啡馆、娱乐场所。3 条路线各选一个方向（购物、文化、悠闲）。` : '',
     '三条路线要明显差异化。',
+    '⚠️ 必须遵守下方「结构分化强制约束」：三条路线的 axes 三轴至少两轴不同，并为每条填写 axes / direction / reason 三个字段。',
     '只输出 JSON，不要任何其他内容。',
   ].filter(Boolean).map((s, i) => `- ${s}`).join('\n')
 
@@ -154,13 +156,16 @@ export function buildUserPrompt(input: {
 - 可用时间：${timeMinutes >= 480 ? '一天（约8小时）' : timeMinutes >= 240 ? '半天（约4小时）' : `${timeMinutes} 分钟`}
 - 探索距离：${distance > 0 ? `${distance}m 以内` : '当前城市范围'}
 - 偏好：${prefCN}${subDetailText}
-
+${singleRoute ? '' : AXIS_PROMPT_FRAGMENT}
 ## 输出格式
 {
   "routes": [
     {
       "name": "路线名（3-8字）",
-      "tagline": "一句话特色",
+      "tagline": "一句话特色",${singleRoute ? '' : `
+      "axes": { "goal": "sightsee", "behavior": "hop_multi", "info": "by_theme" },
+      "direction": "结构方向（如：连逛 · 多点串）",
+      "reason": "为什么与其它方案不同（一句话）",`}
       "stops": [
         {
           "name": "准确的店名/地名（如'老吉士酒楼'，高德可搜到）",

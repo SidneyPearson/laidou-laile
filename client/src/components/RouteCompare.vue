@@ -108,13 +108,18 @@ function handleSelect(route: Route) {
     >
       <!-- Header -->
       <div class="px-4 pt-4 pb-3">
-        <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center justify-between mb-1 gap-2">
           <h3 class="text-lg font-bold text-gray-900">{{ rt.name }}</h3>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-medium">
-            {{ metaMap[i]?.icon }} {{ metaMap[i]?.bestFor }}
+          <span class="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-medium">
+            <template v-if="rt.direction">🧭 {{ rt.direction }}</template>
+            <template v-else>{{ metaMap[i]?.icon }} {{ metaMap[i]?.bestFor }}</template>
           </span>
         </div>
         <p class="text-sm text-gray-400">{{ rt.tagline }}</p>
+        <!-- Divergence rationale: why this option differs from the others -->
+        <p v-if="rt.reason" class="mt-1 text-[11px] text-gray-400 leading-snug">
+          <span class="text-gray-300">为何不同 ·</span> {{ rt.reason }}
+        </p>
       </div>
 
       <!-- Metrics row -->

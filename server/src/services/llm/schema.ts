@@ -21,6 +21,14 @@ const routeSchema = z.object({
   totalDurationMinutes: z.number().int().min(10).max(540),
   walkingDistanceMeters: z.number().int().min(0).max(50000),
   tips: z.string().min(1).max(200),
+  // Structural divergence metadata (3-route mode). Optional: lenient on missing/partial.
+  direction: z.string().max(40).optional(),
+  reason: z.string().max(120).optional(),
+  axes: z.object({
+    goal: z.string(),
+    behavior: z.string(),
+    info: z.string(),
+  }).optional(),
 })
 
 // LLM output schema — array of 1-3 routes

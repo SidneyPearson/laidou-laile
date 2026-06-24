@@ -7,10 +7,14 @@ const props = defineProps<{
   stop: Stop
   index: number
   removable?: boolean
+  /** Whether this stop is currently being replaced (shows spinner) */
+  replacing?: boolean
 }>()
 
 const emit = defineEmits<{
   remove: [index: number]
+  replace: [index: number]
+  'handle-pointerdown': [payload: { index: number; event: PointerEvent }]
 }>()
 
 const expanded = ref(false)
@@ -26,12 +30,14 @@ function fmtDist(m: number): string {
 
 <template>
   <div class="relative flex gap-4 pb-5 last:pb-0">
-    <!-- Number circle -->
+    <!-- Number circle (doubles as drag handle in edit mode) -->
     <div
       class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-white
              border-2 border-primary-200 flex items-center justify-center
-             shadow-sm cursor-pointer active:scale-95 transition-transform"
-      @click="toggle"
+             shadow-sm transition-transform"
+      :class="removable ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer active:scale-95'"
+      @click="removable ? undefined : toggle()"
+      @pointerdown="removable ? emit('handle-pointerdown', { index, event: $event }) : undefined"
     >
       <span class="text-sm font-bold text-primary-500">{{ index + 1 }}</span>
     </div>
@@ -126,12 +132,29 @@ function fmtDist(m: number): string {
             </p>
           </div>
 
-          <!-- Navigate button -->
-          <NavButton
-            :name="stop.name"
-            :lng="stop.lng"
-            :lat="stop.lat"
-          />
+          <!-- Actions: navigate + replace -->
+          <div class="flex gap-2">
+            <div class="flex-1">
+              <NavButton
+                :name="stop.name"
+                :lng="stop.lng"
+                :lat="stop.lat"
+              />
+            </div>
+            <button
+              v-if="removable"
+              class="flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium
+                     bg-gray-50 border border-gray-200 text-gray-600
+                     active:bg-gray-100 transition-colors disabled:opacity-50
+                     flex items-center gap-1"
+              :disabled="replacing"
+              @click.stop="emit('replace', index)"
+            >
+              <span v-if="replacing" class="w-3 h-3 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+              <span v-else>🔄</span>
+              {{ replacing ? '换中' : '换一家' }}
+            </button>
+          </div>
         </div>
       </Transition>
     </div>

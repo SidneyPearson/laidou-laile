@@ -1,7 +1,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express'
 import type { GenerateRoutesResponse } from '../types/route.js'
 import { generateRoutes } from '../services/routeGenerator.js'
-import { refinePlan } from '../services/aiPlannerService.js'
+import { refinePlan, replaceStop } from '../services/aiPlannerService.js'
 
 const router = Router()
 
@@ -88,6 +88,38 @@ router.post(
 
     res.setHeader('Cache-Control', 'no-store')
     res.json({ routes: [refined] })
+  }),
+)
+
+router.post(
+  '/replace-stop',
+  asyncHandler(async (req, res) => {
+    const { route, stopIndex, preferences, distance, adcode } = req.body
+
+    if (!route || !route.stops?.length || typeof stopIndex !== 'number' || !route.stops[stopIndex]) {
+      res.status(400).json({
+        error: { code: 'INVALID_PARAMS', message: '请提供有效的路线和要替换的地点' },
+      })
+      return
+    }
+
+    const replaced = await replaceStop({
+      route,
+      stopIndex,
+      preferences: Array.isArray(preferences) && preferences.length ? preferences : ['food'],
+      distance: typeof distance === 'number' ? distance : 0,
+      adcode,
+    })
+
+    if (!replaced) {
+      res.status(404).json({
+        error: { code: 'NO_REPLACEMENT', message: '附近没有更多同类地点了' },
+      })
+      return
+    }
+
+    res.setHeader('Cache-Control', 'no-store')
+    res.json({ route: replaced })
   }),
 )
 

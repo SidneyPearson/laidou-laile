@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { GenerateRoutesRequest, GenerateRoutesResponse, RefineRouteRequest, RefineRouteResponse } from '../types/api'
+import type { GenerateRoutesRequest, GenerateRoutesResponse, RefineRouteRequest, RefineRouteResponse, ReplaceStopRequest, ReplaceStopResponse } from '../types/api'
 
 // In dev, Vite proxy handles /api → localhost:3000.
 // In production, VITE_API_BASE_URL points to the deployed backend.
@@ -66,5 +66,13 @@ export async function refineRoute(
   signal?: AbortSignal,
 ): Promise<RefineRouteResponse> {
   const { data } = await api.post<RefineRouteResponse>('/plan/refine', req, { signal })
+  return data
+}
+
+export async function replaceStop(
+  req: ReplaceStopRequest,
+  signal?: AbortSignal,
+): Promise<ReplaceStopResponse> {
+  const { data } = await api.post<ReplaceStopResponse>('/plan/replace-stop', req, { signal })
   return data
 }
