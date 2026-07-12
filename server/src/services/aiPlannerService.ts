@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid'
 import { chatCompletionWithFallback } from './llm/client.js'
 import { buildUserPrompt, buildRefinePrompt, SYSTEM_PROMPT } from './llm/prompt.js'
 import { parseAndValidate, formatValidationErrors } from './llm/schema.js'
@@ -119,7 +118,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   if (!extraRequirements) {
     return {
       ...route,
-      id: uuid(),
+      id: crypto.randomUUID(),
       stops: keptStops,
       totalDurationMinutes: keptStops.reduce((s, st) => s + st.visitDurationMinutes, 0) + 10,
       walkingDistanceMeters: Math.max(0, route.walkingDistanceMeters - removedStops.length * 200),
@@ -391,7 +390,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   }
 
   return {
-    id: uuid(),
+    id: crypto.randomUUID(),
     name: routeName,
     tagline: routeTagline,
     stops: mergedStops,
@@ -486,7 +485,7 @@ export async function replaceStop(input: ReplaceStopInput): Promise<Route | null
 
   return {
     ...route,
-    id: uuid(),
+    id: crypto.randomUUID(),
     stops: newStops,
     walkingDistanceMeters: walkDist,
     totalDurationMinutes: totalDur,
@@ -819,7 +818,7 @@ ${poiTable}
   const totalDur = stops.length * 30 + Math.ceil(walkDist / 100 * 1.5)
 
   return [{
-    id: uuid(),
+    id: crypto.randomUUID(),
     name: '附近美食清单',
     tagline: `AI 精选 ${stops.length} 家，按评分排序`,
     stops,
@@ -849,7 +848,7 @@ function buildPlainFoodList(candidates: AmapPOI[], input: PlanInput): Route[] | 
 
   const walkDist = estimateWalkDistFromStops(stops)
   return [{
-    id: uuid(),
+    id: crypto.randomUUID(),
     name: '附近美食清单',
     tagline: `附近 ${stops.length} 家餐厅`,
     stops,
@@ -1039,7 +1038,7 @@ async function generateCuisineComparison(input: PlanInput): Promise<Route[] | nu
     const cuNames = cuisineTypes.map(c => CUISINE_LABEL[c] || c).join('+')
     const topSuffix = STOPS_PER_TYPE > 1 ? ` TOP${STOPS_PER_TYPE}` : ''
     routes.push({
-      id: uuid(),
+      id: crypto.randomUUID(),
       name: dim.slogan,                       // title: "口碑之选，好评如潮"
       tagline: `${dim.label} · ${cuNames}${topSuffix}`,   // badge: "评分最高 · 火锅 TOP3"
       stops,
@@ -1276,7 +1275,7 @@ ${poiTable}
       if (stops.length > 0) {
         const walkDist = estimateWalkDistFromStops(stops)
         routes.push({
-          id: uuid(), name: r.name, tagline: r.tagline || `${stops.length}个地点`,
+          id: crypto.randomUUID(), name: r.name, tagline: r.tagline || `${stops.length}个地点`,
           stops,
           totalDurationMinutes: stops.reduce((s, st) => s + st.visitDurationMinutes, 0) + Math.ceil(walkDist / 100 * 1.5),
           walkingDistanceMeters: walkDist,
@@ -1325,7 +1324,7 @@ function buildSimpleThemedRoutes(
     })
     const walkDist = estimateWalkDistFromStops(stops)
     routes.push({
-      id: uuid(),
+      id: crypto.randomUUID(),
       name: `路线${i + 1}`,
       tagline: `${stops.length}个地点`,
       stops,
@@ -1742,7 +1741,7 @@ async function verifyAndEnrichRoutes(
         + Math.ceil(recalcWalkDist / 100 * 1.5)
 
       enriched.push({
-        id: uuid(),
+        id: crypto.randomUUID(),
         name: r.name,
         tagline: r.tagline,
         stops: verifiedStops,
@@ -1809,7 +1808,7 @@ export function buildFallbackRoutes(
     const walkDist = estimateWalkDist(chunk)
 
     routes.push({
-      id: uuid(),
+      id: crypto.randomUUID(),
       name: `${prefLabel}路线${i + 1}`,
       tagline: `${stops.length}个地点`,
       stops,

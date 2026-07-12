@@ -1,126 +1,149 @@
-import { Router, type Request, type Response, type NextFunction } from 'express'
-import type { GenerateRoutesResponse } from '../types/route.js'
+import { Hono } from 'hono'
+import type { Env } from '../config/env.js'
 import { generateRoutes } from '../services/routeGenerator.js'
 import { refinePlan, replaceStop } from '../services/aiPlannerService.js'
+import { createJob, completeJob, failJob, getJob } from '../services/jobStore.js'
 
-const router = Router()
+const planRoutes = new Hono<{ Bindings: Env }>()
 
-function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
-) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    fn(req, res, next).catch(next)
+// ── POST /generate ──
+// Async with polling: returns jobId immediately, client polls GET /job/:id
+planRoutes.post('/generate', async (c) => {
+  const body = await c.req.json()
+  const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, customCuisine, customScenic, customWander } = body
+
+  if (lat == null || lng == null || timeOption == null || distance == null || !preferences?.length) {
+    return c.json({
+      error: { code: 'INVALID_PARAMS', message: '请提供位置、时间、距离和至少一个偏好' },
+    }, 400)
   }
-}
 
-router.post(
-  '/generate',
-  asyncHandler(async (req, res) => {
-    const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, customCuisine, customScenic, customWander } = req.body
+  const mergedCuisine = [...(cuisineTypes || []), ...(customCuisine || [])]
+  const mergedScenic = [...(scenicTypes || []), ...(customScenic || [])]
+  const mergedWander = [...(wanderTypes || []), ...(customWander || [])]
 
-    if (lat == null || lng == null || timeOption == null || distance == null || !preferences?.length) {
-      res.status(400).json({
-        error: { code: 'INVALID_PARAMS', message: '请提供位置、时间、距离和至少一个偏好' },
-      })
-      return
-    }
+  const jobId = createJob()
 
-    // Merge custom strings into type arrays so the backend treats them as additional keywords
-    const mergedCuisine = [...(cuisineTypes || []), ...(customCuisine || [])]
-    const mergedScenic = [...(scenicTypes || []), ...(customScenic || [])]
-    const mergedWander = [...(wanderTypes || []), ...(customWander || [])]
+  // Background processing: Worker stays alive via ctx.waitUntil
+  c.executionCtx.waitUntil(
+    (async () => {
+      try {
+        const result = await generateRoutes({
+          lat, lng, timeOption, distance, preferences,
+          cuisineTypes: mergedCuisine, scenicTypes: mergedScenic, wanderTypes: mergedWander,
+        })
 
-    const result = await generateRoutes({ lat, lng, timeOption, distance, preferences, cuisineTypes: mergedCuisine, scenicTypes: mergedScenic, wanderTypes: mergedWander })
+        if (result.routes.length === 0) {
+          failJob(jobId, { code: 'NO_POIS_FOUND', message: '附近暂未找到合适的地点' })
+          return
+        }
 
-    if (result.routes.length === 0) {
-      res.status(404).json({
-        error: { code: 'NO_POIS_FOUND', message: '附近暂未找到合适的地点' },
-      })
-      return
-    }
+        completeJob(jobId, {
+          routes: result.routes,
+          generatedAt: new Date().toISOString(),
+          weatherNote: result.weatherNote,
+          weather: result.weather,
+          locationName: result.locationName,
+          source: result.source,
+          fallbackReason: result.fallbackReason,
+        })
+      } catch (err: any) {
+        console.error('generateRoutes job failed:', err.message)
+        failJob(jobId, { code: 'INTERNAL_ERROR', message: '路线生成失败，请重试' })
+      }
+    })(),
+  )
 
-    const response: GenerateRoutesResponse & { source: string; fallbackReason: string | null } = {
-      routes: result.routes,
-      generatedAt: new Date().toISOString(),
-      weatherNote: result.weatherNote,
-      weather: result.weather,
-      locationName: result.locationName,
-      source: result.source,
-      fallbackReason: result.fallbackReason,
-    }
+  c.header('Cache-Control', 'no-store')
+  return c.json({ jobId })
+})
 
-    res.setHeader('Cache-Control', 'no-store')
-    res.json(response)
-  }),
-)
+// ── GET /job/:id ──
+// Poll for job result. Returns { status, result? } or { status, error? }
+planRoutes.get('/job/:id', (c) => {
+  const jobId = c.req.param('id')
+  const job = getJob(jobId)
 
-router.post(
-  '/refine',
-  asyncHandler(async (req, res) => {
-    const { route, removeStopIndices, extraRequirements, city, weather, timeMinutes, distance } = req.body
+  if (!job) {
+    return c.json({ error: { code: 'JOB_NOT_FOUND', message: '任务不存在或已过期' } }, 404)
+  }
 
-    if (!route || !route.stops?.length) {
-      res.status(400).json({
-        error: { code: 'INVALID_PARAMS', message: '请提供需要优化的路线' },
-      })
-      return
-    }
+  c.header('Cache-Control', 'no-store')
 
-    const refined = await refinePlan({
-      route,
-      removeStopIndices: removeStopIndices || [],
-      extraRequirements,
-      position: route.stops[0]
-        ? { lat: route.stops[0].lat, lng: route.stops[0].lng }
-        : { lat: 0, lng: 0 },
-      city: city || '',
-      weather: weather || '晴',
-      timeMinutes: timeMinutes || 240,
-      distance: distance || 0,
-    })
+  if (job.status === 'processing') {
+    return c.json({ status: 'processing' })
+  }
 
-    if (!refined) {
-      res.status(404).json({
-        error: { code: 'REFINE_FAILED', message: '路线优化失败，请重试' },
-      })
-      return
-    }
+  if (job.status === 'error') {
+    return c.json({ status: 'error', error: job.error }, 500)
+  }
 
-    res.setHeader('Cache-Control', 'no-store')
-    res.json({ routes: [refined] })
-  }),
-)
+  return c.json({ status: 'done', result: job.result })
+})
 
-router.post(
-  '/replace-stop',
-  asyncHandler(async (req, res) => {
-    const { route, stopIndex, preferences, distance, adcode } = req.body
+// ── POST /refine ──
+// Synchronous: LLM regeneration is fast enough to stay within 30s
+planRoutes.post('/refine', async (c) => {
+  const body = await c.req.json()
+  const { route, removeStopIndices, extraRequirements, city, weather, timeMinutes, distance } = body
 
-    if (!route || !route.stops?.length || typeof stopIndex !== 'number' || !route.stops[stopIndex]) {
-      res.status(400).json({
-        error: { code: 'INVALID_PARAMS', message: '请提供有效的路线和要替换的地点' },
-      })
-      return
-    }
+  if (!route || !route.stops?.length) {
+    return c.json({
+      error: { code: 'INVALID_PARAMS', message: '请提供需要优化的路线' },
+    }, 400)
+  }
 
-    const replaced = await replaceStop({
-      route,
-      stopIndex,
-      preferences: Array.isArray(preferences) && preferences.length ? preferences : ['food'],
-      distance: typeof distance === 'number' ? distance : 0,
-      adcode,
-    })
+  const refined = await refinePlan({
+    route,
+    removeStopIndices: removeStopIndices || [],
+    extraRequirements,
+    position: route.stops[0]
+      ? { lat: route.stops[0].lat, lng: route.stops[0].lng }
+      : { lat: 0, lng: 0 },
+    city: city || '',
+    weather: weather || '晴',
+    timeMinutes: timeMinutes || 240,
+    distance: distance || 0,
+  })
 
-    if (!replaced) {
-      res.status(404).json({
-        error: { code: 'NO_REPLACEMENT', message: '附近没有更多同类地点了' },
-      })
-      return
-    }
+  if (!refined) {
+    return c.json({
+      error: { code: 'REFINE_FAILED', message: '路线优化失败，请重试' },
+    }, 404)
+  }
 
-    res.setHeader('Cache-Control', 'no-store')
-    res.json({ route: replaced })
-  }),
-)
+  c.header('Cache-Control', 'no-store')
+  return c.json({ routes: [refined] })
+})
 
-export default router
+// ── POST /replace-stop ──
+// Synchronous: Amap around-search replaces one stop, well within 30s
+planRoutes.post('/replace-stop', async (c) => {
+  const body = await c.req.json()
+  const { route, stopIndex, preferences, distance, adcode } = body
+
+  if (!route || !route.stops?.length || typeof stopIndex !== 'number' || !route.stops[stopIndex]) {
+    return c.json({
+      error: { code: 'INVALID_PARAMS', message: '请提供有效的路线和要替换的地点' },
+    }, 400)
+  }
+
+  const replaced = await replaceStop({
+    route,
+    stopIndex,
+    preferences: Array.isArray(preferences) && preferences.length ? preferences : ['food'],
+    distance: typeof distance === 'number' ? distance : 0,
+    adcode,
+  })
+
+  if (!replaced) {
+    return c.json({
+      error: { code: 'NO_REPLACEMENT', message: '附近没有更多同类地点了' },
+    }, 404)
+  }
+
+  c.header('Cache-Control', 'no-store')
+  return c.json({ route: replaced })
+})
+
+export default planRoutes
