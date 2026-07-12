@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { getEnv, type Bindings } from './config/env.js'
 import { initAmapClient } from './services/amap/client.js'
 import { initLlmClient } from './services/llm/client.js'
+import { initJobStore } from './services/jobStore.js'
 import planRoutes from './routes/planRoutes.js'
 import { AppError } from './middleware/errorHandler.js'
 
@@ -16,6 +17,7 @@ app.use('*', async (c, next) => {
     const env = getEnv(c.env)
     initAmapClient(env)
     initLlmClient(env)
+    initJobStore(c.env.JOBS)
     initialized = true
   }
   await next()

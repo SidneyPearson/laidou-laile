@@ -16,7 +16,9 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>
 
 /** Hono Bindings type — what ctx.env provides in Workers */
-export type Bindings = Env
+export type Bindings = Env & {
+  JOBS: KVNamespace
+}
 
 /** Extract and validate env from Hono context. Called once on first request. */
 export function getEnv(envLike: unknown): Env {

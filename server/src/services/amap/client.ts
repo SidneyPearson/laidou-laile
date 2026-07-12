@@ -25,17 +25,19 @@ class FetchAmapClient implements AmapClientInstance {
   }
 
   async get<T>(path: string, config: { params: Record<string, string | number | undefined> }): Promise<{ data: T }> {
-    const url = new URL(path, this.baseURL)
-    url.searchParams.set('key', this.apiKey)
-    for (const [k, v] of Object.entries(config.params)) {
-      if (v !== undefined) url.searchParams.set(k, String(v))
-    }
+    // Build query string manually (not via URLSearchParams) to avoid encoding
+    // commas and pipes which Amap requires as-is.
+    const qs = Object.entries({ key: this.apiKey, ...config.params })
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${k}=${String(v)}`)
+      .join('&')
+    const fullUrl = `${this.baseURL}${path}?${qs}`
 
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), this.timeoutMs)
 
     try {
-      const res = await fetch(url.toString(), {
+      const res = await fetch(fullUrl, {
         method: 'GET',
         signal: controller.signal,
       })

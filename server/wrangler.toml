@@ -3,9 +3,13 @@ main = "src/worker.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+kv_namespaces = [
+  { binding = "JOBS", id = "59043001e04a434bb1997ea93a6ab00b" }
+]
+
 [vars]
 NODE_ENV = "production"
-CORS_ORIGIN = "https://citywalk-git-master-sidneypearsons-projects.vercel.app"
+CORS_ORIGIN = "https://citywalk-zeta.vercel.app"
 LLM_BASE_URL = "https://api.deepseek.com/v1"
 LLM_MODEL = "deepseek-v4-flash"
 LLM_FALLBACK_MODEL = "deepseek-v4-pro"

@@ -22,7 +22,7 @@ planRoutes.post('/generate', async (c) => {
   const mergedScenic = [...(scenicTypes || []), ...(customScenic || [])]
   const mergedWander = [...(wanderTypes || []), ...(customWander || [])]
 
-  const jobId = createJob()
+  const jobId = await createJob()
 
   // Background processing: Worker stays alive via ctx.waitUntil
   c.executionCtx.waitUntil(
@@ -34,11 +34,11 @@ planRoutes.post('/generate', async (c) => {
         })
 
         if (result.routes.length === 0) {
-          failJob(jobId, { code: 'NO_POIS_FOUND', message: '附近暂未找到合适的地点' })
+          await failJob(jobId, { code: 'NO_POIS_FOUND', message: '附近暂未找到合适的地点' })
           return
         }
 
-        completeJob(jobId, {
+        await completeJob(jobId, {
           routes: result.routes,
           generatedAt: new Date().toISOString(),
           weatherNote: result.weatherNote,
@@ -49,7 +49,7 @@ planRoutes.post('/generate', async (c) => {
         })
       } catch (err: any) {
         console.error('generateRoutes job failed:', err.message)
-        failJob(jobId, { code: 'INTERNAL_ERROR', message: '路线生成失败，请重试' })
+        await failJob(jobId, { code: 'INTERNAL_ERROR', message: '路线生成失败，请重试' })
       }
     })(),
   )
@@ -60,9 +60,9 @@ planRoutes.post('/generate', async (c) => {
 
 // ── GET /job/:id ──
 // Poll for job result. Returns { status, result? } or { status, error? }
-planRoutes.get('/job/:id', (c) => {
+planRoutes.get('/job/:id', async (c) => {
   const jobId = c.req.param('id')
-  const job = getJob(jobId)
+  const job = await getJob(jobId)
 
   if (!job) {
     return c.json({ error: { code: 'JOB_NOT_FOUND', message: '任务不存在或已过期' } }, 404)
