@@ -9,7 +9,7 @@ kv_namespaces = [
 
 [vars]
 NODE_ENV = "production"
-CORS_ORIGIN = "https://citywalk-zeta.vercel.app"
+CORS_ORIGIN = "https://citywalk-ame.pages.dev"
 LLM_BASE_URL = "https://api.deepseek.com/v1"
 LLM_MODEL = "deepseek-v4-flash"
 LLM_FALLBACK_MODEL = "deepseek-v4-pro"
