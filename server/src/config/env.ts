@@ -15,9 +15,10 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>
 
-/** Hono Bindings type — what ctx.env provides in Workers */
+/** Hono Bindings type — what ctx.env provides in Workers/Pages */
 export type Bindings = Env & {
   JOBS: KVNamespace
+  ASSETS?: { fetch: (request: Request) => Promise<Response> }
 }
 
 /** Extract and validate env from Hono context. Called once on first request. */

@@ -1,5 +1,4 @@
 import { Hono } from 'hono'
-import { cors } from 'hono/cors'
 import { getEnv, type Bindings } from './config/env.js'
 import { initAmapClient } from './services/amap/client.js'
 import { initLlmClient } from './services/llm/client.js'
@@ -7,28 +6,21 @@ import { initJobStore } from './services/jobStore.js'
 import planRoutes from './routes/planRoutes.js'
 import { AppError } from './middleware/errorHandler.js'
 
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono()
 
 // ── Lazy one-time initialization (per isolate) ──
-// ctx.env is per-request, so we init on first request and cache the env reference.
+// Must call getEnv() to apply Zod defaults for vars not set in Pages env
+// (e.g. AMAP_TIMEOUT_MS, LLM_TIMEOUT_MS). Raw env only has secrets + JOBS.
 let initialized = false
-app.use('*', async (c, next) => {
+function ensureInit(env: Bindings) {
   if (!initialized) {
-    const env = getEnv(c.env)
-    initAmapClient(env)
-    initLlmClient(env)
-    initJobStore(c.env.JOBS)
+    const validatedEnv = getEnv(env)
+    initAmapClient(validatedEnv)
+    initLlmClient(validatedEnv)
+    initJobStore(env.JOBS)
     initialized = true
   }
-  await next()
-})
-
-// ── CORS ──
-app.use('*', cors({
-  origin: (origin) => origin || '*',
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-}))
+}
 
 // ── Health check ──
 app.get('/api/health', (c) => {
@@ -51,4 +43,28 @@ app.onError((err, c) => {
   }, 500)
 })
 
-export default app
+// ── Pages _worker.js export ──
+export default {
+  async fetch(request: Request, env: Bindings, ctx: ExecutionContext) {
+    ensureInit(env)
+
+    const url = new URL(request.url)
+
+    // API routes → Hono
+    if (url.pathname.startsWith('/api/')) {
+      return app.fetch(request, env, ctx)
+    }
+
+    // Static assets from Pages
+    const assets = env.ASSETS
+    if (!assets) {
+      return new Response('ASSETS not available', { status: 500 })
+    }
+
+    const assetsRes = await assets.fetch(request)
+    if (assetsRes.status !== 404) return assetsRes
+
+    // SPA fallback: serve index.html for client-side routing
+    return assets.fetch(new Request(new URL('/index.html', request.url)))
+  },
+}
