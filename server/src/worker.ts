@@ -2,7 +2,6 @@ import { Hono } from 'hono'
 import { getEnv, type Bindings } from './config/env.js'
 import { initAmapClient } from './services/amap/client.js'
 import { initLlmClient } from './services/llm/client.js'
-import { initJobStore } from './services/jobStore.js'
 import planRoutes from './routes/planRoutes.js'
 import { AppError } from './middleware/errorHandler.js'
 
@@ -10,14 +9,13 @@ const app = new Hono()
 
 // ── Lazy one-time initialization (per isolate) ──
 // Must call getEnv() to apply Zod defaults for vars not set in Pages env
-// (e.g. AMAP_TIMEOUT_MS, LLM_TIMEOUT_MS). Raw env only has secrets + JOBS.
+// (e.g. AMAP_TIMEOUT_MS, LLM_TIMEOUT_MS).
 let initialized = false
 function ensureInit(env: Bindings) {
   if (!initialized) {
     const validatedEnv = getEnv(env)
     initAmapClient(validatedEnv)
     initLlmClient(validatedEnv)
-    initJobStore(env.JOBS)
     initialized = true
   }
 }

@@ -2,12 +2,12 @@ import { Hono } from 'hono'
 import type { Env } from '../config/env.js'
 import { generateRoutes } from '../services/routeGenerator.js'
 import { refinePlan, replaceStop } from '../services/aiPlannerService.js'
-import { createJob, completeJob, failJob, getJob } from '../services/jobStore.js'
 
 const planRoutes = new Hono<{ Bindings: Env }>()
 
 // ── POST /generate ──
-// Async with polling: returns jobId immediately, client polls GET /job/:id
+// Synchronous: LLM + Amap typically completes within 10-20s, well within
+// the 30s wall-time limit. No more KV/polling complexity.
 planRoutes.post('/generate', async (c) => {
   const body = await c.req.json()
   const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, customCuisine, customScenic, customWander } = body
@@ -22,67 +22,37 @@ planRoutes.post('/generate', async (c) => {
   const mergedScenic = [...(scenicTypes || []), ...(customScenic || [])]
   const mergedWander = [...(wanderTypes || []), ...(customWander || [])]
 
-  const jobId = await createJob()
+  try {
+    const result = await generateRoutes({
+      lat, lng, timeOption, distance, preferences,
+      cuisineTypes: mergedCuisine, scenicTypes: mergedScenic, wanderTypes: mergedWander,
+    })
 
-  // Background processing: Worker stays alive via ctx.waitUntil
-  c.executionCtx.waitUntil(
-    (async () => {
-      try {
-        const result = await generateRoutes({
-          lat, lng, timeOption, distance, preferences,
-          cuisineTypes: mergedCuisine, scenicTypes: mergedScenic, wanderTypes: mergedWander,
-        })
+    if (result.routes.length === 0) {
+      return c.json({
+        error: { code: 'NO_POIS_FOUND', message: '附近暂未找到合适的地点' },
+      }, 404)
+    }
 
-        if (result.routes.length === 0) {
-          await failJob(jobId, { code: 'NO_POIS_FOUND', message: '附近暂未找到合适的地点' })
-          return
-        }
-
-        await completeJob(jobId, {
-          routes: result.routes,
-          generatedAt: new Date().toISOString(),
-          weatherNote: result.weatherNote,
-          weather: result.weather,
-          locationName: result.locationName,
-          source: result.source,
-          fallbackReason: result.fallbackReason,
-        })
-      } catch (err: any) {
-        console.error('generateRoutes job failed:', err.message)
-        await failJob(jobId, { code: 'INTERNAL_ERROR', message: '路线生成失败，请重试' })
-      }
-    })(),
-  )
-
-  c.header('Cache-Control', 'no-store')
-  return c.json({ jobId })
-})
-
-// ── GET /job/:id ──
-// Poll for job result. Returns { status, result? } or { status, error? }
-planRoutes.get('/job/:id', async (c) => {
-  const jobId = c.req.param('id')
-  const job = await getJob(jobId)
-
-  if (!job) {
-    return c.json({ error: { code: 'JOB_NOT_FOUND', message: '任务不存在或已过期' } }, 404)
+    c.header('Cache-Control', 'no-store')
+    return c.json({
+      routes: result.routes,
+      generatedAt: new Date().toISOString(),
+      weatherNote: result.weatherNote,
+      weather: result.weather,
+      locationName: result.locationName,
+      source: result.source,
+      fallbackReason: result.fallbackReason,
+    })
+  } catch (err: any) {
+    console.error('generateRoutes failed:', err.message)
+    return c.json({
+      error: { code: 'INTERNAL_ERROR', message: '路线生成失败，请重试' },
+    }, 500)
   }
-
-  c.header('Cache-Control', 'no-store')
-
-  if (job.status === 'processing') {
-    return c.json({ status: 'processing' })
-  }
-
-  if (job.status === 'error') {
-    return c.json({ status: 'error', error: job.error }, 500)
-  }
-
-  return c.json({ status: 'done', result: job.result })
 })
 
 // ── POST /refine ──
-// Synchronous: LLM regeneration is fast enough to stay within 30s
 planRoutes.post('/refine', async (c) => {
   const body = await c.req.json()
   const { route, removeStopIndices, extraRequirements, city, weather, timeMinutes, distance } = body
@@ -117,7 +87,6 @@ planRoutes.post('/refine', async (c) => {
 })
 
 // ── POST /replace-stop ──
-// Synchronous: Amap around-search replaces one stop, well within 30s
 planRoutes.post('/replace-stop', async (c) => {
   const body = await c.req.json()
   const { route, stopIndex, preferences, distance, adcode } = body

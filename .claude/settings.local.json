@@ -76,7 +76,9 @@
       "Bash(/Users/chentao/Desktop/citywalk/node_modules/.bin/tsc -p /Users/chentao/Desktop/citywalk/server/tsconfig.json --outDir /tmp/citywalk-build-test)",
       "Bash(/Users/chentao/Desktop/citywalk/node_modules/.bin/tsc -p /Users/chentao/Desktop/citywalk/server/tsconfig.json)",
       "Read(//tmp/**)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(npx wrangler *)",
+      "Bash(npx esbuild *)"
     ]
   }
 }
