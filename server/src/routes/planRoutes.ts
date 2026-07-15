@@ -1,32 +1,138 @@
 import { Hono } from 'hono'
+import { ZodError } from 'zod'
 import type { Env } from '../config/env.js'
 import { generateRoutes } from '../services/routeGenerator.js'
 import { refinePlan, replaceStop } from '../services/aiPlannerService.js'
+import { badRequest } from '../middleware/errorHandler.js'
+import {
+  generateRequestSchema,
+  refineRequestSchema,
+  replaceStopRequestSchema,
+} from './planRoutes.schemas.js'
 
 const planRoutes = new Hono<{ Bindings: Env }>()
+
+/** Reject request bodies larger than 64 KiB. The largest legitimate payload
+ *  is a full Route + stops (~10 KB); anything much bigger is either a bug
+ *  or an abuse attempt. Check runs before json() to avoid parsing garbage. */
+const MAX_BODY_BYTES = 64 * 1024
+const DEDUPE_TTL_MS = 5_000
+
+interface DedupeEntry {
+  expiresAt: number
+  promise: Promise<unknown>
+}
+
+// Soft, best-effort dedupe only: this Map is local to one Cloudflare isolate.
+// It is NOT a distributed rate limiter and must never be described as one.
+// A successful result is reused for 5 seconds; failures are evicted immediately
+// so transient provider errors can be retried.
+const requestDedupe = new Map<string, DedupeEntry>()
+
+/** Test helper: isolate test cases from the 5-second module-level cache. */
+export function clearRequestDedupe(): void {
+  requestDedupe.clear()
+}
+
+async function dedupeKey(path: string, body: unknown): Promise<string> {
+  return `${path}::${JSON.stringify(body)}`
+}
+
+function withRequestDedupe<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const now = Date.now()
+  const existing = requestDedupe.get(key)
+  if (existing && existing.expiresAt > now) {
+    return existing.promise as Promise<T>
+  }
+  if (existing) requestDedupe.delete(key)
+
+  const promise = run()
+  requestDedupe.set(key, { expiresAt: now + DEDUPE_TTL_MS, promise })
+
+  // Do not cache failures — only identical successful requests get the 5s reuse.
+  void promise.catch(() => {
+    if (requestDedupe.get(key)?.promise === promise) requestDedupe.delete(key)
+  })
+  setTimeout(() => {
+    if (requestDedupe.get(key)?.promise === promise) requestDedupe.delete(key)
+  }, DEDUPE_TTL_MS)
+
+  return promise
+}
+
+async function parseJsonBody(c: import('hono').Context): Promise<unknown | Response> {
+  const lenHeader = c.req.header('content-length')
+  if (lenHeader) {
+    const len = Number(lenHeader)
+    if (Number.isFinite(len) && len > MAX_BODY_BYTES) {
+      return c.json(
+        { error: { code: 'PAYLOAD_TOO_LARGE', message: '请求体过大' } },
+        413,
+      )
+    }
+  }
+  try {
+    const text = await c.req.text()
+    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
+      return c.json(
+        { error: { code: 'PAYLOAD_TOO_LARGE', message: '请求体过大' } },
+        413,
+      )
+    }
+    return JSON.parse(text) as unknown
+  } catch {
+    return c.json(
+      { error: { code: 'INVALID_JSON', message: '请求格式错误' } },
+      400,
+    )
+  }
+}
 
 // ── POST /generate ──
 // Synchronous: LLM + Amap typically completes within 10-20s, well within
 // the 30s wall-time limit. No more KV/polling complexity.
 planRoutes.post('/generate', async (c) => {
-  const body = await c.req.json()
-  const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, customCuisine, customScenic, customWander } = body
+  const raw = await parseJsonBody(c)
+  if (raw instanceof Response) return raw
 
-  if (lat == null || lng == null || timeOption == null || distance == null || !preferences?.length) {
-    return c.json({
-      error: { code: 'INVALID_PARAMS', message: '请提供位置、时间、距离和至少一个偏好' },
-    }, 400)
+  let input
+  try {
+    input = generateRequestSchema.parse(raw)
+  } catch (err) {
+    if (err instanceof ZodError) return badRequest(c, err)
+    throw err
   }
 
-  const mergedCuisine = [...(cuisineTypes || []), ...(customCuisine || [])]
-  const mergedScenic = [...(scenicTypes || []), ...(customScenic || [])]
-  const mergedWander = [...(wanderTypes || []), ...(customWander || [])]
+  // Custom free-text tags are appended to the typed enum arrays and passed
+  // through as-is; downstream code (aiPlannerService) uses them as keyword
+  // hints via `extractCuisineKeyword` / label maps, treating unknown strings
+  // gracefully. This preserves the pre-Zod behaviour where these fields were
+  // never enum-checked at all.
+  const mergedCuisine = [
+    ...(input.cuisineTypes || []),
+    ...(input.customCuisine || []),
+  ] as import('../types/route.js').CuisineType[]
+  const mergedScenic = [
+    ...(input.scenicTypes || []),
+    ...(input.customScenic || []),
+  ] as import('../types/route.js').ScenicType[]
+  const mergedWander = [
+    ...(input.wanderTypes || []),
+    ...(input.customWander || []),
+  ] as import('../types/route.js').WanderType[]
 
   try {
-    const result = await generateRoutes({
-      lat, lng, timeOption, distance, preferences,
-      cuisineTypes: mergedCuisine, scenicTypes: mergedScenic, wanderTypes: mergedWander,
-    })
+    const key = await dedupeKey('/generate', input)
+    const result = await withRequestDedupe(key, () => generateRoutes({
+      lat: input.lat,
+      lng: input.lng,
+      timeOption: input.timeOption,
+      distance: input.distance,
+      preferences: input.preferences,
+      cuisineTypes: mergedCuisine,
+      scenicTypes: mergedScenic,
+      wanderTypes: mergedWander,
+    }))
 
     if (result.routes.length === 0) {
       return c.json({
@@ -44,8 +150,9 @@ planRoutes.post('/generate', async (c) => {
       source: result.source,
       fallbackReason: result.fallbackReason,
     })
-  } catch (err: any) {
-    console.error('generateRoutes failed:', err.message)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('generateRoutes failed:', msg)
     return c.json({
       error: { code: 'INTERNAL_ERROR', message: '路线生成失败，请重试' },
     }, 500)
@@ -54,27 +161,30 @@ planRoutes.post('/generate', async (c) => {
 
 // ── POST /refine ──
 planRoutes.post('/refine', async (c) => {
-  const body = await c.req.json()
-  const { route, removeStopIndices, extraRequirements, city, weather, timeMinutes, distance } = body
+  const raw = await parseJsonBody(c)
+  if (raw instanceof Response) return raw
 
-  if (!route || !route.stops?.length) {
-    return c.json({
-      error: { code: 'INVALID_PARAMS', message: '请提供需要优化的路线' },
-    }, 400)
+  let input
+  try {
+    input = refineRequestSchema.parse(raw)
+  } catch (err) {
+    if (err instanceof ZodError) return badRequest(c, err)
+    throw err
   }
 
-  const refined = await refinePlan({
-    route,
-    removeStopIndices: removeStopIndices || [],
-    extraRequirements,
-    position: route.stops[0]
-      ? { lat: route.stops[0].lat, lng: route.stops[0].lng }
+  const key = await dedupeKey('/refine', input)
+  const refined = await withRequestDedupe(key, () => refinePlan({
+    route: input.route,
+    removeStopIndices: input.removeStopIndices,
+    extraRequirements: input.extraRequirements,
+    position: input.route.stops[0]
+      ? { lat: input.route.stops[0].lat, lng: input.route.stops[0].lng }
       : { lat: 0, lng: 0 },
-    city: city || '',
-    weather: weather || '晴',
-    timeMinutes: timeMinutes || 240,
-    distance: distance || 0,
-  })
+    city: input.city,
+    weather: input.weather,
+    timeMinutes: input.timeMinutes,
+    distance: input.distance,
+  }))
 
   if (!refined) {
     return c.json({
@@ -88,22 +198,25 @@ planRoutes.post('/refine', async (c) => {
 
 // ── POST /replace-stop ──
 planRoutes.post('/replace-stop', async (c) => {
-  const body = await c.req.json()
-  const { route, stopIndex, preferences, distance, adcode } = body
+  const raw = await parseJsonBody(c)
+  if (raw instanceof Response) return raw
 
-  if (!route || !route.stops?.length || typeof stopIndex !== 'number' || !route.stops[stopIndex]) {
-    return c.json({
-      error: { code: 'INVALID_PARAMS', message: '请提供有效的路线和要替换的地点' },
-    }, 400)
+  let input
+  try {
+    input = replaceStopRequestSchema.parse(raw)
+  } catch (err) {
+    if (err instanceof ZodError) return badRequest(c, err)
+    throw err
   }
 
-  const replaced = await replaceStop({
-    route,
-    stopIndex,
-    preferences: Array.isArray(preferences) && preferences.length ? preferences : ['food'],
-    distance: typeof distance === 'number' ? distance : 0,
-    adcode,
-  })
+  const key = await dedupeKey('/replace-stop', input)
+  const replaced = await withRequestDedupe(key, () => replaceStop({
+    route: input.route,
+    stopIndex: input.stopIndex,
+    preferences: input.preferences,
+    distance: input.distance,
+    adcode: input.adcode,
+  }))
 
   if (!replaced) {
     return c.json({

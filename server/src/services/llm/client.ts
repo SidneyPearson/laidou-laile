@@ -7,7 +7,7 @@ export function initLlmClient(env: Env): void {
   _env = env
 }
 
-// ── Types (unchanged) ──
+// ── Types ─────────────────────────────────────────────
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
@@ -18,6 +18,37 @@ interface ChatCompletionParams {
   messages: ChatMessage[]
   temperature?: number
   maxTokens?: number
+}
+
+interface ChatCompletionResponse {
+  choices?: Array<{
+    message?: { content?: string }
+    finish_reason?: string
+  }>
+}
+
+class LlmRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+    public readonly code?: string,
+  ) {
+    super(message)
+    this.name = 'LlmRequestError'
+  }
+}
+
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException
+    ? err.name === 'AbortError'
+    : err instanceof Error && err.name === 'AbortError'
+}
+
+function isChatCompletionResponse(value: unknown): value is ChatCompletionResponse {
+  if (typeof value !== 'object' || value === null) return false
+  const choices = (value as Record<string, unknown>).choices
+  if (choices === undefined) return true
+  return Array.isArray(choices)
 }
 
 // ── Chat completion (fetch-based) ──
@@ -54,17 +85,17 @@ export async function chatCompletion(
       body,
       signal: controller.signal,
     })
-    clearTimeout(timer)
 
     if (!res.ok) {
-      // Synthesize axios-compatible error shape for fallback detection
-      const err: any = new Error(`LLM HTTP ${res.status}`)
-      err.response = { status: res.status }
-      throw err
+      throw new LlmRequestError(`LLM HTTP ${res.status}`, res.status)
     }
 
-    const data = await res.json() as any
-    const choice = data?.choices?.[0]
+    const data: unknown = await res.json()
+    if (!isChatCompletionResponse(data)) {
+      throw new Error('LLM returned malformed response')
+    }
+
+    const choice = data.choices?.[0]
     const content = choice?.message?.content
     const finishReason = choice?.finish_reason
 
@@ -77,15 +108,13 @@ export async function chatCompletion(
     }
 
     return content
-  } catch (err: any) {
-    clearTimeout(timer)
-    if (err.name === 'AbortError') {
-      // Synthesize axios-compatible error shape for fallback detection
-      const timeoutErr: any = new Error('LLM request timeout')
-      timeoutErr.code = 'ECONNABORTED'
-      throw timeoutErr
+  } catch (err: unknown) {
+    if (isAbortError(err)) {
+      throw new LlmRequestError('LLM request timeout', undefined, 'ECONNABORTED')
     }
     throw err
+  } finally {
+    clearTimeout(timer)
   }
 }
 
