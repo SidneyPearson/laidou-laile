@@ -6,7 +6,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 const api = axios.create({
   baseURL,
-  timeout: 30000, // 30s — within Pages wall-time limit
+  timeout: 50000, // 50s — v4-pro model can be slow for long prompts
   headers: { 'Content-Type': 'application/json' },
 })
 

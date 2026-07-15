@@ -172,7 +172,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
         { role: 'user', content: prompt },
       ],
       temperature: 0.5,
-    })
+    }, 25000)
   } catch (err: any) {
     console.error('Refine LLM call failed:', err.message)
     return null
@@ -713,8 +713,8 @@ async function generateFoodList(input: PlanInput): Promise<Route[] | null> {
     }
   }
 
-  // Take top candidates (max 20) for LLM to score
-  const candidates = filtered.slice(0, 20)
+  // Take top candidates (max 8) for LLM to score — fewer tokens = faster response
+  const candidates = filtered.slice(0, 8)
 
   // Step 2: Build prompt for LLM scoring
   const poiTable = candidates.map((p, i) =>
@@ -743,7 +743,7 @@ ${poiTable}
 }
 按 score 从高到低排序。`
 
-  // Step 3: Call LLM
+  // Step 3: Call LLM (18s timeout — fast fail to plain list, no retry)
   let raw: string
   try {
     raw = await chatCompletionWithFallback({
@@ -752,7 +752,8 @@ ${poiTable}
         { role: 'user', content: scoringPrompt },
       ],
       temperature: 0.5,
-    })
+      maxTokens: 1500, // scoring output is small, cap to speed up
+    }, 15000)
   } catch {
     // LLM failed → return plain list without AI scores
     return buildPlainFoodList(candidates, input)
@@ -1106,7 +1107,8 @@ ${stopList}
         { role: 'user', content: prompt },
       ],
       temperature: 0.5,
-    })
+      maxTokens: 1500,
+    }, 12000)
   } catch {
     return routes
   }
@@ -1230,7 +1232,7 @@ ${poiTable}
         { role: 'user', content: prompt },
       ],
       temperature: 0.5,
-    })
+    }, 22000)
   } catch {
     return buildSimpleThemedRoutes(candidates, preferences, fallbackKeywords, input)
   }
@@ -1376,7 +1378,7 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
     singleRoute: isDayTrip,
   })
 
-  // Step 2: Call LLM
+  // Step 2: Call LLM (25s timeout for general route generation)
   let raw: string
   try {
     raw = await chatCompletionWithFallback({
@@ -1385,7 +1387,7 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.7,
-    })
+    }, 25000)
   } catch {
     return null // → fallback
   }
@@ -1393,7 +1395,7 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
   // Step 3: Parse & validate JSON
   let validated = parseAndValidate(raw)
 
-  // Retry once on schema failure
+  // Retry once on schema failure (shorter leash — primary already succeeded)
   if (!validated) {
     const errors = formatValidationErrors(raw)
     const retryPrompt = `${userPrompt}\n\n## ⚠️ 上次格式错误\n${errors}\n\n请修正后重新输出 JSON。`
@@ -1404,7 +1406,7 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
           { role: 'user', content: retryPrompt },
         ],
         temperature: 0.3,
-      })
+      }, 18000)
       validated = parseAndValidate(raw)
     } catch {
       // retry failed → fallback

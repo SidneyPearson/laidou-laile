@@ -7,9 +7,8 @@ const envSchema = z.object({
   AMAP_WEB_API_KEY: z.string().min(1),
   LLM_API_KEY: z.string().min(1),
   LLM_BASE_URL: z.string().default('https://api.deepseek.com/v1'),
-  LLM_MODEL: z.string().default('deepseek-v4-flash'),
-  LLM_FALLBACK_MODEL: z.string().default('deepseek-v4-pro'),
-  LLM_TIMEOUT_MS: z.coerce.number().default(25000),
+  LLM_MODEL: z.string().default('deepseek-v4-pro'),
+  LLM_TIMEOUT_MS: z.coerce.number().default(35000),
   AMAP_TIMEOUT_MS: z.coerce.number().default(10000),
 })
 

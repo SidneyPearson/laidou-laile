@@ -25,11 +25,13 @@ interface ChatCompletionParams {
 export async function chatCompletion(
   params: ChatCompletionParams,
   model?: string,
+  timeoutMs?: number,
 ): Promise<string> {
   if (!_env) throw new Error('LLM client not initialized. Call initLlmClient(env) first.')
 
   const url = `${_env.LLM_BASE_URL}/chat/completions`
   const usedModel = model || _env.LLM_MODEL
+  const effectiveTimeout = timeoutMs ?? _env.LLM_TIMEOUT_MS
 
   const body = JSON.stringify({
     model: usedModel,
@@ -40,7 +42,7 @@ export async function chatCompletion(
   })
 
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), _env.LLM_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), effectiveTimeout)
 
   try {
     const res = await fetch(url, {
@@ -87,25 +89,11 @@ export async function chatCompletion(
   }
 }
 
-// ── Fallback (unchanged logic) ──
-
+/** Chat completion — single attempt, no retry. Caller handles timeoutMs. */
 export async function chatCompletionWithFallback(
   params: ChatCompletionParams,
+  timeoutMs?: number,
 ): Promise<string> {
   if (!_env) throw new Error('LLM client not initialized. Call initLlmClient(env) first.')
-
-  try {
-    return await chatCompletion(params, _env.LLM_MODEL)
-  } catch (err: any) {
-    const isRetryable =
-      err.code === 'ECONNABORTED' ||
-      err.response?.status >= 500 ||
-      err.response?.status === 429
-
-    if (isRetryable && _env.LLM_FALLBACK_MODEL !== _env.LLM_MODEL) {
-      console.log(`LLM primary model failed, falling back to ${_env.LLM_FALLBACK_MODEL}`)
-      return await chatCompletion(params, _env.LLM_FALLBACK_MODEL)
-    }
-    throw err
-  }
+  return chatCompletion(params, _env.LLM_MODEL, timeoutMs)
 }
