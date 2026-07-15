@@ -4,6 +4,7 @@ import { POPULAR_CITIES, type City, type Attraction } from '../data/popularCitie
 
 const emit = defineEmits<{
   select: [attraction: Attraction, city: City]
+  cancel: []
 }>()
 
 const selectedCity = ref<City | null>(null)
@@ -28,7 +29,18 @@ function goBack() {
   <div class="space-y-3">
     <!-- City list -->
     <template v-if="showCities">
-      <p class="text-xs text-gray-400 text-center mb-2">选择一个热门旅游城市</p>
+      <div class="flex items-center gap-3 mb-3">
+        <button
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-white
+                 border border-gray-100 text-gray-400 active:bg-gray-50 flex-shrink-0"
+          @click="emit('cancel')"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <p class="text-sm font-semibold text-gray-800">选择热门旅游城市</p>
+      </div>
       <div class="grid grid-cols-2 gap-2.5">
         <button
           v-for="city in POPULAR_CITIES"

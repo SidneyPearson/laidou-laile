@@ -16,15 +16,14 @@ export type ScenicType = 'popular' | 'street'
 export type WanderType = 'shopping' | 'cafe' | 'entertainment' | 'hidden' | 'museum'
 
 // ── Distance options ──
-export type DistanceOption = 0 | 500 | 1000 | 2000 | 3000 | 5000
+export type DistanceOption = 0 | 500 | 1000 | 3000 | 5000
 
 // ── Time options ──
-export type TimeOption = 30 | 60 | 120 | 240 | 480
+export type TimeOption = 60 | 120 | 240 | 480
 
 // ── Labels ────────────────────────────────────────────
 
 export const TIME_LABELS: Record<TimeOption, string> = {
-  30: '30分钟',
   60: '1小时',
   120: '2小时',
   240: '半天',
@@ -35,7 +34,6 @@ export const DISTANCE_LABELS: Record<DistanceOption, string> = {
   0: '全城范围',
   500: '500m',
   1000: '1km',
-  2000: '2km',
   3000: '3km',
   5000: '5km',
 }

@@ -84,7 +84,7 @@ async function handleRefine() {
       city: locationName.value,
       weather: weatherNote.value || '晴',
       timeMinutes: Number(route.query.timeOption) || 240,
-      distance: Number(route.query.distance) || 2000,
+      distance: Number(route.query.distance) || 1000,
     })
     routes.value = res.routes
     removedIndices.value = new Set()

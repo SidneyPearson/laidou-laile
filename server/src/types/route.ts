@@ -12,9 +12,9 @@ export type ScenicType = 'popular' | 'street'
 
 export type WanderType = 'shopping' | 'cafe' | 'entertainment' | 'hidden' | 'museum'
 
-export type DistanceOption = 0 | 500 | 1000 | 2000 | 3000 | 5000
+export type DistanceOption = 0 | 500 | 1000 | 3000 | 5000
 
-export type TimeOption = 30 | 60 | 120 | 240 | 480
+export type TimeOption = 60 | 120 | 240 | 480
 
 export interface Stop {
   name: string

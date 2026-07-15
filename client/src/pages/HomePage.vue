@@ -6,7 +6,6 @@ import { useRouteRequest } from '../composables/useRouteRequest'
 import { useHistory } from '../composables/useHistory'
 import LocationGate from '../components/LocationGate.vue'
 import CityPicker from '../components/CityPicker.vue'
-import AmapLocationPicker from '../components/AmapLocationPicker.vue'
 import LocationMap from '../components/LocationMap.vue'
 import TimeSelector from '../components/TimeSelector.vue'
 import DistanceSelector from '../components/DistanceSelector.vue'
@@ -33,17 +32,10 @@ const customWander = ref<string[]>([])
 
 const hasRequestedLocation = ref(false)
 const showCityPicker = ref(false)
-const showAmapPicker = ref(false)
 
 function handleCitySelect(attraction: Attraction, city: City) {
   setManualLocation(attraction.lat, attraction.lng, `${city.name} · ${attraction.name}`)
   showCityPicker.value = false
-  hasRequestedLocation.value = true
-}
-
-function handleAmapConfirm(payload: { lat: number; lng: number; name: string; address: string }) {
-  setManualLocation(payload.lat, payload.lng, payload.name)
-  showAmapPicker.value = false
   hasRequestedLocation.value = true
 }
 
@@ -142,11 +134,11 @@ async function handleGenerate() {
 
   <div class="h-full flex flex-col max-w-md mx-auto">
     <!-- Header -->
-    <header class="flex-shrink-0 pt-12 pb-6 px-5 text-center relative">
+    <header class="flex-shrink-0 pt-24 pb-6 px-5 text-center relative">
       <h1 class="text-3xl font-bold text-gray-900 mb-1">来都来了</h1>
       <p class="text-sm text-gray-400">不用做攻略，到了就会玩</p>
       <button
-        class="absolute right-5 top-12 w-9 h-9 flex items-center justify-center rounded-full bg-white
+        class="absolute right-5 top-24 w-9 h-9 flex items-center justify-center rounded-full bg-white
                shadow-sm border border-gray-100 text-gray-400 active:bg-gray-50 transition-colors"
         aria-label="历史路线"
         @click="router.push({ name: 'history' })"
@@ -162,17 +154,9 @@ async function handleGenerate() {
     <div class="flex-1 overflow-auto px-5">
       <!-- Location -->
       <section class="mb-6">
-        <!-- Amap map picker -->
-        <div v-if="showAmapPicker && !coords" class="py-2">
-          <AmapLocationPicker
-            @confirm="handleAmapConfirm"
-            @cancel="showAmapPicker = false"
-          />
-        </div>
-
         <!-- City Picker (when activated) -->
-        <div v-else-if="showCityPicker && !coords" class="py-2">
-          <CityPicker @select="handleCitySelect" />
+        <div v-if="showCityPicker && !coords" class="py-2">
+          <CityPicker @select="handleCitySelect" @cancel="showCityPicker = false" />
         </div>
 
         <!-- Location not yet set -->
@@ -187,25 +171,10 @@ async function handleGenerate() {
           <button
             class="mt-3 w-full py-3 rounded-xl bg-white border border-gray-200
                    text-sm font-medium text-gray-600 active:bg-gray-50 transition-colors"
-            @click="showAmapPicker = true"
-          >
-            🗺️ 地图上选位置
-          </button>
-          <button
-            class="mt-2 w-full py-3 rounded-xl bg-white border border-gray-200
-                   text-sm font-medium text-gray-600 active:bg-gray-50 transition-colors"
             @click="showCityPicker = true"
           >
             🏙️ 热门旅游城市
           </button>
-        </div>
-
-        <!-- Amap map picker (also available when location already set) -->
-        <div v-else-if="showAmapPicker" class="py-2">
-          <AmapLocationPicker
-            @confirm="handleAmapConfirm"
-            @cancel="showAmapPicker = false"
-          />
         </div>
 
         <!-- Location set (via GPS or city picker) -->
@@ -227,14 +196,6 @@ async function handleGenerate() {
             @request="handleRequestLocation"
           />
         </template>
-        <p v-if="coords && !showAmapPicker" class="text-center mt-1">
-          <button
-            class="text-xs text-gray-400 underline active:text-gray-600"
-            @click="showAmapPicker = true"
-          >
-            🗺️ 在地图上换位置
-          </button>
-        </p>
       </section>
 
       <!-- Preferences (only show after location is set) -->
