@@ -3,16 +3,17 @@ main = "src/worker.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-kv_namespaces = [
-  { binding = "JOBS", id = "59043001e04a434bb1997ea93a6ab00b" }
-]
+# Deployed as Cloudflare Pages `_worker.js` (Advanced Mode).
+# Front + API share the same origin (laidou-laile.pages.dev),
+# so no CORS middleware is required at runtime.
 
 [vars]
 NODE_ENV = "production"
-CORS_ORIGIN = "https://laidou-laile.pages.dev"
 LLM_BASE_URL = "https://api.deepseek.com/v1"
-LLM_MODEL = "deepseek-v4-flash"
-LLM_FALLBACK_MODEL = "deepseek-v4-pro"
-LLM_TIMEOUT_MS = "25000"
+LLM_MODEL = "deepseek-v4-pro"
+LLM_TIMEOUT_MS = "35000"
 AMAP_TIMEOUT_MS = "10000"
-PORT = "3000"
+
+# Secrets (set with `wrangler pages secret put`, never here):
+#   LLM_API_KEY
+#   AMAP_WEB_API_KEY

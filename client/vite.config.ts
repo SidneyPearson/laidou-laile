@@ -10,7 +10,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 9090,
     host: '0.0.0.0', // allow LAN access from mobile
     allowedHosts: ['.loca.lt', 'localhost'], // allow tunnel domains
     proxy: {

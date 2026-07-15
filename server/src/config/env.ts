@@ -1,9 +1,7 @@
 import { z } from 'zod'
 
 const envSchema = z.object({
-  PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production']).default('production'),
-  CORS_ORIGIN: z.string().default('*'),
   AMAP_WEB_API_KEY: z.string().min(1),
   LLM_API_KEY: z.string().min(1),
   LLM_BASE_URL: z.string().default('https://api.deepseek.com/v1'),
@@ -14,9 +12,8 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>
 
-/** Hono Bindings type — what ctx.env provides in Workers/Pages */
+/** Hono Bindings type — what ctx.env provides in Pages `_worker.js`. */
 export type Bindings = Env & {
-  JOBS: KVNamespace
   ASSETS?: { fetch: (request: Request) => Promise<Response> }
 }
 
@@ -24,3 +21,4 @@ export type Bindings = Env & {
 export function getEnv(envLike: unknown): Env {
   return envSchema.parse(envLike)
 }
+

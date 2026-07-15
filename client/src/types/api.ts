@@ -54,10 +54,3 @@ export interface ReplaceStopRequest {
 export interface ReplaceStopResponse {
   route: import('./route').Route
 }
-
-// ── Job polling ──
-export interface JobPollResponse {
-  status: 'processing' | 'done' | 'error'
-  result?: GenerateRoutesResponse & { source: string; fallbackReason: string | null }
-  error?: { code: string; message: string }
-}
