@@ -1,5 +1,25 @@
 # 来都来了 · 更新日志
 
+## 2026-07-15（工程化重构）
+
+### 变更
+- **架构迁移**：Express → Cloudflare Pages `_worker.js` 高级模式，前后端同域 `laidou-laile.pages.dev`
+- **模型统一**：`deepseek-v4-pro` 单一模型，移除了 fallback 机制和冗余配置
+- **KV 轮询移除**：`POST /api/plan/generate` 改为纯同步，不再依赖 KV 轮询
+- **输入校验**：三个 API 端点新增 Zod 严格校验（`planRoutes.schemas.ts`），统一错误格式 `{ error: { code, message } }`
+- **代码拆分**：`aiPlannerService.ts`（1835 行）拆分为 `services/planner/` 下 12 个模块，最大文件 441 行
+- **废弃代码清理**：删除 `jobStore.ts`、`AmapLocationPicker.vue`、`JobPollResponse` 类型、KV 绑定、`render.yaml`、`vercel.json`
+- **配置一致化**：`wrangler.toml`、`.env.example` 统一为 `deepseek-v4-pro`，清除失效字段
+- **限流策略**：请求体 64KB 上限、同 isolate 5 秒去重（输入+BODY 双重校验）
+- **测试覆盖**：新增 8 个 Vitest 测试文件（103 个测试用例），LLM/Amap 全 mock、确定性
+- **CI 引入**：GitHub Actions 自动化类型检查 + 测试 + 构建（Node 22，mock 密钥）
+- **文档补全**：README 覆盖安装/开发/部署/安全须知；CHANGELOG 追补
+
+### 修复
+- **`tsconfig.tsbuildinfo`** 从 git 移除，加入 `.gitignore`
+- **`as any` 类型弱化**：`llm/client.ts` 部分替换为 `unknown` + 类型守卫；`planRoutes.ts` 错误处理改用 `unknown` 捕获
+- **`vite.config.ts` 端口**：默认 5173 → 9090（对齐实际使用）
+
 ## 2026-06-22（第 2 天）
 
 ### 新增
