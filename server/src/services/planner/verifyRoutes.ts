@@ -6,6 +6,8 @@ import type { Route, Stop } from '../../types/route.js'
 import { FALSE_MATCH_RE } from './constants.js'
 import { parseRawPoi, type AmapRawPoi } from './poiMatching.js'
 import { estimateWalkDistFromStops, fmtDist } from './routeMetrics.js'
+import { filterUsablePois } from './poiQuality.js'
+import { estimateVisitDuration } from './timeBudget.js'
 
 /** LLM route shape before verification — LLM only provides stop names, we
  *  fill lng/lat/address/amapPoiId via Amap. */
@@ -54,9 +56,9 @@ export async function fallbackSearchStop(
         offset: 5, page: 1, extensions: 'all',
       },
     })
-    const pois = ((res.data.pois || []) as AmapRawPoi[])
+    const pois = filterUsablePois(((res.data.pois || []) as AmapRawPoi[])
       .map((raw) => parseRawPoi(raw, userLng, userLat))
-      .filter((p): p is AmapPOI => p !== null)
+      .filter((p): p is AmapPOI => p !== null))
 
     const candidates = pois.filter((p) => {
       if (maxDistance && maxDistance > 0 && p.distance > maxDistance) return false
@@ -195,9 +197,9 @@ export async function verifyAndEnrichRoutes(
             offset: 5, page: 1, extensions: 'all',
           },
         })
-        const fillPois = ((res.data.pois || []) as AmapRawPoi[])
+        const fillPois = filterUsablePois(((res.data.pois || []) as AmapRawPoi[])
           .map((raw) => parseRawPoi(raw, userLng, userLat))
-          .filter((p): p is AmapPOI => p !== null)
+          .filter((p): p is AmapPOI => p !== null))
           .filter((p) => {
             if (claimedIds.has(p.id)) return false
             if (typeFilter && !typeFilter.test(p.typecode)) return false
@@ -211,9 +213,7 @@ export async function verifyAndEnrichRoutes(
         if (fillPois.length > 0) {
           const fill = fillPois[0]
           claimedIds.add(fill.id)
-          const fillDur = fill.typecode.startsWith('0503') ? 25
-            : fill.typecode.startsWith('05') ? 30
-            : 25
+          const fillDur = estimateVisitDuration(fill)
           verifiedStops.push({
             name: fill.name,
             address: fill.address,

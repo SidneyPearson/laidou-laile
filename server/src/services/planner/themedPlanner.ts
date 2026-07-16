@@ -5,6 +5,7 @@ import type { AmapPOI } from '../../types/poi.js'
 import type { Route, Stop, PreferenceTag } from '../../types/route.js'
 import type { PlanInput } from './types.js'
 import { estimateWalkDistFromStops, fmtDist } from './routeMetrics.js'
+import { estimateVisitDuration } from './timeBudget.js'
 
 /**
  * Scenic-only without sub-types: search Amap for scenic POIs, LLM organizes
@@ -42,6 +43,7 @@ export async function generateThemedRoutes(
     adcode,
     wideMode: distance === 0,
     scenicKeywords,
+    customKeywords: preferences.includes('scenic') ? input.customScenic : input.customWander,
   })
 
   if (pois.length === 0) return null
@@ -187,7 +189,7 @@ export function buildSimpleThemedRoutes(
       return {
         name: p.name,
         address: p.address,
-        visitDurationMinutes: 40,
+        visitDurationMinutes: estimateVisitDuration(p),
         notes: `${p.address}，距您${fmtDist(dist)}`,
         amapPoiId: p.id,
         lng: p.lng,

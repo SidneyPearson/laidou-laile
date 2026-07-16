@@ -21,6 +21,10 @@ export interface PlanInput {
   scenicTypes?: string[]
   /** Wander sub-preferences */
   wanderTypes?: string[]
+  /** Free-text preferences stay separate from enum-backed options. */
+  customCuisine?: string[]
+  customScenic?: string[]
+  customWander?: string[]
   /** Adcode for Amap city-scoped search */
   adcode?: string
 }
@@ -43,6 +47,7 @@ export interface RefineInput {
   timeMinutes: number
   distance: number
   adcode?: string
+  preferences?: PreferenceTag[]
 }
 
 export interface ReplaceStopInput {
@@ -51,6 +56,8 @@ export interface ReplaceStopInput {
   preferences: PreferenceTag[]
   distance: number
   adcode?: string
+  timeMinutes?: number
+  origin?: { lat: number; lng: number }
 }
 
 // Re-export commonly-used domain types so planner submodules don't have to

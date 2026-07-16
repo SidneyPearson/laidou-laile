@@ -3,6 +3,8 @@ import { generateRoutes, ApiRequestError } from '../services/api'
 import type { GenerateRoutesRequest, GenerateRoutesResponse } from '../types/api'
 import type { Route } from '../types/route'
 
+export type RouteRequestOutcome = 'success' | 'cancelled' | 'error'
+
 // ── Singleton state — shared across all components ──────
 const routes = ref<Route[]>([])
 const locationName = ref('')
@@ -12,113 +14,140 @@ const loading = ref(false)
 const loadingStage = ref(0)
 const error = ref<ApiRequestError | null>(null)
 const lastResponse = ref<GenerateRoutesResponse | null>(null)
-let lastRequest: GenerateRoutesRequest | null = null
+const lastRequest = ref<GenerateRoutesRequest | null>(null)
+
 let stageTimer: ReturnType<typeof setTimeout> | null = null
+let retryTimer: ReturnType<typeof setTimeout> | null = null
+let retryResolve: ((continueRetry: boolean) => void) | null = null
 let abortController: AbortController | null = null
+let activeRequestId = 0
 
-// ── Helpers ─────────────────────────────────────────────
+function isRetryableError(value: unknown): boolean {
+  return value instanceof ApiRequestError && value.code === 'NETWORK_ERROR'
+}
 
-function isRetryableError(e: unknown): boolean {
-  if (e instanceof ApiRequestError) {
-    return e.code === 'NETWORK_ERROR' || e.code === 'LLM_TIMEOUT'
-  }
-  return false
+function isCancelledError(value: unknown): boolean {
+  return (value instanceof ApiRequestError && value.code === 'CANCELLED')
+    || (value instanceof DOMException && value.name === 'AbortError')
 }
 
 function isValidResponse(data: unknown): data is GenerateRoutesResponse {
-  return (
-    !!data &&
-    typeof data === 'object' &&
-    Array.isArray((data as any).routes) &&
-    typeof (data as any).locationName === 'string'
-  )
+  if (!data || typeof data !== 'object') return false
+  const candidate = data as Partial<GenerateRoutesResponse>
+  return Array.isArray(candidate.routes) && typeof candidate.locationName === 'string'
 }
 
-// ── Composable ──────────────────────────────────────────
+function clearStageTimer() {
+  if (stageTimer) clearTimeout(stageTimer)
+  stageTimer = null
+}
+
+function cancelRetryDelay() {
+  if (retryTimer) clearTimeout(retryTimer)
+  retryTimer = null
+  retryResolve?.(false)
+  retryResolve = null
+}
+
+function waitForRetry(requestId: number): Promise<boolean> {
+  cancelRetryDelay()
+  return new Promise(resolve => {
+    retryResolve = resolve
+    retryTimer = setTimeout(() => {
+      retryTimer = null
+      retryResolve = null
+      resolve(requestId === activeRequestId)
+    }, 1500)
+  })
+}
+
+function runStages(requestId: number) {
+  clearStageTimer()
+  stageTimer = setTimeout(() => {
+    if (loading.value && requestId === activeRequestId) loadingStage.value = 1
+    stageTimer = setTimeout(() => {
+      if (loading.value && requestId === activeRequestId) loadingStage.value = 2
+    }, 15000)
+  }, 3000)
+}
 
 export function useRouteRequest() {
-  async function fetchRoutes(req: GenerateRoutesRequest, retryCount = 0): Promise<void> {
-    // Clear stale state before starting
+  async function runAttempt(
+    req: GenerateRoutesRequest,
+    requestId: number,
+    retryCount: number,
+  ): Promise<RouteRequestOutcome> {
+    if (requestId !== activeRequestId) return 'cancelled'
+
+    const controller = new AbortController()
+    abortController = controller
+    try {
+      const data = await generateRoutes(req, controller.signal)
+      if (requestId !== activeRequestId) return 'cancelled'
+      if (!isValidResponse(data)) {
+        throw new ApiRequestError('INVALID_RESPONSE', '服务器返回格式异常，请重试')
+      }
+
+      routes.value = data.routes
+      locationName.value = data.locationName
+      weatherNote.value = data.weatherNote ?? null
+      weather.value = data.weather ?? null
+      lastResponse.value = data
+      return 'success'
+    } catch (caught: unknown) {
+      if (requestId !== activeRequestId || isCancelledError(caught)) return 'cancelled'
+
+      if (retryCount < 1 && isRetryableError(caught)) {
+        const shouldRetry = await waitForRetry(requestId)
+        if (!shouldRetry) return 'cancelled'
+        return runAttempt(req, requestId, retryCount + 1)
+      }
+
+      error.value = caught instanceof ApiRequestError
+        ? caught
+        : new ApiRequestError('UNKNOWN', '未知错误，请稍后重试')
+      return 'error'
+    }
+  }
+
+  async function fetchRoutes(req: GenerateRoutesRequest): Promise<RouteRequestOutcome> {
+    const previous = abortController
+    const requestId = ++activeRequestId
+    previous?.abort()
+    cancelRetryDelay()
+
     loading.value = true
     loadingStage.value = 0
     error.value = null
     routes.value = []
-    lastRequest = req
+    lastRequest.value = req
+    runStages(requestId)
 
-    // Abort any in-flight request
-    if (abortController) {
-      abortController.abort()
-    }
-    abortController = new AbortController()
-
-    // Progress stages — staged delays: search quick, AI slow
-    if (stageTimer) clearTimeout(stageTimer)
-    const runStages = () => {
-      // Stage 1: AI 规划 (from 3s ~ 18s)
-      stageTimer = setTimeout(() => {
-        if (loading.value) loadingStage.value = 1
-        // Stage 2: 即将出炉 (after 18s)
-        stageTimer = setTimeout(() => {
-          if (loading.value) loadingStage.value = 2
-        }, 15000)
-      }, 3000)
-    }
-    runStages()
-
-    try {
-      const data = await generateRoutes(req, abortController.signal)
-
-      // Validate response structure before trusting it
-      if (!isValidResponse(data)) {
-        console.error('Invalid API response shape:', typeof data, Object.keys(data ?? {}))
-        throw new ApiRequestError('INVALID_RESPONSE', '服务器返回格式异常，请重试')
-      }
-
-      loadingStage.value = 2 // final stage
-      routes.value = data.routes
-      locationName.value = data.locationName
-      weatherNote.value = data.weatherNote ?? null
-      weather.value = data.weather || null
-      lastResponse.value = data
-    } catch (e: unknown) {
-      // Auto-retry on network errors (once)
-      if (retryCount < 1 && isRetryableError(e)) {
-        console.log(`Retrying request (attempt ${retryCount + 1})...`)
-        // Small delay before retry
-        await new Promise((r) => setTimeout(r, 1500))
-        return fetchRoutes(req, retryCount + 1)
-      }
-
-      if (e instanceof ApiRequestError) {
-        error.value = e
-      } else if (e instanceof DOMException && e.name === 'AbortError') {
-        error.value = new ApiRequestError('CANCELLED', '请求已取消')
-      } else {
-        console.error('Unexpected fetch error:', e)
-        error.value = new ApiRequestError('UNKNOWN', '未知错误，请稍后重试')
-      }
-    } finally {
-      if (stageTimer) { clearTimeout(stageTimer); stageTimer = null }
+    const outcome = await runAttempt(req, requestId, 0)
+    if (requestId === activeRequestId) {
+      clearStageTimer()
+      cancelRetryDelay()
+      abortController = null
       loading.value = false
       loadingStage.value = 0
-      abortController = null
+      if (outcome === 'cancelled') error.value = null
     }
+    return outcome
   }
 
   function cancelRequest() {
-    if (abortController) {
-      abortController.abort()
-      abortController = null
-    }
+    activeRequestId++
+    abortController?.abort()
+    abortController = null
+    cancelRetryDelay()
+    clearStageTimer()
     loading.value = false
     loadingStage.value = 0
-    if (stageTimer) { clearTimeout(stageTimer); stageTimer = null }
+    error.value = null
   }
 
-  async function retry() {
-    if (lastRequest) {
-      await fetchRoutes(lastRequest)
-    }
+  async function retry(): Promise<RouteRequestOutcome> {
+    return lastRequest.value ? fetchRoutes(lastRequest.value) : 'error'
   }
 
   return {

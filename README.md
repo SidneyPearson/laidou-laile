@@ -12,7 +12,7 @@
 | 后端 | Hono (Cloudflare Pages `_worker.js` 高级模式) |
 | AI | DeepSeek `deepseek-v4-pro`（单一模型，无 fallback） |
 | 地图 | 高德地图 JS API（前端）+ 高德 Web Services（后端，POI 搜索/验证/天气） |
-| 测试 | Vitest（103 个测试用例，全 mock 确定性） |
+| 测试 | Vitest（147 个测试用例，全 mock 确定性） |
 | 部署 | Cloudflare Pages（`laidou-laile.pages.dev`） |
 | CI | GitHub Actions |
 
@@ -92,7 +92,7 @@ npm run dev -w client
 ### 运行测试
 
 ```bash
-# 运行所有测试（103 个，全 mock，不消耗第三方 API）
+# 运行所有测试（147 个，全 mock，不消耗第三方 API）
 npm test
 
 # 查看测试覆盖率

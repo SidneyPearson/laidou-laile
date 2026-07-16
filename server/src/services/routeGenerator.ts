@@ -3,6 +3,7 @@ import { reverseGeocode } from './amap/geocode.js'
 import { getWeather } from './amap/weather.js'
 import { generatePlan, buildFallbackRoutes } from './aiPlannerService.js'
 import type { Route, PreferenceTag, TimeOption, CuisineType, ScenicType, WanderType, DistanceOption } from '../types/route.js'
+import { applyRoutePolicies } from './planner/routePolicy.js'
 
 interface GenerateParams {
   lat: number
@@ -13,6 +14,9 @@ interface GenerateParams {
   cuisineTypes?: CuisineType[]
   scenicTypes?: ScenicType[]
   wanderTypes?: WanderType[]
+  customCuisine?: string[]
+  customScenic?: string[]
+  customWander?: string[]
 }
 
 interface GenerateResult {
@@ -31,7 +35,8 @@ interface GenerateResult {
  * 3. If AI fails, fall back to Amap around-search + rule-based builder
  */
 export async function generateRoutes(params: GenerateParams): Promise<GenerateResult> {
-  const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes } = params
+  const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes,
+    customCuisine, customScenic, customWander } = params
 
   // Step 1: geocode + weather (no POI search — LLM goes first)
   const geoInfo = await reverseGeocode(lat, lng)
@@ -63,6 +68,9 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
     cuisineTypes,
     scenicTypes,
     wanderTypes,
+    customCuisine,
+    customScenic,
+    customWander,
     adcode: searchAdcode,
   })
 
@@ -77,7 +85,7 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
         isRainy: weatherInfo.isRainy,
       } : null,
       source: 'ai',
-      fallbackReason: null,
+      fallbackReason: plan.fallbackReason,
     }
   }
 
@@ -88,12 +96,20 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
     cuisineTypes, scenicTypes, wanderTypes,
     adcode: searchAdcode,
     wideMode: distance === 0,
+    customKeywords: [...(customCuisine ?? []), ...(customScenic ?? []), ...(customWander ?? [])],
   })
 
   const fallbackRoutes = buildFallbackRoutes(pois, timeOption, preferences)
+  const guardedFallback = applyRoutePolicies(fallbackRoutes, {
+    origin: { lat, lng },
+    timeMinutes: timeOption,
+    explorationDistance: distance,
+    preferences,
+    customKeywords: [...(customCuisine ?? []), ...(customScenic ?? []), ...(customWander ?? [])],
+  })
 
   return {
-    routes: fallbackRoutes,
+    routes: guardedFallback.routes,
     locationName,
     weatherNote: weatherInfo?.note || null,
     weather: weatherInfo ? {
@@ -102,6 +118,6 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
       isRainy: weatherInfo.isRainy,
     } : null,
     source: 'fallback',
-    fallbackReason: plan.fallbackReason || 'AI服务暂不可用，已为您生成基础路线',
+    fallbackReason: guardedFallback.fallbackReason || plan.fallbackReason || 'AI服务暂不可用，已为您生成基础路线',
   }
 }

@@ -15,7 +15,7 @@ import type { Route, Stop } from '../types/route'
 
 const router = useRouter()
 const route = useRoute()
-const { routes, locationName, weatherNote, weather, loading, error, retry } = useRouteRequest()
+const { routes, locationName, weatherNote, weather, loading, error, retry, lastRequest } = useRouteRequest()
 
 const selectedId = ref<string | null>(null)
 
@@ -85,6 +85,8 @@ async function handleRefine() {
       weather: weatherNote.value || '晴',
       timeMinutes: Number(route.query.timeOption) || 240,
       distance: Number(route.query.distance) || 1000,
+      preferences: preferences.value,
+      origin: lastRequest.value ? { lat: lastRequest.value.lat, lng: lastRequest.value.lng } : undefined,
     })
     routes.value = res.routes
     removedIndices.value = new Set()
@@ -117,6 +119,8 @@ async function handleReplaceStop(index: number) {
       stopIndex: index,
       preferences: preferences.value.length ? preferences.value : ['food'],
       distance: Number(route.query.distance) || 0,
+      timeMinutes: Number(route.query.timeOption) || undefined,
+      origin: lastRequest.value ? { lat: lastRequest.value.lat, lng: lastRequest.value.lng } : undefined,
     })
     routes.value = [res.route]
     removedIndices.value = new Set() // indices shifted after re-sort
@@ -177,6 +181,7 @@ function goBack() {
         class="w-9 h-9 flex items-center justify-center rounded-full bg-white
                shadow-sm border border-gray-100 text-gray-500 active:bg-gray-50"
         @click="goBack"
+        aria-label="返回"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 18l-6-6 6-6"/>

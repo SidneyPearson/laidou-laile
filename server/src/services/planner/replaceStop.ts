@@ -1,10 +1,10 @@
-import { haversineDist } from '../../utils/geo.js'
 import { normalizeName } from '../../utils/text.js'
 import type { Stop, Route } from '../../types/route.js'
 import type { ReplaceStopInput } from './types.js'
 import { PREFERENCE_REPLACE_KEYWORDS } from './constants.js'
 import { searchSingleCuisinePOI } from './poiMatching.js'
 import { estimateWalkDistFromStops, extractCuisineKeyword } from './routeMetrics.js'
+import { applyRoutePolicies } from './routePolicy.js'
 
 /**
  * Replace a single stop with a different nearby place of the same type.
@@ -46,8 +46,9 @@ export async function replaceStop(input: ReplaceStopInput): Promise<Route | null
     amapPoiId: found.id,
     lng: found.lng,
     lat: found.lat,
-    distanceMeters: found.distance > 0 ? found.distance
-      : Math.round(haversineDist(target.lat, target.lng, found.lat, found.lng)),
+    // Search distance is relative to the replaced stop; routePolicy recomputes
+    // the displayed value against the original route origin.
+    distanceMeters: undefined,
   }
 
   const newStops = route.stops.map((s, i) => (i === stopIndex ? newStop : s))
@@ -70,11 +71,17 @@ export async function replaceStop(input: ReplaceStopInput): Promise<Route | null
   const totalDur = newStops.reduce((s, st) => s + st.visitDurationMinutes, 0)
     + Math.ceil((walkDist / 100) * 1.5)
 
-  return {
+  const result: Route = {
     ...route,
     id: crypto.randomUUID(),
     stops: newStops,
     walkingDistanceMeters: walkDist,
     totalDurationMinutes: totalDur,
   }
+  return applyRoutePolicies([result], {
+    origin: input.origin ?? { lat: route.stops[0].lat, lng: route.stops[0].lng },
+    timeMinutes: input.timeMinutes ?? Math.max(60, route.totalDurationMinutes),
+    explorationDistance: distance,
+    preferences,
+  }).routes[0] ?? null
 }

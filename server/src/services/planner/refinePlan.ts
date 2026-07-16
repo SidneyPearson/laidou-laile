@@ -8,6 +8,7 @@ import type { Stop, Route } from '../../types/route.js'
 import type { RefineInput } from './types.js'
 import { searchSingleCuisinePOI } from './poiMatching.js'
 import { extractCuisineKeyword } from './routeMetrics.js'
+import { applyRoutePolicies } from './routePolicy.js'
 
 /**
  * Refine an existing day-trip route: remove specified stops, optionally add
@@ -25,13 +26,17 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
 
   // Frontend-only: no extra requirements → just return trimmed route
   if (!extraRequirements) {
-    return {
+    const trimmed: Route = {
       ...route,
       id: crypto.randomUUID(),
       stops: keptStops,
       totalDurationMinutes: keptStops.reduce((s, st) => s + st.visitDurationMinutes, 0) + 10,
       walkingDistanceMeters: Math.max(0, route.walkingDistanceMeters - removedStops.length * 200),
     }
+    return applyRoutePolicies([trimmed], {
+      origin: input.position, timeMinutes, explorationDistance: input.distance,
+      preferences: input.preferences?.length ? input.preferences : ['wander'],
+    }).routes[0] ?? null
   }
 
   // Use the geographic center of all kept stops (not just the first one) —
@@ -191,8 +196,8 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
         amapPoiId: verified.id,
         lng: verified.lng,
         lat: verified.lat,
-        distanceMeters: verified.distance > 0 ? verified.distance
-          : Math.round(haversineDist(centerLat, centerLng, verified.lat, verified.lng)),
+        // Recomputed against the original route origin by routePolicy below.
+        distanceMeters: undefined,
         photoTip: llmStop.photoTip,
       })
     } else {
@@ -234,7 +239,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
         amapPoiId: forced.id,
         lng: forced.lng,
         lat: forced.lat,
-        distanceMeters: forced.distance,
+        distanceMeters: undefined,
       })
       newStopsAdded++
       console.log(`Refine: force-added "${forced.name}" (${forced.distance}m, rating=${forced.rating})`)
@@ -284,7 +289,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
     if (tips.length < 10) tips = route.tips || ''
   }
 
-  return {
+  const result: Route = {
     id: crypto.randomUUID(),
     name: routeName,
     tagline: routeTagline,
@@ -293,4 +298,8 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
     walkingDistanceMeters: actualWalking,
     tips,
   }
+  return applyRoutePolicies([result], {
+    origin: input.position, timeMinutes, explorationDistance: input.distance,
+    preferences: input.preferences?.length ? input.preferences : ['wander'],
+  }).routes[0] ?? null
 }

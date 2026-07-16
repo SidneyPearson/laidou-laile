@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { Route } from '../types/route'
 import StopCard from './StopCard.vue'
 import NavButton from './NavButton.vue'
+import { formatOriginDistance } from '../utils/distance'
 
 const props = defineProps<{
   routes: Route[]
@@ -85,9 +86,6 @@ const metaMap = computed<RouteMeta[]>(() => {
   })
 })
 
-function fmtDist(m: number): string {
-  return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${m}m`
-}
 
 function handleSelect(route: Route) {
   emit('select', route)
@@ -170,7 +168,7 @@ function handleSelect(route: Route) {
                 {{ j + 1 }}
               </span>
               <span class="text-gray-700 truncate">{{ stop.name }}</span>
-              <span v-if="stop.distanceMeters != null" class="text-xs text-gray-400 ml-auto flex-shrink-0">{{ fmtDist(stop.distanceMeters) }}</span>
+              <span class="text-xs text-gray-400 ml-auto flex-shrink-0">{{ formatOriginDistance(stop.distanceMeters) }}</span>
             </div>
           </div>
         </div>

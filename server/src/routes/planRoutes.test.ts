@@ -86,7 +86,7 @@ describe('POST /api/plan/generate', () => {
     expect(res.headers.get('cache-control')).toBe('no-store')
   })
 
-  it('passes custom tags through as merged keyword arrays', async () => {
+  it('keeps custom tags separate from enum-backed options', async () => {
     const res = await post('/api/plan/generate', {
       ...valid,
       cuisineTypes: ['hotpot'],
@@ -94,7 +94,8 @@ describe('POST /api/plan/generate', () => {
     })
     expect(res.status).toBe(200)
     expect(serviceMocks.generateRoutes).toHaveBeenCalledWith(expect.objectContaining({
-      cuisineTypes: ['hotpot', '潮汕牛肉锅'],
+      cuisineTypes: ['hotpot'],
+      customCuisine: ['潮汕牛肉锅'],
     }))
   })
 

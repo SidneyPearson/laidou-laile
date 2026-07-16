@@ -8,6 +8,7 @@ import type { PlanInput } from './types.js'
 import { CUISINE_NAME_RE, CUISINE_LABEL } from './constants.js'
 import { parseRawPoi, type AmapRawPoi } from './poiMatching.js'
 import { estimateWalkDistFromStops, fmtDist } from './routeMetrics.js'
+import { buildKeywordProfile, scorePoiRelevance } from './keywordRelevance.js'
 
 /**
  * When user selects food but no specific cuisine type, switch to a hybrid approach:
@@ -28,7 +29,8 @@ export async function generateFoodList(input: PlanInput): Promise<Route[] | null
     adcode,
     cuisineTypes: cuisineTypes as string[] | undefined,
     // Skip around-search when a specific cuisine is set (around returns ALL types)
-    skipAroundSearch: (cuisineTypes?.length ?? 0) > 0,
+    skipAroundSearch: (cuisineTypes?.length ?? 0) > 0 || (input.customCuisine?.length ?? 0) > 0,
+    customKeywords: input.customCuisine,
   })
 
   if (pois.length === 0) return null
@@ -202,8 +204,13 @@ export function buildPlainFoodList(candidates: AmapPOI[], input: PlanInput): Rou
  * - Multiple cuisines: each card has 1 shop per type (cross-cuisine comparison).
  */
 export async function generateCuisineComparison(input: PlanInput): Promise<Route[] | null> {
-  const { position, distance, adcode, cuisineTypes } = input
-  if (!cuisineTypes?.length) return null
+  const { position, distance, adcode } = input
+  // A custom term is a narrowing constraint (e.g. 面馆 + 本帮面), not a
+  // second cuisine that should receive a separate slot.
+  const cuisineTypes = input.customCuisine?.length
+    ? [...input.customCuisine]
+    : [...(input.cuisineTypes ?? [])]
+  if (!cuisineTypes.length) return null
 
   const STOPS_PER_TYPE = cuisineTypes.length === 1 ? 3 : 1
   const SEARCH_OFFSET = cuisineTypes.length === 1 ? 20 : 10
@@ -215,6 +222,7 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
 
   for (const ct of cuisineTypes) {
     const kws = (CUISINE_KEYWORDS as Record<string, string>)[ct]
+      || (ct === '本帮面' ? '本帮面|蟹黄面|葱油拌面|焖肉面|大排面' : ct)
     if (!kws) continue
     try {
       const res = await client.get<AmapTextResponse>('/place/text', {
@@ -265,11 +273,14 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
   // misclassification (e.g. "额尔敦传统涮" matches local_cuisine search but its
   // name contains "涮" → should be hotpot).
   const separated = new Map<string, ScoredPOI[]>()
+  const customProfile = buildKeywordProfile(input.customCuisine ?? [])
   for (const ct of cuisineTypes) {
     const ownRe = CUISINE_NAME_RE[ct]
     const otherCts = cuisineTypes.filter((c) => c !== ct)
     const matched = allScored.filter((p) => {
       if (!cuisinePOIs.get(ct)?.some((pp) => pp.id === p.id)) return false
+      if (customProfile.requested.length > 0
+        && scorePoiRelevance(p, customProfile) === 0) return false
       for (const otherCt of otherCts) {
         const otherRe = CUISINE_NAME_RE[otherCt]
         if (otherRe && otherRe.test(p.name) && (!ownRe || !ownRe.test(p.name))) {
@@ -300,6 +311,7 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
   // Step 5: per dimension, pick top N shops per cuisine. Shops can repeat
   // across routes (a shop might be #1 in multiple dimensions).
   const routes: Route[] = []
+  const globallyUsed = new Set<string>()
   const rankEmoji = ['🥇', '🥈', '🥉']
 
   for (const dim of dimensions) {
@@ -311,11 +323,19 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
       if (!list || list.length === 0) continue
 
       const sorted = [...list].sort((a, b) => dim.scorer(b) - dim.scorer(a))
-      const picks = sorted.filter((p) => !used.has(p.id)).slice(0, STOPS_PER_TYPE)
+      const picks = sorted
+        .filter((p) => !used.has(p.id) && !globallyUsed.has(p.id))
+        .slice(0, STOPS_PER_TYPE)
+      if (picks.length < STOPS_PER_TYPE) {
+        picks.push(...sorted
+          .filter((p) => !used.has(p.id) && !picks.some(pick => pick.id === p.id))
+          .slice(0, STOPS_PER_TYPE - picks.length))
+      }
 
       for (let pi = 0; pi < picks.length; pi++) {
         const best = picks[pi]
         used.add(best.id)
+        globallyUsed.add(best.id)
 
         const cuLabel = CUISINE_LABEL[ct] || ct
         const distStr = fmtDist(best._dist)

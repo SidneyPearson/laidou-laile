@@ -37,6 +37,8 @@ export interface RefineRouteRequest {
   weather: string
   timeMinutes: number
   distance: number
+  preferences?: PreferenceTag[]
+  origin?: { lat: number; lng: number }
 }
 
 export interface RefineRouteResponse {
@@ -49,6 +51,8 @@ export interface ReplaceStopRequest {
   preferences: PreferenceTag[]
   distance: number
   adcode?: string
+  timeMinutes?: number
+  origin?: { lat: number; lng: number }
 }
 
 export interface ReplaceStopResponse {

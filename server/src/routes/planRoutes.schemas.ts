@@ -78,6 +78,8 @@ export const refineRequestSchema = z.object({
   weather: z.string().max(30).default('晴'),
   timeMinutes: z.number().int().min(30).max(600).default(240),
   distance: z.number().int().min(0).max(50000).default(0),
+  preferences: z.array(preferenceTag).max(3).default([]),
+  origin: z.object({ lat, lng }).optional(),
 }).superRefine((v, ctx) => {
   const max = v.route.stops.length
   for (const idx of v.removeStopIndices) {
@@ -100,6 +102,8 @@ export const replaceStopRequestSchema = z.object({
   preferences: z.array(preferenceTag).max(3).default(['food']),
   distance: z.number().int().min(0).max(50000).default(0),
   adcode: z.string().max(10).optional(),
+  timeMinutes: z.number().int().min(30).max(600).optional(),
+  origin: z.object({ lat, lng }).optional(),
 }).superRefine((v, ctx) => {
   if (v.stopIndex >= v.route.stops.length) {
     ctx.addIssue({

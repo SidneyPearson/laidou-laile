@@ -3,6 +3,7 @@ import { haversineDist } from '../../utils/geo.js'
 import { normalizeName } from '../../utils/text.js'
 import type { AmapPOI, AmapTextResponse } from '../../types/poi.js'
 import { CUISINE_FALSE_RE } from './constants.js'
+import { filterUsablePois } from './poiQuality.js'
 
 /** Amap raw POI shape after `/place/text` or `/place/around` — Amap returns
  *  fully untyped JSON, so we narrow here to a minimal common subset. */
@@ -14,6 +15,7 @@ export interface AmapRawPoi {
   address?: string
   location?: string
   distance?: string
+  parent?: string
   biz_ext?: { rating?: string | null; cost?: string | null }
 }
 
@@ -43,6 +45,7 @@ export function parseRawPoi(
     distance: dist,
     rating: raw.biz_ext?.rating || null,
     cost: raw.biz_ext?.cost || null,
+    parentId: raw.parent || null,
   }
 }
 
@@ -66,9 +69,9 @@ export async function searchSingleCuisinePOI(
   const client = getAmapClient()
 
   function pickBest(rawPois: AmapRawPoi[]): AmapPOI | null {
-    const pois = rawPois
+    const pois = filterUsablePois(rawPois
       .map((raw) => parseRawPoi(raw, lng, lat))
-      .filter((p): p is AmapPOI => p !== null)
+      .filter((p): p is AmapPOI => p !== null))
 
     const candidates = pois
       .filter((p) => {

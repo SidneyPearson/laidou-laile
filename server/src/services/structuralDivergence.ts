@@ -127,7 +127,7 @@ export function annotate(route: Route, axes: LooseAxes): Route {
 
   return {
     ...route,
-    direction,
+    direction: route.direction || direction,
     reason,
     axes,
   }

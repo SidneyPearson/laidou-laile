@@ -1,7 +1,8 @@
 import type { AmapPOI } from '../../types/poi.js'
 import type { Route, Stop, PreferenceTag } from '../../types/route.js'
 import { PREF_LABELS } from './constants.js'
-import { estimateWalkDist, estimateDuration, fmtDist } from './routeMetrics.js'
+import { estimateWalkDist, fmtDist } from './routeMetrics.js'
+import { estimateVisitDuration } from './timeBudget.js'
 
 /**
  * Rule-based fallback: split deduped POIs (sorted by distance) into up to 3
@@ -33,7 +34,7 @@ export function buildFallbackRoutes(
     const stops: Stop[] = chunk.map((p) => ({
       name: p.name,
       address: p.address,
-      visitDurationMinutes: estimateDuration(p),
+      visitDurationMinutes: estimateVisitDuration(p),
       notes: `${p.address}，距您约${fmtDist(p.distance)}`,
       amapPoiId: p.id,
       lng: p.lng,
