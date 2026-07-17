@@ -28,17 +28,10 @@ const tips = [
 
 const currentTip = ref(0)
 const elapsedSeconds = ref(0)
-// Smooth progress 0–100, driven by a timer
-const smoothProgress = ref(0)
+const continuing = ref(false)
 
 let tipTimer: ReturnType<typeof setInterval> | null = null
 let elapsedTimer: ReturnType<typeof setInterval> | null = null
-let progressTimer: ReturnType<typeof setInterval> | null = null
-
-// Each stage has a progress range, and we creep toward the ceiling of the current stage.
-// When the real stage advances, the ceiling jumps up and we keep creeping.
-const stageCeilings = [30, 70, 95]
-
 onMounted(() => {
   tipTimer = setInterval(() => {
     currentTip.value = (currentTip.value + 1) % tips.length
@@ -48,28 +41,15 @@ onMounted(() => {
     elapsedSeconds.value++
   }, 1000)
 
-  // Smooth progress: creep ~2% per 500ms toward the current stage ceiling
-  progressTimer = setInterval(() => {
-    const target = stageCeilings[props.stage] ?? 95
-    if (smoothProgress.value < target) {
-      // Slow down as we approach the ceiling
-      const remaining = target - smoothProgress.value
-      const increment = Math.max(0.3, remaining * 0.06)
-      smoothProgress.value = Math.min(target, smoothProgress.value + increment)
-    }
-  }, 500)
 })
 
 onUnmounted(() => {
   if (tipTimer) clearInterval(tipTimer)
   if (elapsedTimer) clearInterval(elapsedTimer)
-  if (progressTimer) clearInterval(progressTimer)
 })
 
 // Show slow hint during stage 2 (AI thinking is the slow part)
-const showSlowHint = computed(() => props.stage >= 1 && elapsedSeconds.value > 15)
-
-const progressWidth = computed(() => `${Math.round(smoothProgress.value)}%`)
+const showSlowHint = computed(() => elapsedSeconds.value >= 15 && !continuing.value)
 </script>
 
 <template>
@@ -84,27 +64,22 @@ const progressWidth = computed(() => `${Math.round(smoothProgress.value)}%`)
       </transition-group>
     </div>
 
-    <!-- Progress bar with smooth width + percentage -->
+    <!-- Indeterminate progress: the backend does not expose a real percentage. -->
     <div class="w-full max-w-xs mb-2">
       <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          class="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-500 ease-linear"
-          :style="{ width: progressWidth }"
-        />
+        <div class="progress-indeterminate h-full w-1/3 bg-gradient-to-r from-primary-400 to-primary-600 rounded-full" />
       </div>
-      <p class="text-xs text-gray-400 text-center mt-1.5">{{ progressWidth }}</p>
+      <p class="text-xs text-gray-400 text-center mt-1.5">按阶段处理，完成后会自动进入路线页</p>
     </div>
 
     <!-- Slow hint — show during stage 2 when AI is thinking -->
     <div v-if="showSlowHint" class="mb-6 text-center">
-      <p class="text-sm text-amber-500 font-medium">AI 正在仔细规划，请耐心等待...</p>
+      <p class="text-sm text-amber-500 font-medium">AI仍在规划</p>
       <p class="text-xs text-gray-400 mt-1">已等待 {{ elapsedSeconds }} 秒</p>
-      <button
-        class="mt-3 text-xs text-gray-400 underline active:text-gray-600"
-        @click="emit('cancel')"
-      >
-        取消等待
-      </button>
+      <div class="mt-3 flex items-center justify-center gap-4">
+        <button class="text-xs text-primary-500 font-medium" @click="continuing = true">继续等待</button>
+        <button class="text-xs text-gray-500 underline" @click="emit('cancel')">取消生成</button>
+      </div>
     </div>
 
     <!-- Tips rotation -->
@@ -115,6 +90,14 @@ const progressWidth = computed(() => `${Math.round(smoothProgress.value)}%`)
         </p>
       </transition>
     </div>
+
+    <button
+      v-if="!showSlowHint"
+      class="mt-4 px-4 py-2 text-sm text-gray-500 underline active:text-gray-700"
+      @click="emit('cancel')"
+    >
+      取消生成
+    </button>
   </div>
 </template>
 
@@ -136,5 +119,14 @@ const progressWidth = computed(() => `${Math.round(smoothProgress.value)}%`)
 .tip-enter-from,
 .tip-leave-to {
   opacity: 0;
+}
+
+.progress-indeterminate {
+  animation: progress-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(320%); }
 }
 </style>

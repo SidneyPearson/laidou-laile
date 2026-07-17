@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import type { Stop } from '../types/route'
 import NavButton from './NavButton.vue'
+import { formatOriginDistance } from '../utils/distance'
 
 const props = defineProps<{
   stop: Stop
@@ -23,9 +24,6 @@ function toggle() {
   expanded.value = !expanded.value
 }
 
-function fmtDist(m: number): string {
-  return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${m}m`
-}
 </script>
 
 <template>
@@ -48,6 +46,12 @@ function fmtDist(m: number): string {
              shadow-sm border border-gray-100 active:bg-gray-50
              transition-colors cursor-pointer relative"
       @click="toggle"
+      role="button"
+      tabindex="0"
+      :aria-expanded="expanded"
+      :aria-label="`${expanded ? '收起' : '展开'}${stop.name}详情`"
+      @keydown.enter="toggle"
+      @keydown.space.prevent="toggle"
     >
       <!-- Remove button (refinement mode) — positioned top-left to avoid covering distance -->
       <button
@@ -56,6 +60,7 @@ function fmtDist(m: number): string {
                rounded-full bg-red-50 text-red-400 active:bg-red-100 active:text-red-500
                transition-colors z-10"
         @click.stop="emit('remove', index)"
+        :aria-label="`移除${stop.name}`"
       >
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M18 6L6 18M6 6l12 12"/>
@@ -70,11 +75,8 @@ function fmtDist(m: number): string {
         >
           {{ stop.name }}
         </h3>
-        <span
-          v-if="stop.distanceMeters"
-          class="flex-shrink-0 text-[11px] text-gray-400 mt-0.5"
-        >
-          {{ fmtDist(stop.distanceMeters) }}
+        <span class="flex-shrink-0 text-[11px] text-gray-400 mt-0.5">
+          {{ formatOriginDistance(stop.distanceMeters) }}
         </span>
       </div>
 
@@ -148,6 +150,7 @@ function fmtDist(m: number): string {
                      active:bg-gray-100 transition-colors disabled:opacity-50
                      flex items-center gap-1"
               :disabled="replacing"
+              :aria-label="`替换${stop.name}`"
               @click.stop="emit('replace', index)"
             >
               <span v-if="replacing" class="w-3 h-3 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />

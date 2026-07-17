@@ -82,6 +82,7 @@ function formatWeather(entry: HistoryEntry): string {
         class="w-9 h-9 flex items-center justify-center rounded-full bg-white
                shadow-sm border border-gray-100 text-gray-500 active:bg-gray-50"
         @click="goBack"
+        aria-label="返回"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 18l-6-6 6-6"/>
@@ -92,6 +93,7 @@ function formatWeather(entry: HistoryEntry): string {
         v-if="hasEntries"
         class="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 text-xs active:bg-gray-50"
         @click="showClearConfirm = true"
+        aria-label="清空历史记录"
       >
         清空
       </button>

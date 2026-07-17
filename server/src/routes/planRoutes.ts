@@ -103,24 +103,6 @@ planRoutes.post('/generate', async (c) => {
     throw err
   }
 
-  // Custom free-text tags are appended to the typed enum arrays and passed
-  // through as-is; downstream code (aiPlannerService) uses them as keyword
-  // hints via `extractCuisineKeyword` / label maps, treating unknown strings
-  // gracefully. This preserves the pre-Zod behaviour where these fields were
-  // never enum-checked at all.
-  const mergedCuisine = [
-    ...(input.cuisineTypes || []),
-    ...(input.customCuisine || []),
-  ] as import('../types/route.js').CuisineType[]
-  const mergedScenic = [
-    ...(input.scenicTypes || []),
-    ...(input.customScenic || []),
-  ] as import('../types/route.js').ScenicType[]
-  const mergedWander = [
-    ...(input.wanderTypes || []),
-    ...(input.customWander || []),
-  ] as import('../types/route.js').WanderType[]
-
   try {
     const key = await dedupeKey('/generate', input)
     const result = await withRequestDedupe(key, () => generateRoutes({
@@ -129,9 +111,12 @@ planRoutes.post('/generate', async (c) => {
       timeOption: input.timeOption,
       distance: input.distance,
       preferences: input.preferences,
-      cuisineTypes: mergedCuisine,
-      scenicTypes: mergedScenic,
-      wanderTypes: mergedWander,
+      cuisineTypes: input.cuisineTypes,
+      scenicTypes: input.scenicTypes,
+      wanderTypes: input.wanderTypes,
+      customCuisine: input.customCuisine,
+      customScenic: input.customScenic,
+      customWander: input.customWander,
     }))
 
     if (result.routes.length === 0) {
@@ -177,13 +162,14 @@ planRoutes.post('/refine', async (c) => {
     route: input.route,
     removeStopIndices: input.removeStopIndices,
     extraRequirements: input.extraRequirements,
-    position: input.route.stops[0]
+    position: input.origin ?? (input.route.stops[0]
       ? { lat: input.route.stops[0].lat, lng: input.route.stops[0].lng }
-      : { lat: 0, lng: 0 },
+      : { lat: 0, lng: 0 }),
     city: input.city,
     weather: input.weather,
     timeMinutes: input.timeMinutes,
     distance: input.distance,
+    preferences: input.preferences,
   }))
 
   if (!refined) {
@@ -216,6 +202,8 @@ planRoutes.post('/replace-stop', async (c) => {
     preferences: input.preferences,
     distance: input.distance,
     adcode: input.adcode,
+    timeMinutes: input.timeMinutes,
+    origin: input.origin,
   }))
 
   if (!replaced) {

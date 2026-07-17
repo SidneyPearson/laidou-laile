@@ -7,6 +7,7 @@ import type { PlanInput, PlanOutput } from './types.js'
 import { generateFoodList, generateCuisineComparison } from './foodPlanner.js'
 import { generateScenicRoutes, generateWanderRoutes } from './themedPlanner.js'
 import { verifyAndEnrichRoutes } from './verifyRoutes.js'
+import { applyRoutePolicies } from './routePolicy.js'
 
 /**
  * LLM-first generation:
@@ -20,11 +21,26 @@ export async function generatePlan(input: PlanInput): Promise<PlanOutput> {
   try {
     const aiRoutes = await tryAIGeneration(input)
     if (aiRoutes && aiRoutes.length > 0) {
+      const policy = applyRoutePolicies(aiRoutes, {
+        origin: input.position,
+        timeMinutes: input.timeMinutes,
+        explorationDistance: input.distance,
+        preferences: input.preferences,
+        customKeywords: [
+          ...(input.customCuisine ?? []),
+          ...(input.customScenic ?? []),
+          ...(input.customWander ?? []),
+        ],
+      })
+      const guardedRoutes = policy.routes
+      if (guardedRoutes.length === 0) return {
+        routes: [], source: 'fallback', fallbackReason: '附近没有通过可达性与偏好筛选的地点',
+      }
       // Enforce ≥30° structural divergence on multi-route results. Single-
       // route (day-trip) needs no divergence. Exempt routes (gourmet
       // comparison) pass through untouched inside enforceDivergence.
-      if (aiRoutes.length > 1) {
-        const { kept, dropped } = enforceDivergence(aiRoutes, { preferences: input.preferences })
+      if (guardedRoutes.length > 1) {
+        const { kept, dropped } = enforceDivergence(guardedRoutes, { preferences: input.preferences })
         if (dropped.length > 0) {
           for (const d of dropped) {
             console.log(`📐 Divergence drop: "${d.route.name}" — ${d.reason}`)
@@ -32,12 +48,12 @@ export async function generatePlan(input: PlanInput): Promise<PlanOutput> {
           return {
             routes: kept,
             source: 'ai',
-            fallbackReason: `为保证方案结构差异（≥30°），已从 ${aiRoutes.length} 条精简为 ${kept.length} 条`,
+            fallbackReason: `为保证方案结构差异（≥30°），已从 ${guardedRoutes.length} 条精简为 ${kept.length} 条`,
           }
         }
-        return { routes: kept, source: 'ai', fallbackReason: null }
+        return { routes: kept, source: 'ai', fallbackReason: policy.fallbackReason }
       }
-      return { routes: aiRoutes, source: 'ai', fallbackReason: null }
+      return { routes: guardedRoutes, source: 'ai', fallbackReason: policy.fallbackReason }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
@@ -61,11 +77,12 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
   // Short-time special paths (bypassed for 半天/一天 — go LLM-first instead).
   if (!isDayTrip) {
     // Food without cuisine type → food list with AI scoring.
-    if (preferences.length === 1 && preferences[0] === 'food' && !input.cuisineTypes?.length) {
+    const hasCuisinePreference = !!(input.cuisineTypes?.length || input.customCuisine?.length)
+    if (preferences.length === 1 && preferences[0] === 'food' && !hasCuisinePreference) {
       return generateFoodList(input)
     }
     // Food with cuisine types → 3 comparison cards (评分/距离/打卡).
-    if (preferences.length === 1 && preferences[0] === 'food' && input.cuisineTypes?.length) {
+    if (preferences.length === 1 && preferences[0] === 'food' && hasCuisinePreference) {
       return generateCuisineComparison(input)
     }
     // Scenic/wander without sub-types + local → POI search + LLM curation.
@@ -84,9 +101,9 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
     timeMinutes,
     distance,
     preferences,
-    cuisineTypes: input.cuisineTypes,
-    scenicTypes: input.scenicTypes,
-    wanderTypes: input.wanderTypes,
+    cuisineTypes: [...(input.cuisineTypes ?? []), ...(input.customCuisine ?? [])],
+    scenicTypes: [...(input.scenicTypes ?? []), ...(input.customScenic ?? [])],
+    wanderTypes: [...(input.wanderTypes ?? []), ...(input.customWander ?? [])],
     singleRoute: isDayTrip,
   })
 
@@ -139,7 +156,7 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
   // these to search for replacements of the right type.
   let gapFillKeywords = ''
   if (preferences.includes('food')) {
-    if (input.cuisineTypes?.length) {
+    if (input.cuisineTypes?.length || input.customCuisine?.length) {
       const cuisineMap: Record<string, string> = {
         hotpot: '火锅|串串|涮肉',
         noodles: '面馆|拉面|米线',
@@ -150,7 +167,8 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
         coffee_tea: '咖啡|奶茶|茶馆|茶饮',
         buffet: '自助餐|自助|海鲜自助|烤肉自助',
       }
-      gapFillKeywords = input.cuisineTypes.map((c) => cuisineMap[c] || c).join('|')
+      gapFillKeywords = [...(input.cuisineTypes ?? []), ...(input.customCuisine ?? [])]
+        .map((c) => cuisineMap[c] || c).join('|')
     } else {
       gapFillKeywords = '餐厅|饭馆|美食'
     }

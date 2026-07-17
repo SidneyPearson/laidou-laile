@@ -34,6 +34,7 @@ function goBack() {
           class="w-8 h-8 flex items-center justify-center rounded-full bg-white
                  border border-gray-100 text-gray-400 active:bg-gray-50 flex-shrink-0"
           @click="emit('cancel')"
+          aria-label="返回"
         >
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M15 18l-6-6 6-6"/>
@@ -65,6 +66,7 @@ function goBack() {
           class="w-8 h-8 flex items-center justify-center rounded-full bg-white
                  border border-gray-100 text-gray-400 active:bg-gray-50 flex-shrink-0"
           @click="goBack"
+          aria-label="返回"
         >
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M15 18l-6-6 6-6"/>

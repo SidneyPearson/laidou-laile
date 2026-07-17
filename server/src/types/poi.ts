@@ -9,6 +9,7 @@ export interface AmapRawPOI {
   address: string
   location: string // "lng,lat"
   distance: string // meters
+  parent?: string
   tel: string
   biz_ext?: {
     rating?: string
@@ -32,6 +33,8 @@ export interface AmapPOI {
   distance: number
   rating: string | null
   cost: string | null
+  /** Amap parent POI id; internal only, used to collapse scenic sub-POIs. */
+  parentId?: string | null
 }
 
 /** Amap around-search response */

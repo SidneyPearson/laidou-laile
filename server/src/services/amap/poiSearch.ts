@@ -3,6 +3,9 @@ import { haversineDist } from '../../utils/geo.js'
 import { normalizeName } from '../../utils/text.js'
 import type { AmapAroundResponse, AmapTextResponse, AmapPOI } from '../../types/poi.js'
 import type { PreferenceTag } from '../../types/route.js'
+import { normalizePoiDistance } from '../planner/distancePolicy.js'
+import { classifyPoiQuality, filterUsablePois } from '../planner/poiQuality.js'
+import { searchTermsFor } from '../planner/keywordRelevance.js'
 
 // Preference → Amap typecode mapping
 const PREFERENCE_TYPECODES: Record<PreferenceTag, string> = {
@@ -42,7 +45,7 @@ const WANDER_CONFIG: Record<string, { types?: string; keywords?: string }> = {
 const MAX_POI_RESULTS = 50
 
 /** Normalize raw Amap POI into clean format */
-function normalizePOI(raw: AmapAroundResponse['pois'][number]): AmapPOI | null {
+function normalizePOI(raw: AmapAroundResponse['pois'][number], refLng: number, refLat: number): AmapPOI | null {
   if (!raw.location || !raw.location.includes(',')) {
     console.warn(`POI missing location: ${raw.name} (${raw.id})`)
     return null
@@ -60,25 +63,33 @@ function normalizePOI(raw: AmapAroundResponse['pois'][number]): AmapPOI | null {
     address: raw.address || '',
     lng,
     lat,
-    distance: parseInt(raw.distance, 10) || 0,
+    distance: normalizePoiDistance(raw.distance, { lat: refLat, lng: refLng }, { lat, lng }) ?? 0,
     rating: raw.biz_ext?.rating || null,
     cost: raw.biz_ext?.cost || null,
+    parentId: raw.parent || null,
   }
 }
 
 /** Deduplicate POIs. When wideMode is true, sample across the full distance
  *  range instead of taking the closest ones — used for 全城范围 to avoid
  *  filling the candidate list with neighborhood parks. */
-function dedupeAndSort(pois: AmapPOI[], wideMode = false): AmapPOI[] {
+function dedupeAndSort(pois: AmapPOI[], wideMode = false, dedupeScenicParents = false): AmapPOI[] {
   const seen = new Set<string>()
+  const seenParents = new Set<string>()
   const unique: AmapPOI[] = []
   for (const poi of pois) {
-    if (!seen.has(poi.id)) {
+    const duplicateParent = dedupeScenicParents && !!poi.parentId && seenParents.has(poi.parentId)
+    if (!seen.has(poi.id) && !duplicateParent) {
       seen.add(poi.id)
+      if (dedupeScenicParents && poi.parentId) seenParents.add(poi.parentId)
       unique.push(poi)
     }
   }
-  unique.sort((a, b) => a.distance - b.distance)
+  unique.sort((a, b) => {
+    const aPenalty = classifyPoiQuality(a).decision === 'downrank' ? 1 : 0
+    const bPenalty = classifyPoiQuality(b).decision === 'downrank' ? 1 : 0
+    return aPenalty - bPenalty || a.distance - b.distance
+  })
 
   if (!wideMode || unique.length <= MAX_POI_RESULTS) {
     return unique.slice(0, MAX_POI_RESULTS)
@@ -112,8 +123,11 @@ export async function searchNearbyPOIs(params: {
   scenicKeywords?: string
   /** When true, skip around-search (biased toward user location). Use for 全城范围. */
   skipAroundSearch?: boolean
+  /** Free-text preferences, kept separate from enum-backed subtypes. */
+  customKeywords?: string[]
 }): Promise<AmapPOI[]> {
-  const { lat, lng, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, adcode, wideMode, scenicKeywords, skipAroundSearch } = params
+  const { lat, lng, distance, preferences, cuisineTypes, scenicTypes, wanderTypes, adcode, wideMode, scenicKeywords, skipAroundSearch,
+    customKeywords = [] } = params
   const client = getAmapClient()
 
   // 0 = unlimited → use max Amap radius (50km)
@@ -161,7 +175,7 @@ export async function searchNearbyPOIs(params: {
             },
           })
           .then((res) => {
-            const pois = (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[]
+            const pois = (res.data.pois || []).map(raw => normalizePOI(raw, lng, lat)).filter(Boolean) as AmapPOI[]
             return pois
           })
           .catch((err) => {
@@ -182,6 +196,7 @@ export async function searchNearbyPOIs(params: {
     if (cuisineTypes?.length) {
       for (const c of cuisineTypes) if (CUISINE_KEYWORDS[c]) kwParts.push(CUISINE_KEYWORDS[c])
     }
+    kwParts.push(...searchTermsFor(customKeywords))
     const kws = kwParts.join('|')
     console.log(`Amap food text-search: keywords=${kws}`)
     for (const page of [1, 2]) {
@@ -198,7 +213,7 @@ export async function searchNearbyPOIs(params: {
               extensions: 'all',
             },
           })
-          .then((res) => (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[])
+          .then((res) => (res.data.pois || []).map(raw => normalizePOI(raw, lng, lat)).filter(Boolean) as AmapPOI[])
           .catch((err) => { console.error(`Amap food text-search page=${page} FAILED:`, err.message); return [] as AmapPOI[] }),
       )
     }
@@ -211,6 +226,8 @@ export async function searchNearbyPOIs(params: {
       const subKws = scenicTypes.map((st) => SCENIC_KEYWORDS[st]).filter(Boolean)
       if (subKws.length) scenicKws = subKws.join('|')
     }
+    const customTerms = searchTermsFor(customKeywords)
+    if (customTerms.length) scenicKws = `${scenicKws}|${customTerms.join('|')}`
     console.log(`Amap scenic text-search: keywords=${scenicKws}`)
     promises.push(
       client
@@ -225,7 +242,7 @@ export async function searchNearbyPOIs(params: {
             extensions: 'all',
           },
         })
-        .then((res) => (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[])
+        .then((res) => (res.data.pois || []).map(raw => normalizePOI(raw, lng, lat)).filter(Boolean) as AmapPOI[])
         .catch((err) => { console.error('Amap scenic text-search FAILED:', err.message); return [] as AmapPOI[] }),
     )
   }
@@ -250,7 +267,7 @@ export async function searchNearbyPOIs(params: {
                 extensions: 'all',
               },
             })
-            .then((res) => (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[])
+            .then((res) => (res.data.pois || []).map(raw => normalizePOI(raw, lng, lat)).filter(Boolean) as AmapPOI[])
             .catch((err) => { console.error(`Amap wander text-search (${wt}) FAILED:`, err.message); return [] as AmapPOI[] }),
         )
       }
@@ -264,7 +281,7 @@ export async function searchNearbyPOIs(params: {
     return []
   }
 
-  return dedupeAndSort(allPois, wideMode)
+  return dedupeAndSort(filterUsablePois(allPois), wideMode, preferences.includes('scenic'))
 }
 
 /** Verify a single place name via Amap text-search.
@@ -296,7 +313,9 @@ export async function verifyPlace(
         },
       })
 
-    const pois = (res.data.pois || []).map(normalizePOI).filter(Boolean) as AmapPOI[]
+    const pois = filterUsablePois(
+      (res.data.pois || []).map(raw => normalizePOI(raw, userLng, userLat)).filter(Boolean) as AmapPOI[],
+    )
     if (pois.length === 0) {
       console.warn(`⚠️ verifyPlace: no results for "${name}"`)
       return null
@@ -371,4 +390,3 @@ export async function verifyPlace(
   console.error(`verifyPlace failed for "${name}":`, lastError)
   return null
 }
-

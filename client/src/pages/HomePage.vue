@@ -71,7 +71,7 @@ async function handleGenerate() {
   if (!coords.value || timeOption.value == null || distance.value == null) return
 
   try {
-    await fetchRoutes({
+    const outcome = await fetchRoutes({
       lat: coords.value.lat,
       lng: coords.value.lng,
       timeOption: timeOption.value,
@@ -85,8 +85,7 @@ async function handleGenerate() {
       customWander: preferences.value.includes('wander') ? customWander.value : undefined,
     })
 
-    // Defensive check: routes must be a non-empty array
-    if (!Array.isArray(routes.value) || routes.value.length === 0) {
+    if (outcome !== 'success' || !Array.isArray(routes.value) || routes.value.length === 0) {
       return
     }
 
