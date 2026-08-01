@@ -2,10 +2,17 @@ import { Hono } from 'hono'
 import { getEnv, type Bindings } from './config/env.js'
 import { initAmapClient } from './services/amap/client.js'
 import { initLlmClient } from './services/llm/client.js'
+import { initSocialFoodSearch } from './services/planner/socialFoodSearch.js'
 import planRoutes from './routes/planRoutes.js'
+import exploreRoutes from './routes/exploreRoutes.js'
+import cityRoutes from './routes/cityRoutes.js'
+import { createAdminAuthRoutes } from './routes/adminAuthRoutes.js'
+import { createAdminRoutes } from './routes/adminRoutes.js'
+import { createRecommendationRoutes } from './routes/recommendationRoutes.js'
+import { createAdminRefreshRoutes } from './routes/adminRefreshRoutes.js'
 import { AppError } from './middleware/errorHandler.js'
 
-const app = new Hono()
+const app = new Hono<{ Bindings: Bindings }>()
 
 // ── Lazy one-time initialization (per isolate) ──
 // Must call getEnv() to apply Zod defaults for vars not set in Pages env
@@ -16,6 +23,7 @@ function ensureInit(env: Bindings) {
     const validatedEnv = getEnv(env)
     initAmapClient(validatedEnv)
     initLlmClient(validatedEnv)
+    initSocialFoodSearch(validatedEnv.TAVILY_API_KEY)
     initialized = true
   }
 }
@@ -27,6 +35,12 @@ app.get('/api/health', (c) => {
 
 // ── API routes ──
 app.route('/api/plan', planRoutes)
+app.route('/api/admin/auth', createAdminAuthRoutes())
+app.route('/api/admin', createAdminRoutes())
+app.route('/api/admin', createAdminRefreshRoutes())
+app.route('/api/recommendations/cities', createRecommendationRoutes())
+app.route('/api/explore', exploreRoutes)
+app.route('/api/city', cityRoutes)
 
 // ── Global error handler ──
 app.onError((err, c) => {
@@ -44,12 +58,18 @@ app.onError((err, c) => {
 // ── Pages _worker.js export ──
 export default {
   async fetch(request: Request, env: Bindings, ctx: ExecutionContext) {
-    ensureInit(env)
-
     const url = new URL(request.url)
 
     // API routes → Hono
     if (url.pathname.startsWith('/api/')) {
+      try {
+        ensureInit(env)
+      } catch (error) {
+        console.error('Worker configuration error:', error instanceof Error ? error.message : 'invalid configuration')
+        return Response.json({
+          error: { code: 'CONFIGURATION_ERROR', message: '服务配置不完整，请联系管理员' },
+        }, { status: 500 })
+      }
       return app.fetch(request, env, ctx)
     }
 

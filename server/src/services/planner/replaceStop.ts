@@ -5,6 +5,7 @@ import { PREFERENCE_REPLACE_KEYWORDS } from './constants.js'
 import { searchSingleCuisinePOI } from './poiMatching.js'
 import { estimateWalkDistFromStops, extractCuisineKeyword } from './routeMetrics.js'
 import { applyRoutePolicies } from './routePolicy.js'
+import { searchTermsFor } from './keywordRelevance.js'
 
 /**
  * Replace a single stop with a different nearby place of the same type.
@@ -21,7 +22,13 @@ export async function replaceStop(input: ReplaceStopInput): Promise<Route | null
   // back to the user's preference category.
   const cuisineKw = extractCuisineKeyword(target.name)
   const prefKw = preferences.map((p) => PREFERENCE_REPLACE_KEYWORDS[p]).filter(Boolean).join('|')
-  const keyword = cuisineKw || prefKw || '餐厅|景点'
+  const inheritedCustom = [
+    ...(preferences.includes('food') ? input.customCuisine ?? [] : []),
+    ...(preferences.includes('scenic') ? input.customScenic ?? [] : []),
+    ...(preferences.includes('wander') ? input.customWander ?? [] : []),
+  ]
+  const customKeyword = searchTermsFor(inheritedCustom).join('|')
+  const keyword = customKeyword || cuisineKw || prefKw || '餐厅|景点'
 
   // Exclude every place already in the route so the replacement is genuinely new.
   const usedNames = new Set(route.stops.map((s) => normalizeName(s.name)))
@@ -44,6 +51,8 @@ export async function replaceStop(input: ReplaceStopInput): Promise<Route | null
       ? `${found.address}${found.rating ? `，评分 ${found.rating}` : ''}`
       : '',
     amapPoiId: found.id,
+    parentPoiId: found.parentId,
+    typecode: found.typecode,
     lng: found.lng,
     lat: found.lat,
     // Search distance is relative to the replaced stop; routePolicy recomputes
@@ -83,5 +92,10 @@ export async function replaceStop(input: ReplaceStopInput): Promise<Route | null
     timeMinutes: input.timeMinutes ?? Math.max(60, route.totalDurationMinutes),
     explorationDistance: distance,
     preferences,
+    customKeywordsByPreference: {
+      food: input.customCuisine ?? [],
+      scenic: input.customScenic ?? [],
+      wander: input.customWander ?? [],
+    },
   }).routes[0] ?? null
 }

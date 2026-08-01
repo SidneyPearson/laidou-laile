@@ -200,7 +200,7 @@ export function buildRefinePrompt(input: {
   city: string
   weather: string
   timeMinutes: number
-  existingStops: Array<{ name: string; notes: string; address: string; distanceMeters: number; visitDurationMinutes: number }>
+  existingStops: Array<{ name: string; notes: string; address: string; distanceMeters?: number; visitDurationMinutes: number }>
   removedStops: Array<{ name: string }>
   extraRequirements?: string
 }): string {
@@ -209,7 +209,7 @@ export function buildRefinePrompt(input: {
   const existingJson = JSON.stringify(existingStops.map(s => ({
     name: s.name,
     address: s.address,
-    distance: s.distanceMeters > 0 ? `${s.distanceMeters}m` : '未知',
+    distance: s.distanceMeters == null ? '未知' : `${s.distanceMeters}m`,
     visitDurationMinutes: s.visitDurationMinutes,
     notes: s.notes,
   })), null, 2)

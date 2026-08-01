@@ -9,6 +9,8 @@ const props = defineProps<{
   removedIndices?: Set<number>
   /** Original index of the stop currently being replaced (shows spinner) */
   replacingIndex?: number | null
+  /** Verified hotspot that must remain first and cannot be removed/replaced. */
+  lockedPoiId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -77,6 +79,9 @@ function onMove(e: PointerEvent) {
     if (y < r.top + r.height / 2) { target = k; break }
   }
   const curPos = order.value.indexOf(draggedOrig.value)
+  if (props.lockedPoiId && baseDisplayStops.value[0]?.stop.amapPoiId === props.lockedPoiId) {
+    target = Math.max(1, target)
+  }
   if (target !== curPos && target >= 0) {
     const next = [...order.value]
     next.splice(curPos, 1)
@@ -203,6 +208,7 @@ function navigateAll() {
               :index="item.displayIndex"
               :removable="removable"
               :replacing="replacingIndex === item.originalIndex"
+              :locked="!!lockedPoiId && item.stop.amapPoiId === lockedPoiId"
               @remove="emit('remove-stop', item.originalIndex)"
               @replace="emit('replace-stop', item.originalIndex)"
               @handle-pointerdown="onHandleDown"

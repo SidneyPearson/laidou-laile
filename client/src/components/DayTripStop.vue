@@ -8,6 +8,7 @@ const props = defineProps<{
   stop: Stop
   index: number
   removable?: boolean
+  locked?: boolean
   /** Whether this stop is currently being replaced (shows spinner) */
   replacing?: boolean
 }>()
@@ -33,9 +34,9 @@ function toggle() {
       class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-white
              border-2 border-primary-200 flex items-center justify-center
              shadow-sm transition-transform"
-      :class="removable ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer active:scale-95'"
-      @click="removable ? undefined : toggle()"
-      @pointerdown="removable ? emit('handle-pointerdown', { index, event: $event }) : undefined"
+      :class="removable && !locked ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer active:scale-95'"
+      @click="removable && !locked ? undefined : toggle()"
+      @pointerdown="removable && !locked ? emit('handle-pointerdown', { index, event: $event }) : undefined"
     >
       <span class="text-sm font-bold text-primary-500">{{ index + 1 }}</span>
     </div>
@@ -55,7 +56,7 @@ function toggle() {
     >
       <!-- Remove button (refinement mode) — positioned top-left to avoid covering distance -->
       <button
-        v-if="removable"
+        v-if="removable && !locked"
         class="absolute top-2 left-2 w-6 h-6 flex items-center justify-center
                rounded-full bg-red-50 text-red-400 active:bg-red-100 active:text-red-500
                transition-colors z-10"
@@ -71,7 +72,7 @@ function toggle() {
       <div class="flex items-start justify-between gap-2">
         <h3
           class="text-[15px] font-semibold text-gray-800 leading-snug"
-          :class="{ 'pl-5': removable }"
+          :class="{ 'pl-5': removable && !locked }"
         >
           {{ stop.name }}
         </h3>
@@ -106,6 +107,12 @@ function toggle() {
                px-2 py-0.5 rounded-full font-medium"
       >
         ⏱ {{ stop.visitDurationMinutes }}分钟
+      </span>
+      <span
+        v-if="locked"
+        class="ml-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
+      >
+        📌 路线锚点
       </span>
 
       <!-- Expand indicator -->
@@ -144,7 +151,7 @@ function toggle() {
               />
             </div>
             <button
-              v-if="removable"
+              v-if="removable && !locked"
               class="flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium
                      bg-gray-50 border border-gray-200 text-gray-600
                      active:bg-gray-100 transition-colors disabled:opacity-50

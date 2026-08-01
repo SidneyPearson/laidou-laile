@@ -30,7 +30,7 @@ const MINOR_FEATURE_RE = /基座|阶沿石|须弥座|遗构|遗迹|碑座|柱础
 const CAUTION_RE = /故居|遗址|古迹/
 const INTERNAL_CONTEXT_RE = /(?:景区|风景名胜区|公园|博物馆|岛)内|风景(?:名胜)?区-/
 const WATER_LANDMARK_RE = /岛|洲|湖心|潭塔|小瀛洲/
-const NON_VISITOR_NAME_RE = /学校|中学|小学|幼儿园|培训中心|培训学校|培训机构|青少年活动中心|服务站|维修站|发行站|办事处|政务中心|办公区/
+const NON_VISITOR_NAME_RE = /学校|中学|小学|幼儿园|培训中心|培训学校|培训机构|驾考(?:中心|基地|考场)?|驾驶人考场|考试服务中心|青少年活动中心|服务站|维修站|发行站|办事处|政务中心|办公区|支部委员会|党委|居民委员会|社区委员会/
 const VISITOR_OVERRIDE_RE = /博物馆|美术馆|展览馆|纪念馆|科技馆|文化馆|剧院|艺术馆/
 
 export function classifyPoiQuality(poi: PoiTextLike): PoiQualityResult {

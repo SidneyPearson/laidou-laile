@@ -9,6 +9,7 @@ import type { RefineInput } from './types.js'
 import { searchSingleCuisinePOI } from './poiMatching.js'
 import { extractCuisineKeyword } from './routeMetrics.js'
 import { applyRoutePolicies } from './routePolicy.js'
+import { searchTermsFor } from './keywordRelevance.js'
 
 /**
  * Refine an existing day-trip route: remove specified stops, optionally add
@@ -36,6 +37,9 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
     return applyRoutePolicies([trimmed], {
       origin: input.position, timeMinutes, explorationDistance: input.distance,
       preferences: input.preferences?.length ? input.preferences : ['wander'],
+      customKeywordsByPreference: {
+        food: input.customCuisine ?? [], scenic: input.customScenic ?? [], wander: input.customWander ?? [],
+      },
     }).routes[0] ?? null
   }
 
@@ -56,7 +60,8 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   const maxDist = Math.max(input.distance > 0 ? input.distance : 2000, spanMeters * 2)
 
   const reqText = extraRequirements || ''
-  const cuisineFallbackKeyword = extractCuisineKeyword(reqText)
+  const inheritedCuisineKeyword = searchTermsFor(input.customCuisine ?? []).join('|') || null
+  const cuisineFallbackKeyword = extractCuisineKeyword(reqText) || inheritedCuisineKeyword
 
   const prompt = buildRefinePrompt({
     city,
@@ -66,7 +71,7 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
       name: s.name,
       notes: s.notes || '',
       address: s.address || '',
-      distanceMeters: s.distanceMeters || 0,
+      distanceMeters: s.distanceMeters,
       visitDurationMinutes: s.visitDurationMinutes,
     })),
     removedStops: removedStops.map((s) => ({ name: s.name })),
@@ -194,6 +199,8 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
         visitDurationMinutes: llmStop.visitDurationMinutes || 30,
         notes: llmStop.notes || '',
         amapPoiId: verified.id,
+        parentPoiId: verified.parentId,
+        typecode: verified.typecode,
         lng: verified.lng,
         lat: verified.lat,
         // Recomputed against the original route origin by routePolicy below.
@@ -237,6 +244,8 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
           ? `${forced.address}${forced.rating ? `，评分 ${forced.rating}` : ''}`
           : '',
         amapPoiId: forced.id,
+        parentPoiId: forced.parentId,
+        typecode: forced.typecode,
         lng: forced.lng,
         lat: forced.lat,
         distanceMeters: undefined,
@@ -301,5 +310,10 @@ export async function refinePlan(input: RefineInput): Promise<Route | null> {
   return applyRoutePolicies([result], {
     origin: input.position, timeMinutes, explorationDistance: input.distance,
     preferences: input.preferences?.length ? input.preferences : ['wander'],
+    customKeywordsByPreference: {
+      food: input.customCuisine ?? [],
+      scenic: input.customScenic ?? [],
+      wander: input.customWander ?? [],
+    },
   }).routes[0] ?? null
 }

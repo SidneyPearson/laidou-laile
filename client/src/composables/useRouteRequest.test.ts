@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError } from '../services/api'
 
-const { generateRoutes } = vi.hoisted(() => ({ generateRoutes: vi.fn() }))
+const { generateRoutes, addEntry } = vi.hoisted(() => ({
+  generateRoutes: vi.fn(),
+  addEntry: vi.fn(),
+}))
 vi.mock('../services/api', async (importOriginal) => {
   const original = await importOriginal<typeof import('../services/api')>()
   return { ...original, generateRoutes }
 })
+vi.mock('./useHistory', () => ({
+  useHistory: () => ({ addEntry }),
+}))
 
 const response = {
   routes: [{ id: 'r', name: '路线', tagline: '', stops: [], totalDurationMinutes: 0, walkingDistanceMeters: 0, tips: '' }],
@@ -17,6 +23,8 @@ describe('useRouteRequest', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     generateRoutes.mockReset()
+    addEntry.mockReset()
+    addEntry.mockReturnValue({ id: 'history-1' })
     vi.resetModules()
   })
 
@@ -27,6 +35,11 @@ describe('useRouteRequest', () => {
     await expect(state.fetchRoutes(request)).resolves.toBe('success')
     expect(state.routes.value).toHaveLength(1)
     expect(state.error.value).toBeNull()
+    expect(state.historySaved.value).toBe(true)
+    expect(addEntry).toHaveBeenCalledWith(expect.objectContaining({
+      locationName: '测试地点',
+      routes: response.routes,
+    }))
   })
 
   it('user cancellation is immediate, silent, and never retried', async () => {

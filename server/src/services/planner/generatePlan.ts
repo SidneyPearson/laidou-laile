@@ -8,6 +8,28 @@ import { generateFoodList, generateCuisineComparison } from './foodPlanner.js'
 import { generateScenicRoutes, generateWanderRoutes } from './themedPlanner.js'
 import { verifyAndEnrichRoutes } from './verifyRoutes.js'
 import { applyRoutePolicies } from './routePolicy.js'
+import { buildCategoryKeywords, buildCategoryTypecodePrefixes } from './preferenceCriteria.js'
+import { syncFoodListPresentation } from './foodPresentation.js'
+import { hasRegionalCuisineConflict } from './localCuisinePolicy.js'
+import { findMissingPreferences, preferenceLabels } from './preferenceCoverage.js'
+
+function filterRegionalCuisineConflicts(routes: Route[], input: PlanInput): Route[] {
+  if (!input.cuisineTypes?.includes('local_cuisine')) return routes
+  const localeText = [input.city, input.areaName].filter(Boolean).join(' ')
+  const keep = (stop: Route['stops'][number]) => {
+    const isFood = stop.preferenceScope === 'food' || (stop.typecode ?? '').startsWith('05')
+    return !isFood || !hasRegionalCuisineConflict(stop, localeText)
+  }
+  return routes.flatMap((route): Route[] => {
+    const stops = route.stops.filter(keep)
+    if (stops.length === 0) return []
+    return [{
+      ...route,
+      stops,
+      candidateStops: route.candidateStops?.filter(keep),
+    }]
+  })
+}
 
 /**
  * LLM-first generation:
@@ -19,23 +41,36 @@ import { applyRoutePolicies } from './routePolicy.js'
  */
 export async function generatePlan(input: PlanInput): Promise<PlanOutput> {
   try {
-    const aiRoutes = await tryAIGeneration(input)
+    const generatedRoutes = await tryAIGeneration(input)
+    const aiRoutes = generatedRoutes ? filterRegionalCuisineConflicts(generatedRoutes, input) : null
     if (aiRoutes && aiRoutes.length > 0) {
       const policy = applyRoutePolicies(aiRoutes, {
         origin: input.position,
         timeMinutes: input.timeMinutes,
         explorationDistance: input.distance,
         preferences: input.preferences,
-        customKeywords: [
-          ...(input.customCuisine ?? []),
-          ...(input.customScenic ?? []),
-          ...(input.customWander ?? []),
-        ],
+        customKeywordsByPreference: {
+          food: input.customCuisine ?? [],
+          scenic: input.customScenic ?? [],
+          wander: input.customWander ?? [],
+        },
+        categoryKeywordsByPreference: buildCategoryKeywords(input),
+        categoryTypecodePrefixesByPreference: buildCategoryTypecodePrefixes(input),
       })
-      const guardedRoutes = policy.routes
+      const guardedRoutes = policy.routes.map(syncFoodListPresentation)
       if (guardedRoutes.length === 0) return {
         routes: [], source: 'fallback', fallbackReason: '附近没有通过可达性与偏好筛选的地点',
       }
+      const coverageFailure = (routes: Route[]): PlanOutput | null => {
+        const missing = findMissingPreferences(routes, aiRoutes, input.preferences)
+        return missing.length > 0 ? {
+          routes: [],
+          source: 'fallback',
+          fallbackReason: `AI路线缺少${preferenceLabels(missing)}地点，已改用高德候选重新编排`,
+        } : null
+      }
+      const initialCoverageFailure = coverageFailure(guardedRoutes)
+      if (initialCoverageFailure) return initialCoverageFailure
       // Enforce ≥30° structural divergence on multi-route results. Single-
       // route (day-trip) needs no divergence. Exempt routes (gourmet
       // comparison) pass through untouched inside enforceDivergence.
@@ -45,12 +80,16 @@ export async function generatePlan(input: PlanInput): Promise<PlanOutput> {
           for (const d of dropped) {
             console.log(`📐 Divergence drop: "${d.route.name}" — ${d.reason}`)
           }
+          const keptCoverageFailure = coverageFailure(kept)
+          if (keptCoverageFailure) return keptCoverageFailure
           return {
             routes: kept,
             source: 'ai',
             fallbackReason: `为保证方案结构差异（≥30°），已从 ${guardedRoutes.length} 条精简为 ${kept.length} 条`,
           }
         }
+        const keptCoverageFailure = coverageFailure(kept)
+        if (keptCoverageFailure) return keptCoverageFailure
         return { routes: kept, source: 'ai', fallbackReason: policy.fallbackReason }
       }
       return { routes: guardedRoutes, source: 'ai', fallbackReason: policy.fallbackReason }
@@ -73,16 +112,19 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
 
   // 半天/一天 → single curated route instead of 3 competing routes.
   const isDayTrip = timeMinutes >= 240
+  const onlyFood = preferences.length === 1 && preferences[0] === 'food'
+  const hasCuisinePreference = !!(input.cuisineTypes?.length || input.customCuisine?.length)
+
+  // A pure, non-specific food request is always a food list. Longer time
+  // budgets must not turn a restaurant ranking into a fictional day-trip.
+  if (onlyFood && !hasCuisinePreference) {
+    return generateFoodList(input)
+  }
 
   // Short-time special paths (bypassed for 半天/一天 — go LLM-first instead).
   if (!isDayTrip) {
-    // Food without cuisine type → food list with AI scoring.
-    const hasCuisinePreference = !!(input.cuisineTypes?.length || input.customCuisine?.length)
-    if (preferences.length === 1 && preferences[0] === 'food' && !hasCuisinePreference) {
-      return generateFoodList(input)
-    }
     // Food with cuisine types → 3 comparison cards (评分/距离/打卡).
-    if (preferences.length === 1 && preferences[0] === 'food' && hasCuisinePreference) {
+    if (onlyFood && hasCuisinePreference) {
       return generateCuisineComparison(input)
     }
     // Scenic/wander without sub-types + local → POI search + LLM curation.
@@ -150,7 +192,6 @@ async function tryAIGeneration(input: PlanInput): Promise<Route[] | null> {
 
   // Verify each stop via Amap. For 全城范围 (distance=0), use 50km.
   const verifyRadius = distance > 0 ? distance : 50000
-  const onlyFood = preferences.length === 1 && preferences[0] === 'food'
 
   // Build gap-fill keywords: when a route loses stops during verification, use
   // these to search for replacements of the right type.

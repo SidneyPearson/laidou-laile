@@ -102,6 +102,9 @@ function formatWeather(entry: HistoryEntry): string {
 
     <!-- Content -->
     <div class="flex-1 overflow-auto px-5 pb-6">
+      <p class="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-center text-[11px] text-emerald-700">
+        仅保存在当前浏览器，不会上传；最多保留 20 条
+      </p>
       <!-- Empty state -->
       <div v-if="!hasEntries" class="text-center py-16">
         <p class="text-5xl mb-4">📭</p>

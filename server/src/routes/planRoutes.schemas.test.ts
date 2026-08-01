@@ -3,6 +3,7 @@ import {
   generateRequestSchema,
   refineRequestSchema,
   replaceStopRequestSchema,
+  stopSchema,
 } from './planRoutes.schemas.js'
 
 const validStop = {
@@ -25,6 +26,76 @@ const validRoute = {
   tips: '提前预约',
 }
 
+describe('stopSchema recommendation contracts', () => {
+  it('accepts and preserves a social recommendation with scored evidence', () => {
+    const parsed = stopSchema.parse({
+      ...validStop,
+      recommendationType: 'social_hot',
+      socialScore: 82,
+      rankingReason: '小红书与抖音均有公开提及',
+      evidenceSummary: '2个平台公开提及',
+      socialEvidence: [{
+        platform: '小红书',
+        title: '探店笔记',
+        url: 'https://www.xiaohongshu.com/explore/1',
+        confidence: 0.92,
+      }],
+    })
+
+    expect(parsed).toMatchObject({
+      recommendationType: 'social_hot',
+      socialScore: 82,
+      rankingReason: '小红书与抖音均有公开提及',
+      evidenceSummary: '2个平台公开提及',
+      socialEvidence: [{ confidence: 0.92 }],
+    })
+  })
+
+  it('accepts an Amap fallback with no social evidence', () => {
+    expect(stopSchema.parse({
+      ...validStop,
+      recommendationType: 'amap_fallback',
+      socialScore: 0,
+      socialEvidence: [],
+    })).toMatchObject({
+      recommendationType: 'amap_fallback',
+      socialScore: 0,
+      socialEvidence: [],
+    })
+  })
+
+  it('constrains confidence to 0..1 and socialScore to 0..100', () => {
+    const evidence = {
+      platform: '小红书',
+      title: '探店笔记',
+      url: 'https://www.xiaohongshu.com/explore/1',
+    }
+
+    expect(stopSchema.safeParse({
+      ...validStop,
+      socialEvidence: [{ ...evidence, confidence: -0.01 }],
+    }).success).toBe(false)
+    expect(stopSchema.safeParse({
+      ...validStop,
+      socialEvidence: [{ ...evidence, confidence: 1.01 }],
+    }).success).toBe(false)
+    expect(stopSchema.safeParse({ ...validStop, socialScore: -1 }).success).toBe(false)
+    expect(stopSchema.safeParse({ ...validStop, socialScore: 101 }).success).toBe(false)
+  })
+
+  it('keeps legacy stops and unscored legacy evidence compatible', () => {
+    expect(stopSchema.safeParse(validStop).success).toBe(true)
+    expect(stopSchema.safeParse({
+      ...validStop,
+      socialEvidence: [{
+        platform: '美团',
+        title: '旧版公开证据',
+        url: 'https://www.dianping.com/shop/1',
+      }],
+    }).success).toBe(true)
+  })
+})
+
 describe('generateRequestSchema', () => {
   const base = {
     lat: 31.23, lng: 121.47,
@@ -35,6 +106,12 @@ describe('generateRequestSchema', () => {
   it('accepts a minimal valid request', () => {
     const r = generateRequestSchema.safeParse(base)
     expect(r.success).toBe(true)
+  })
+
+  it('accepts and trims an optional selected area name', () => {
+    const r = generateRequestSchema.safeParse({ ...base, areaName: '  宽窄巷子  ' })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.areaName).toBe('宽窄巷子')
   })
 
   it('rejects non-finite lat/lng', () => {
@@ -147,6 +224,14 @@ describe('refineRequestSchema', () => {
       ...base, extraRequirements: 'A'.repeat(201),
     }).success).toBe(false)
   })
+
+  it('accepts and trims inherited custom preference fields', () => {
+    const r = refineRequestSchema.safeParse({
+      ...base, customCuisine: ['  本帮面  '], customScenic: ['古迹'], customWander: ['咖啡'],
+    })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.customCuisine).toEqual(['本帮面'])
+  })
 })
 
 describe('replaceStopRequestSchema', () => {
@@ -181,5 +266,11 @@ describe('replaceStopRequestSchema', () => {
     if (r.success) {
       expect(r.data.preferences).toEqual(['food'])
     }
+  })
+
+  it('accepts inherited custom preference fields', () => {
+    expect(replaceStopRequestSchema.safeParse({
+      ...base, customCuisine: ['本帮面'], customScenic: ['古迹'], customWander: ['咖啡'],
+    }).success).toBe(true)
   })
 })

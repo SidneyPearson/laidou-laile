@@ -1,0 +1,103 @@
+/* citywalk 后台（admin）主题与基础组件样式。
+ *
+ * 合并 v03 时，citywalk 原 main.css 中的 admin 段被 v03 的 H5 版 main.css 覆盖，
+ * 导致 --admin-* 主题变量与 .admin-* 基础类在源码中缺失，后台 UI 失去样式
+ * （面板、按钮、封面预览区、强调色全部失效）。这里补齐 admin 专属样式，
+ * 主题沿用 citywalk 原有的橙色，保留后台视觉身份。 */
+
+:root {
+  --admin-ink: #2b211b;
+  --admin-line: #f0e2d8;
+  --admin-muted: #9a8a7d;
+  --admin-surface: #ffffff;
+  --admin-surface-muted: #fbf6f1;
+  --admin-accent: #ee4d24;
+  --admin-accent-soft: #fde6df;
+  --admin-danger: #c0392b;
+  --admin-danger-soft: #fbeae7;
+  --admin-info: #2f6f8f;
+  --admin-info-soft: #e3eef3;
+  --admin-success: #2f7d4f;
+  --admin-success-soft: #e3f2e9;
+  --admin-warning: #b7791f;
+  --admin-warning-soft: #f7eed6;
+}
+
+.admin-panel {
+  border-radius: 1rem;
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  box-shadow: 0 1px 2px rgba(43, 33, 27, 0.05);
+}
+
+.admin-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: var(--admin-accent);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  transition: opacity 0.15s ease;
+}
+.admin-button-primary:active { opacity: 0.9; }
+.admin-button-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.admin-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-ink);
+  transition: background 0.15s ease;
+}
+.admin-button-secondary:hover { background: var(--admin-surface-muted); }
+.admin-button-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.admin-input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--admin-ink);
+  outline: none;
+}
+.admin-input:focus { border-color: var(--admin-accent); }
+
+.admin-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--admin-muted);
+}
+
+.admin-alert {
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+.admin-alert-error {
+  border-color: var(--admin-danger);
+  background: var(--admin-danger-soft);
+  color: var(--admin-danger);
+}
+
+.admin-empty-state {
+  border-radius: 1rem;
+  border: 1px dashed var(--admin-line);
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--admin-muted);
+}

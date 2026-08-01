@@ -11,13 +11,17 @@ import TimeBudgetBar from '../components/TimeBudgetBar.vue'
 import RouteSkeleton from '../components/RouteSkeleton.vue'
 import RouteError from '../components/RouteError.vue'
 import EmptyState from '../components/EmptyState.vue'
+import RouteOverviewMap from '../components/RouteOverviewMap.vue'
 import type { Route, Stop } from '../types/route'
 
 const router = useRouter()
 const route = useRoute()
-const { routes, locationName, weatherNote, weather, loading, error, retry, lastRequest } = useRouteRequest()
+const { routes, locationName, weatherNote, weather, loading, error, retry, lastRequest, historySaved } = useRouteRequest()
 
 const selectedId = ref<string | null>(null)
+const anchorName = computed(() => String(route.query.anchorName || ''))
+const anchorPoiId = computed(() => String(route.query.anchorPoiId || ''))
+const isAnchored = computed(() => !!anchorName.value && !!anchorPoiId.value)
 
 // ── Refinement state ────────────────────────────────────
 const removedIndices = ref<Set<number>>(new Set())
@@ -30,7 +34,7 @@ const hasRefineInput = computed(() => refineInput.value.trim().length > 0)
 // Day-trip mode: 半天/一天 → single curated route, timeline UI
 const isDayTrip = computed(() => {
   const timeOption = Number(route.query.timeOption)
-  return timeOption >= 240
+  return (isAnchored.value || timeOption >= 240)
     && Array.isArray(routes.value)
     && routes.value.length === 1
 })
@@ -40,6 +44,7 @@ function handleRouteSelect(rt: Route) {
 }
 
 function handleRemoveStop(index: number) {
+  if (routes.value?.[0]?.stops[index]?.amapPoiId === anchorPoiId.value) return
   const next = new Set(removedIndices.value)
   if (next.has(index)) {
     next.delete(index)
@@ -110,6 +115,7 @@ const preferences = computed(() =>
 async function handleReplaceStop(index: number) {
   const currentRoute = routes.value?.[0]
   if (!currentRoute || replacingIndex.value !== null) return
+  if (currentRoute.stops[index]?.amapPoiId === anchorPoiId.value) return
 
   replacingIndex.value = index
   refineError.value = ''
@@ -169,6 +175,10 @@ watch(
 const routeCount = computed(() => Array.isArray(routes.value) ? routes.value.length : 0)
 
 function goBack() {
+  if (route.query.fromCity === '1') {
+    router.back()
+    return
+  }
   router.push({ name: 'home' })
 }
 </script>
@@ -189,8 +199,14 @@ function goBack() {
       </button>
       <div class="text-center">
         <p class="text-sm font-semibold text-gray-800">{{ displayLocation }}</p>
+        <p v-if="isAnchored" class="mt-0.5 text-[10px] font-medium text-primary-600">
+          📌 围绕 {{ anchorName }} 规划
+        </p>
         <p v-if="displayWeather" class="text-xs text-gray-400">{{ displayWeather }}</p>
         <p v-if="isRainy" class="text-xs text-blue-500 mt-0.5">🌂 出门记得带伞哦</p>
+        <p v-if="historySaved" class="mt-0.5 text-[10px] text-stone-400">
+          已自动保存在本机
+        </p>
       </div>
       <div class="w-9 h-9"></div> <!-- spacer -->
     </header>
@@ -214,6 +230,11 @@ function goBack() {
 
       <!-- DayTrip Timeline -->
       <div v-else-if="isDayTrip && routes[0]" class="relative flex-1 min-h-0 flex flex-col">
+        <RouteOverviewMap
+          v-if="isAnchored"
+          class="mb-3"
+          :stops="routes[0].stops"
+        />
         <TimeBudgetBar
           v-if="availableMinutes > 0"
           class="flex-shrink-0"
@@ -227,6 +248,7 @@ function goBack() {
           :removable="true"
           :removed-indices="removedIndices"
           :replacing-index="replacingIndex"
+          :locked-poi-id="anchorPoiId"
           @remove-stop="handleRemoveStop"
           @replace-stop="handleReplaceStop"
           @reorder="handleReorder"

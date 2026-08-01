@@ -3,6 +3,9 @@ main = "src/worker.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+[dev]
+port = 3000
+
 # Deployed as Cloudflare Pages `_worker.js` (Advanced Mode).
 # Front + API share the same origin (laidou-laile.pages.dev),
 # so no CORS middleware is required at runtime.
@@ -10,10 +13,23 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 NODE_ENV = "production"
 LLM_BASE_URL = "https://api.deepseek.com/v1"
-LLM_MODEL = "deepseek-v4-pro"
+LLM_MODEL = "deepseek-v4-flash"
 LLM_TIMEOUT_MS = "35000"
 AMAP_TIMEOUT_MS = "10000"
+ADMIN_ALLOWED_ORIGINS = "https://laidou-laile.pages.dev,http://localhost:9090"
+ADMIN_SESSION_TTL_SECONDS = "28800"
+
+# Replace the zero UUID after `wrangler d1 create citywalk-curation`.
+# Pages production must also bind this database as `DB` in the Pages project.
+[[d1_databases]]
+binding = "DB"
+database_name = "citywalk-curation"
+database_id = "60dcd9a5-9f47-48de-9f1e-9404f2569248"
+migrations_dir = "migrations"
 
 # Secrets (set with `wrangler pages secret put`, never here):
 #   LLM_API_KEY
 #   AMAP_WEB_API_KEY
+#   TAVILY_API_KEY (optional; enables public social-food search evidence)
+#   ADMIN_PASSWORD_HASH
+#   ADMIN_SESSION_SECRET

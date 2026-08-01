@@ -5,6 +5,8 @@ import type { Route, Stop, PreferenceTag } from '../../types/route.js'
 export interface PlanInput {
   /** User position */
   position: { lat: number; lng: number }
+  /** User-selected landmark/commercial area, or a server-derived city fallback. */
+  areaName?: string
   /** City / district name from reverse geocode */
   city: string
   /** Current weather text, e.g. "多云" */
@@ -48,6 +50,9 @@ export interface RefineInput {
   distance: number
   adcode?: string
   preferences?: PreferenceTag[]
+  customCuisine?: string[]
+  customScenic?: string[]
+  customWander?: string[]
 }
 
 export interface ReplaceStopInput {
@@ -58,6 +63,9 @@ export interface ReplaceStopInput {
   adcode?: string
   timeMinutes?: number
   origin?: { lat: number; lng: number }
+  customCuisine?: string[]
+  customScenic?: string[]
+  customWander?: string[]
 }
 
 // Re-export commonly-used domain types so planner submodules don't have to

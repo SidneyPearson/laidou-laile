@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { generateRoutes, ApiRequestError } from '../services/api'
 import type { GenerateRoutesRequest, GenerateRoutesResponse } from '../types/api'
 import type { Route } from '../types/route'
+import { useHistory } from './useHistory'
 
 export type RouteRequestOutcome = 'success' | 'cancelled' | 'error'
 
@@ -15,6 +16,7 @@ const loadingStage = ref(0)
 const error = ref<ApiRequestError | null>(null)
 const lastResponse = ref<GenerateRoutesResponse | null>(null)
 const lastRequest = ref<GenerateRoutesRequest | null>(null)
+const historySaved = ref(false)
 
 let stageTimer: ReturnType<typeof setTimeout> | null = null
 let retryTimer: ReturnType<typeof setTimeout> | null = null
@@ -93,6 +95,20 @@ export function useRouteRequest() {
       weatherNote.value = data.weatherNote ?? null
       weather.value = data.weather ?? null
       lastResponse.value = data
+      historySaved.value = !!useHistory().addEntry({
+        locationName: data.locationName,
+        request: {
+          timeOption: req.timeOption,
+          distance: req.distance,
+          preferences: [...req.preferences],
+          cuisineTypes: req.cuisineTypes ? [...req.cuisineTypes] : undefined,
+          scenicTypes: req.scenicTypes ? [...req.scenicTypes] : undefined,
+          wanderTypes: req.wanderTypes ? [...req.wanderTypes] : undefined,
+        },
+        routes: data.routes,
+        weather: data.weather,
+        anchorName: data.anchorName,
+      })
       return 'success'
     } catch (caught: unknown) {
       if (requestId !== activeRequestId || isCancelledError(caught)) return 'cancelled'
@@ -121,6 +137,7 @@ export function useRouteRequest() {
     error.value = null
     routes.value = []
     lastRequest.value = req
+    historySaved.value = false
     runStages(requestId)
 
     const outcome = await runAttempt(req, requestId, 0)
@@ -144,6 +161,7 @@ export function useRouteRequest() {
     loading.value = false
     loadingStage.value = 0
     error.value = null
+    historySaved.value = false
   }
 
   async function retry(): Promise<RouteRequestOutcome> {
@@ -154,6 +172,7 @@ export function useRouteRequest() {
     routes, locationName, weatherNote, weather,
     loading, loadingStage, error,
     lastRequest, lastResponse,
+    historySaved,
     fetchRoutes, retry, cancelRequest,
   }
 }

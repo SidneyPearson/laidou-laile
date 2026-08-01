@@ -1,11 +1,17 @@
 import type { PreferenceTag, TimeOption, CuisineType, ScenicType, WanderType, DistanceOption } from './route'
 
+export interface RouteAnchorRequest {
+  hotspotId: string
+  amapPoiId: string
+}
+
 export interface GenerateRoutesRequest {
   lat: number
   lng: number
   timeOption: TimeOption
   distance: DistanceOption
   preferences: PreferenceTag[]
+  anchor?: RouteAnchorRequest
   cuisineTypes?: CuisineType[]
   scenicTypes?: ScenicType[]
   wanderTypes?: WanderType[]
@@ -20,6 +26,7 @@ export interface GenerateRoutesResponse {
   weatherNote: string | null
   weather: { weather: string; temperature: string; isRainy: boolean } | null
   locationName: string
+  anchorName?: string
 }
 
 export interface ApiError {

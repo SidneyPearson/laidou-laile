@@ -1,291 +1,215 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGeolocation } from '../composables/useGeolocation'
-import { useRouteRequest } from '../composables/useRouteRequest'
-import { useHistory } from '../composables/useHistory'
-import LocationGate from '../components/LocationGate.vue'
 import CityPicker from '../components/CityPicker.vue'
-import LocationMap from '../components/LocationMap.vue'
-import TimeSelector from '../components/TimeSelector.vue'
-import DistanceSelector from '../components/DistanceSelector.vue'
-import PreferenceTags from '../components/PreferenceTags.vue'
-import LoadingOverlay from '../components/LoadingOverlay.vue'
-import type { Attraction, City } from '../data/popularCities'
-import type { TimeOption, DistanceOption, PreferenceTag, CuisineType, ScenicType, WanderType } from '../types/route'
+import type { City } from '../data/popularCities'
 
 const router = useRouter()
-const { coords, loading: locLoading, error: locError, isMock, manualLocationName, requestLocation, setManualLocation } = useGeolocation()
-const { routes, locationName, weather, weatherNote, loading: genLoading, loadingStage, error: genError, fetchRoutes, cancelRequest } = useRouteRequest()
-const { addEntry } = useHistory()
+const {
+  coords,
+  loading,
+  error,
+  isMock,
+  requestLocation,
+  setManualLocation,
+} = useGeolocation()
 
-// ── Selections (all start empty — user must choose) ──
-const timeOption = ref<TimeOption | null>(null)
-const distance = ref<DistanceOption | null>(null)
-const preferences = ref<PreferenceTag[]>([])
-const cuisineTypes = ref<CuisineType[]>([])
-const scenicTypes = ref<ScenicType[]>([])
-const wanderTypes = ref<WanderType[]>([])
-const customCuisine = ref<string[]>([])
-const customScenic = ref<string[]>([])
-const customWander = ref<string[]>([])
-
-const hasRequestedLocation = ref(false)
 const showCityPicker = ref(false)
 
-function handleCitySelect(attraction: Attraction, city: City) {
-  setManualLocation(attraction.lat, attraction.lng, `${city.name} · ${attraction.name}`)
-  showCityPicker.value = false
-  hasRequestedLocation.value = true
+function openCity(city: string, lat: number, lng: number, source: 'gps' | 'manual') {
+  router.push({
+    name: 'city',
+    query: {
+      city,
+      lat: String(lat),
+      lng: String(lng),
+      source,
+    },
+  })
 }
 
-// ── Computed ──────────────────────────────────────────
+async function handleCurrentLocation() {
+  await requestLocation(false)
+  if (!coords.value || error.value) return
 
-const canGenerate = computed(() => {
-  return (
-    coords.value &&
-    timeOption.value !== null &&
-    distance.value !== null &&
-    preferences.value.length > 0
+  openCity(
+    isMock.value ? '定位演示城市' : '当前城市',
+    coords.value.lat,
+    coords.value.lng,
+    'gps',
   )
-})
-
-const missingHint = computed(() => {
-  if (!coords.value) return null
-  const missing: string[] = []
-  if (timeOption.value == null) missing.push('可用时间')
-  if (distance.value == null) missing.push('探索距离')
-  if (preferences.value.length === 0) missing.push('怎么玩')
-  if (missing.length === 0) return null
-  return `请选择：${missing.join('、')}`
-})
-
-// ── Methods ───────────────────────────────────────────
-
-function handleRequestLocation(useMock: boolean) {
-  hasRequestedLocation.value = true
-  requestLocation(useMock)
 }
 
-async function handleGenerate() {
-  if (!coords.value || timeOption.value == null || distance.value == null) return
+function handleCitySelect(city: City) {
+  const center = city.attractions[0]
+  if (!center) return
 
-  try {
-    const outcome = await fetchRoutes({
-      lat: coords.value.lat,
-      lng: coords.value.lng,
-      timeOption: timeOption.value,
-      distance: distance.value,
-      preferences: preferences.value,
-      cuisineTypes: preferences.value.includes('food') ? cuisineTypes.value : undefined,
-      scenicTypes: preferences.value.includes('scenic') ? scenicTypes.value : undefined,
-      wanderTypes: preferences.value.includes('wander') ? wanderTypes.value : undefined,
-      customCuisine: preferences.value.includes('food') ? customCuisine.value : undefined,
-      customScenic: preferences.value.includes('scenic') ? customScenic.value : undefined,
-      customWander: preferences.value.includes('wander') ? customWander.value : undefined,
-    })
-
-    if (outcome !== 'success' || !Array.isArray(routes.value) || routes.value.length === 0) {
-      return
-    }
-
-    // Save to history (wrapped to prevent blocking navigation)
-    try {
-      addEntry({
-        locationName: locationName.value,
-        request: {
-          timeOption: timeOption.value!,
-          distance: distance.value!,
-          preferences: [...preferences.value],
-          cuisineTypes: cuisineTypes.value.length > 0 ? [...cuisineTypes.value] : undefined,
-          scenicTypes: scenicTypes.value.length > 0 ? [...scenicTypes.value] : undefined,
-          wanderTypes: wanderTypes.value.length > 0 ? [...wanderTypes.value] : undefined,
-        },
-        routes: routes.value,
-        weather: weather.value,
-      })
-    } catch (historyErr) {
-      console.warn('Failed to save history entry:', historyErr)
-      // Non-blocking — still navigate even if history save fails
-    }
-
-    router.push({
-      name: 'routes',
-      query: {
-        locationName: locationName.value,
-        weatherNote: weatherNote.value || '',
-        isRainy: weather.value?.isRainy ? '1' : '0',
-        timeOption: String(timeOption.value ?? ''),
-        distance: String(distance.value ?? ''),
-        preferences: preferences.value.join(','),
-      },
-    })
-  } catch (unexpectedErr) {
-    // Last-resort guard — prevent blank page
-    console.error('Unexpected error in handleGenerate:', unexpectedErr)
-  }
+  setManualLocation(center.lat, center.lng, city.name)
+  showCityPicker.value = false
+  openCity(city.name, center.lat, center.lng, 'manual')
 }
 </script>
 
 <template>
-  <!-- Loading Overlay -->
-  <LoadingOverlay v-if="genLoading" :stage="loadingStage" @cancel="cancelRequest()" />
+  <main class="home-shell min-h-full">
+    <section class="home-hero relative overflow-hidden px-6 pb-10 pt-16 text-white">
+      <div class="city-orbit city-orbit-one" />
+      <div class="city-orbit city-orbit-two" />
+      <div class="city-skyline" aria-hidden="true">
+        <span class="building building-one" />
+        <span class="building building-two" />
+        <span class="building building-three" />
+        <span class="building building-four" />
+        <span class="building building-five" />
+      </div>
 
-  <div class="h-full flex flex-col max-w-md mx-auto">
-    <!-- Header -->
-    <header class="flex-shrink-0 pt-24 pb-6 px-5 text-center relative">
-      <h1 class="text-3xl font-bold text-gray-900 mb-1">来都来了</h1>
-      <p class="text-sm text-gray-400">不用做攻略，到了就会玩</p>
-      <button
-        class="absolute right-5 top-24 w-9 h-9 flex items-center justify-center rounded-full bg-white
-               shadow-sm border border-gray-100 text-gray-400 active:bg-gray-50 transition-colors"
-        aria-label="历史路线"
-        @click="router.push({ name: 'history' })"
-      >
-        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-      </button>
-    </header>
-
-    <!-- Main content -->
-    <div class="flex-1 overflow-auto px-5">
-      <!-- Location -->
-      <section class="mb-6">
-        <!-- City Picker (when activated) -->
-        <div v-if="showCityPicker && !coords" class="py-2">
-          <CityPicker @select="handleCitySelect" @cancel="showCityPicker = false" />
+      <div class="relative z-10">
+        <div class="mb-8 flex items-center justify-between">
+          <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-medium tracking-[0.16em] backdrop-blur">
+            CITY INSPIRATION
+          </span>
+          <button
+            class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur transition active:scale-95"
+            aria-label="历史路线"
+            @click="router.push({ name: 'history' })"
+          >
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+          </button>
         </div>
 
-        <!-- Location not yet set -->
-        <div v-else-if="!hasRequestedLocation && !coords" class="text-center py-6">
+        <p class="mb-2 text-sm text-white/70">今天，不做攻略</p>
+        <h1 class="text-[38px] font-bold leading-[1.12] tracking-tight">
+          来都来了，<br>
+          就好好玩一次。
+        </h1>
+        <p class="mt-4 max-w-[280px] text-sm leading-6 text-white/70">
+          先找到这座城市真正值得去的地方，再生成今天就能出发的玩法。
+        </p>
+      </div>
+    </section>
+
+    <section class="relative z-20 -mt-5 px-5 pb-10">
+      <div class="rounded-[28px] bg-white p-5 shadow-[0_18px_50px_rgba(44,44,44,0.10)]">
+        <template v-if="!showCityPicker">
+          <div class="mb-5">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600">
+              从哪里开始
+            </p>
+            <h2 class="mt-1.5 text-xl font-bold text-stone-900">先告诉我你在哪座城市</h2>
+            <p class="mt-1.5 text-sm leading-5 text-stone-500">
+              定位只用于本次推荐，不会建立账号或上传个人轨迹。
+            </p>
+          </div>
+
           <button
-            class="btn-primary w-full py-3.5 text-base font-semibold"
-            :disabled="locLoading"
-            @click="handleRequestLocation(false)"
+            class="btn-primary flex w-full items-center justify-center gap-2 py-4 text-[15px]"
+            :disabled="loading"
+            @click="handleCurrentLocation"
           >
-            {{ locLoading ? '获取中...' : '📍 获取当前位置' }}
+            <svg v-if="!loading" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 21s6-4.4 6-11a6 6 0 1 0-12 0c0 6.6 6 11 6 11Z" />
+              <circle cx="12" cy="10" r="2" />
+            </svg>
+            <span v-else class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            {{ loading ? '正在获取位置…' : '使用当前位置' }}
           </button>
+
           <button
-            class="mt-3 w-full py-3 rounded-xl bg-white border border-gray-200
-                   text-sm font-medium text-gray-600 active:bg-gray-50 transition-colors"
+            class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 py-3.5 text-sm font-semibold text-stone-700 transition active:scale-[0.99] active:bg-stone-100"
             @click="showCityPicker = true"
           >
-            🏙️ 热门旅游城市
+            <span aria-hidden="true">🏙️</span>
+            手动选择城市
           </button>
-        </div>
 
-        <!-- Location set (via GPS or city picker) -->
-        <template v-else>
-          <!-- Live map showing the current location -->
-          <LocationMap
-            v-if="coords"
-            :lng="coords.lng"
-            :lat="coords.lat"
-            :label="manualLocationName || (isMock ? '模拟位置（北京鼓楼）' : '已获取您的位置')"
-          />
-          <LocationGate
-            v-else
-            :loading="locLoading"
-            :error="locError"
-            :is-mock="isMock"
-            :has-coords="!!coords"
-            :manual-location-name="manualLocationName"
-            @request="handleRequestLocation"
-          />
+          <div v-if="error" class="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-800">
+            {{ error.message }}。你也可以直接选择城市继续体验。
+          </div>
         </template>
-      </section>
 
-      <!-- Preferences (only show after location is set) -->
-      <template v-if="coords">
-        <!-- Guidance banner -->
+        <CityPicker
+          v-else
+          @select="handleCitySelect"
+          @cancel="showCityPicker = false"
+        />
+      </div>
+
+      <div class="mt-6 grid grid-cols-3 gap-2">
         <div
-          v-if="missingHint"
-          class="mb-5 p-3 bg-primary-50 border border-primary-100 rounded-xl text-center"
+          v-for="item in [
+            { icon: '✨', title: '先找灵感', desc: '不先填长表单' },
+            { icon: '🧭', title: '全城范围', desc: '不困在附近' },
+            { icon: '🗺️', title: '选中再规划', desc: '路线更有目的' },
+          ]"
+          :key="item.title"
+          class="rounded-2xl border border-stone-200/70 bg-white/70 px-2 py-3 text-center"
         >
-          <p class="text-sm text-primary-700 font-medium">{{ missingHint }}</p>
+          <div class="text-lg">{{ item.icon }}</div>
+          <div class="mt-1 text-xs font-semibold text-stone-700">{{ item.title }}</div>
+          <div class="mt-0.5 text-[10px] text-stone-400">{{ item.desc }}</div>
         </div>
-
-        <section class="mb-6">
-          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-            可用时间
-            <span v-if="timeOption == null" class="text-primary-400 animate-pulse ml-1">← 必选</span>
-          </h2>
-          <TimeSelector v-model="timeOption" />
-        </section>
-
-        <section class="mb-6">
-          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-            探索距离
-            <span v-if="distance == null" class="text-primary-400 animate-pulse ml-1">← 必选</span>
-          </h2>
-          <DistanceSelector v-model="distance" />
-        </section>
-
-        <section class="mb-8">
-          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-            想怎么玩
-            <span v-if="preferences.length === 0" class="text-primary-400 animate-pulse ml-1">← 必选</span>
-          </h2>
-          <PreferenceTags
-            v-model="preferences"
-            v-model:cuisine-types="cuisineTypes"
-            v-model:scenic-types="scenicTypes"
-            v-model:wander-types="wanderTypes"
-            v-model:custom-cuisine="customCuisine"
-            v-model:custom-scenic="customScenic"
-            v-model:custom-wander="customWander"
-          />
-        </section>
-      </template>
-    </div>
-
-    <!-- Bottom fixed CTA -->
-    <div
-      v-if="coords"
-      class="flex-shrink-0 px-5 py-4 bg-white/80 backdrop-blur-lg border-t border-gray-100"
-    >
-      <!-- Generate + Cancel buttons -->
-      <div v-if="genLoading" class="space-y-2">
-        <button
-          class="btn-primary w-full py-3.5 text-base font-semibold flex items-center justify-center gap-2 opacity-70"
-          disabled
-        >
-          <span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          生成中...
-        </button>
-        <button
-          class="w-full py-2 text-sm text-gray-400 active:text-gray-600 transition-colors"
-          @click="cancelRequest()"
-        >
-          取消
-        </button>
       </div>
-      <div v-else>
-        <button
-          class="btn-primary w-full py-3.5 text-base font-semibold flex items-center justify-center gap-2"
-          :class="!canGenerate ? 'opacity-50 cursor-not-allowed' : ''"
-          :disabled="!canGenerate"
-          @click="handleGenerate"
-        >
-          ✨ 生成路线
-        </button>
-      </div>
-
-      <!-- Error display with retry hint -->
-      <div v-if="genError" class="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl text-center">
-        <p class="text-sm text-red-600 font-medium">{{ genError.message }}</p>
-        <p v-if="genError.code === 'NETWORK_ERROR'" class="text-xs text-red-400 mt-1">
-          服务器可能正在启动，请稍后重试
-        </p>
-        <button
-          class="mt-2 text-sm text-red-500 underline font-medium"
-          @click="handleGenerate"
-        >
-          重新生成
-        </button>
-      </div>
-    </div>
-  </div>
+    </section>
+  </main>
 </template>
+
+<style scoped>
+.home-shell {
+  background: #f7f6f2;
+}
+
+.home-hero {
+  min-height: 390px;
+  background:
+    radial-gradient(circle at 82% 20%, rgba(232, 149, 109, 0.38), transparent 30%),
+    linear-gradient(145deg, #315f45 0%, #5b8c5e 56%, #7aad7d 100%);
+}
+
+.city-orbit {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+}
+
+.city-orbit-one {
+  right: -80px;
+  top: 78px;
+  width: 250px;
+  height: 250px;
+}
+
+.city-orbit-two {
+  right: -28px;
+  top: 132px;
+  width: 144px;
+  height: 144px;
+}
+
+.city-skyline {
+  position: absolute;
+  right: 18px;
+  bottom: 22px;
+  display: flex;
+  height: 118px;
+  align-items: flex-end;
+  gap: 7px;
+  opacity: 0.18;
+}
+
+.building {
+  display: block;
+  width: 24px;
+  border-radius: 7px 7px 0 0;
+  background: white;
+}
+
+.building-one { height: 48px; }
+.building-two { height: 88px; }
+.building-three { height: 66px; }
+.building-four { height: 112px; }
+.building-five { height: 76px; }
+</style>

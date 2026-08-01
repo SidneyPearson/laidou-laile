@@ -9,6 +9,40 @@ import { CUISINE_NAME_RE, CUISINE_LABEL } from './constants.js'
 import { parseRawPoi, type AmapRawPoi } from './poiMatching.js'
 import { estimateWalkDistFromStops, fmtDist } from './routeMetrics.js'
 import { buildKeywordProfile, scorePoiRelevance } from './keywordRelevance.js'
+import { isOrdinaryDineInPoi } from './foodSuitability.js'
+import {
+  attachSocialEvidence,
+  searchSocialFoodEvidence,
+} from './socialFoodSearch.js'
+import { getStopCountRange } from './timeBudget.js'
+import {
+  rankFoodCandidates,
+  type FoodCandidate,
+  type FoodRankingResult,
+} from './foodRanking.js'
+import { buildLocalCuisineSearchTerms, hasRegionalCuisineConflict } from './localCuisinePolicy.js'
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function cuisinePatternFor(input: PlanInput): RegExp | undefined {
+  const sources = (input.cuisineTypes ?? [])
+    .map(cuisine => CUISINE_NAME_RE[cuisine]?.source)
+    .filter((source): source is string => Boolean(source))
+  sources.push(...(input.customCuisine ?? [])
+    .map(value => value.trim())
+    .filter(Boolean)
+    .map(escapeRegExp))
+  return sources.length > 0 ? new RegExp(sources.join('|'), 'u') : undefined
+}
+
+function socialSearchArea(input: PlanInput): string {
+  return [...new Set([input.city, input.areaName]
+    .map(value => value?.trim())
+    .filter((value): value is string => Boolean(value)))]
+    .join(' ')
+}
 
 /**
  * When user selects food but no specific cuisine type, switch to a hybrid approach:
@@ -23,6 +57,7 @@ export async function generateFoodList(input: PlanInput): Promise<Route[] | null
   const pois = await searchNearbyPOIs({
     lat: position.lat,
     lng: position.lng,
+    areaName: input.areaName,
     distance,
     timeOption: timeMinutes,
     preferences: ['food'],
@@ -43,48 +78,67 @@ export async function generateFoodList(input: PlanInput): Promise<Route[] | null
       })
     : pois
 
-  if (withinDistance.length === 0) return null
+  const ordinaryDining = withinDistance.filter(isOrdinaryDineInPoi)
+  if (ordinaryDining.length === 0) return null
 
-  // Pre-filter: prioritise POIs whose name matches the cuisine keywords.
-  let filtered = withinDistance
-  if (cuisineTypes?.length) {
-    const pattern = cuisineTypes.map((c) => CUISINE_NAME_RE[c]).filter(Boolean)
-    if (pattern.length > 0) {
-      const re = new RegExp(pattern.map((p) => p.source).join('|'))
-      const matching = withinDistance.filter((p) => re.test(p.name))
-      const nonMatching = withinDistance.filter((p) => !re.test(p.name))
-      filtered = [...matching, ...nonMatching]
-    }
+  // De-duplicate and establish an Amap-only order first. The bounded leading
+  // names are sent in the single Tavily query so basic search can find concrete
+  // shop pages instead of only broad city guides.
+  const seenPoiIds = new Set<string>()
+  const uniqueDining = ordinaryDining.filter((candidate) => {
+    if (seenPoiIds.has(candidate.id)) return false
+    seenPoiIds.add(candidate.id)
+    return true
+  })
+  const rankingContext = {
+    maxDistance: distance,
+    cuisinePattern: cuisinePatternFor(input),
+  }
+  const initialRanking = rankFoodCandidates(uniqueDining, rankingContext)
+  const socialResults = await searchSocialFoodEvidence(
+    socialSearchArea(input),
+    initialRanking.map(candidate => candidate.poi.name),
+  )
+  const enriched = attachSocialEvidence(uniqueDining, socialResults)
+
+  // Re-rank with matched evidence. Model output is never allowed to change
+  // this deterministic order or membership.
+  const ranked = rankFoodCandidates(enriched, {
+    ...rankingContext,
+  })
+
+  // Use the shared time-budget cap for both plain and AI-commented food lists.
+  const maxStops = getStopCountRange(timeMinutes).max
+  const candidates = ranked.slice(0, maxStops)
+
+  // Without public platform evidence, use an honest Amap-only list. DeepSeek
+  // must not turn model memory into a claimed Meituan/Douyin/Xiaohongshu fact.
+  if (!candidates.some(candidate => candidate.recommendationType === 'social_hot')) {
+    return buildPlainFoodList(candidates, input)
   }
 
-  // Take top candidates (max 8) for LLM to score — fewer tokens = faster response
-  const candidates = filtered.slice(0, 8)
-
-  const poiTable = candidates.map((p, i) =>
-    `${i + 1}. ${p.name} | ${p.type || '餐饮'} | ${p.address} | 距您${fmtDist(p.distance)} | 高德评分:${p.rating || '无'}`
+  const poiTable = candidates.map(({ poi: p }, i) =>
+    `${i + 1}. ${p.name} | ${p.type || '餐饮'} | ${p.address} | 距您${fmtDist(p.distance)} | 高德评分:${p.rating || '无'} | 公开平台证据:${p.socialEvidence?.map(e => `${e.platform}:${e.title}`).join('；') || '无'}`
   ).join('\n')
 
-  const scoringPrompt = `你是一个资深美食评论家，名叫"阿来"。下面是你附近的一些餐厅，请根据你的知识对它们进行评分和筛选。
+  const scoringPrompt = `你是一个资深美食评论家，名叫"阿来"。下面是已经由规则完成排序的餐厅，请为每家餐厅补充一句简短点评。
 
 ## 餐厅列表
 ${poiTable}
 
 ## 任务
-从以上列表中选出最好的 5-8 家，根据以下维度综合打分（1-5分，可带小数点）：
-- 口碑：大众点评/美食圈的评价
-- 特色：是否有招牌菜、独特风味
-- 性价比：价格是否合理
-- 氛围：环境和服务
-
-对每家入选的餐厅写一句简短点评（15字以内），说明推荐理由。
+系统已最多选出 ${candidates.length} 家（不得超过输入候选数）。
+保持输入门店范围，为每家餐厅写一句简短点评（15字以内）。
+不得添加列表中没有的门店、平台来源、评分或事实。
+输出顺序不参与最终排序；遗漏门店时系统会保留该门店并使用规则理由。
 
 只输出 JSON，不要其他内容：
 {
   "foodList": [
-    { "name": "店名（保持原名）", "score": 4.5, "comment": "简短推荐理由" }
+    { "name": "店名（保持原名）", "comment": "简短推荐理由" }
   ]
 }
-按 score 从高到低排序。`
+`
 
   let raw: string
   try {
@@ -100,7 +154,7 @@ ${poiTable}
     return buildPlainFoodList(candidates, input)
   }
 
-  let scored: Array<{ name: string; score: number; comment: string }> = []
+  let scored: Array<{ name: string; comment: string }> = []
   try {
     let json = raw.trim()
     if (json.startsWith('```')) json = json.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
@@ -112,43 +166,62 @@ ${poiTable}
 
   if (scored.length === 0) return buildPlainFoodList(candidates, input)
 
-  // Match scored names back to Amap POIs (exact, then simplified, then fuzzy).
-  const poiByName = new Map<string, AmapPOI>()
-  for (const p of candidates) {
-    poiByName.set(p.name, p)
+  // Match model comments back to ranked Amap POIs. Unknown and duplicate model
+  // items are ignored; final iteration always follows deterministic rank order.
+  const poiByName = new Map<string, FoodRankingResult>()
+  for (const rankedCandidate of candidates) {
+    const p = rankedCandidate.poi
+    poiByName.set(p.name, rankedCandidate)
     const simple = p.name.replace(/[（(][^)）]*[)）]/g, '').trim()
-    if (simple !== p.name) poiByName.set(simple, p)
+    if (simple !== p.name) poiByName.set(simple, rankedCandidate)
   }
 
-  const stops: Stop[] = []
+  const commentsByPoiId = new Map<string, string>()
   for (const item of scored) {
-    let poi = poiByName.get(item.name)
-    if (!poi) {
-      for (const [key, p] of poiByName) {
+    if (!item || typeof item.name !== 'string' || typeof item.comment !== 'string') continue
+    let rankedCandidate = poiByName.get(item.name)
+    if (!rankedCandidate) {
+      for (const [key, candidate] of poiByName) {
         if (key.includes(item.name) || item.name.includes(key)) {
-          poi = p
+          rankedCandidate = candidate
           break
         }
       }
     }
-    if (!poi) {
+    if (!rankedCandidate) {
       console.warn(`⚠️ Food list: scored item not found in POIs: "${item.name}"`)
       continue
     }
+    const comment = item.comment.trim().slice(0, 60)
+    if (comment && !commentsByPoiId.has(rankedCandidate.poi.id)) {
+      commentsByPoiId.set(rankedCandidate.poi.id, comment)
+    }
+  }
 
-    const stars = '⭐'.repeat(Math.round(item.score))
+  const stops: Stop[] = candidates.map((rankedCandidate) => {
+    const poi = rankedCandidate.poi
+    const rankingReason = commentsByPoiId.get(poi.id) || rankedCandidate.rankingReason
     const dist = poi.distance > 0 ? poi.distance : Math.round(haversineDist(position.lat, position.lng, poi.lat, poi.lng))
-    stops.push({
+    return {
       name: poi.name,
       address: poi.address,
       visitDurationMinutes: 30,
-      notes: `${stars} ${item.score.toFixed(1)} ${item.comment}`,
+      notes: `${poi.rating ? `高德评分 ${poi.rating} · ` : ''}${rankingReason}`,
       amapPoiId: poi.id,
+      parentPoiId: poi.parentId,
+      typecode: poi.typecode,
+      preferenceScope: 'food',
       lng: poi.lng,
       lat: poi.lat,
       distanceMeters: dist,
-    })
-  }
+      socialEvidence: poi.socialEvidence,
+      recommendationType: rankedCandidate.recommendationType,
+      socialScore: rankedCandidate.socialScore,
+      rankingReason,
+      evidenceSummary: rankedCandidate.evidenceSummary,
+      popularityReason: poi.socialEvidence?.length ? rankingReason : undefined,
+    }
+  })
 
   if (stops.length === 0) return null
 
@@ -157,20 +230,29 @@ ${poiTable}
 
   return [{
     id: crypto.randomUUID(),
+    kind: 'food_list',
     name: '附近美食清单',
-    tagline: `AI 精选 ${stops.length} 家，按评分排序`,
+    tagline: `附近 ${stops.length} 家餐厅，按综合表现排序`,
     stops,
     totalDurationMinutes: totalDur,
     walkingDistanceMeters: walkDist,
-    tips: '评分基于口碑、特色、性价比、氛围综合评定，仅供参考',
+    tips: '排序综合公开平台证据、高德评分、品类与距离，仅供参考',
+    divergenceExempt: true,
   }]
 }
 
-/** Fallback plain food list without AI scores */
-export function buildPlainFoodList(candidates: AmapPOI[], input: PlanInput): Route[] | null {
+/** Fallback food list without AI comments; deterministic ranking stays intact. */
+export function buildPlainFoodList(candidates: FoodRankingResult[], input: PlanInput): Route[] | null {
   const { position } = input
-  const maxStops = Math.min(8, candidates.length)
-  const stops: Stop[] = candidates.slice(0, maxStops).map((p) => {
+  const maxStops = getStopCountRange(input.timeMinutes).max
+  const seenPoiIds = new Set<string>()
+  const selectedCandidates = candidates.filter((candidate) => {
+    if (seenPoiIds.has(candidate.poi.id)) return false
+    seenPoiIds.add(candidate.poi.id)
+    return true
+  }).slice(0, maxStops)
+  const stops: Stop[] = selectedCandidates.map((rankedCandidate) => {
+    const p = rankedCandidate.poi
     const dist = p.distance > 0 ? p.distance : Math.round(haversineDist(position.lat, position.lng, p.lat, p.lng))
     return {
       name: p.name,
@@ -178,27 +260,38 @@ export function buildPlainFoodList(candidates: AmapPOI[], input: PlanInput): Rou
       visitDurationMinutes: 30,
       notes: `${p.address}，距您${fmtDist(dist)}${p.rating ? `，高德评分 ${p.rating}` : ''}`,
       amapPoiId: p.id,
+      parentPoiId: p.parentId,
+      typecode: p.typecode,
+      preferenceScope: 'food',
       lng: p.lng,
       lat: p.lat,
       distanceMeters: dist,
+      socialEvidence: p.socialEvidence,
+      recommendationType: rankedCandidate.recommendationType,
+      socialScore: rankedCandidate.socialScore,
+      rankingReason: rankedCandidate.rankingReason,
+      evidenceSummary: rankedCandidate.evidenceSummary,
+      popularityReason: p.socialEvidence?.length ? rankedCandidate.rankingReason : undefined,
     }
   })
 
   const walkDist = estimateWalkDistFromStops(stops)
   return [{
     id: crypto.randomUUID(),
+    kind: 'food_list',
     name: '附近美食清单',
     tagline: `附近 ${stops.length} 家餐厅`,
     stops,
     totalDurationMinutes: stops.length * 30 + Math.ceil((walkDist / 100) * 1.5),
     walkingDistanceMeters: walkDist,
-    tips: '未获取 AI 评分，按距离排序',
+    tips: '未获取 AI 点评，按公开证据、高德评分、品类与距离综合排序',
+    divergenceExempt: true,
   }]
 }
 
 /**
  * When user selects food + cuisine types, generate 3 comparison cards by
- * dimension (评分最高 / 距离最近 / 最多打卡).
+ * dimension (评分最高 / 距离最近 / 综合推荐).
  *
  * - Single cuisine (e.g. just 火锅): each card has TOP 3 shops of that type.
  * - Multiple cuisines: each card has 1 shop per type (cross-cuisine comparison).
@@ -221,7 +314,9 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
   const cuisinePOIs = new Map<string, AmapPOI[]>()
 
   for (const ct of cuisineTypes) {
-    const kws = (CUISINE_KEYWORDS as Record<string, string>)[ct]
+    const kws = ct === 'local_cuisine'
+      ? buildLocalCuisineSearchTerms([input.city, input.areaName].filter(Boolean).join(' ')).join('|')
+      : (CUISINE_KEYWORDS as Record<string, string>)[ct]
       || (ct === '本帮面' ? '本帮面|蟹黄面|葱油拌面|焖肉面|大排面' : ct)
     if (!kws) continue
     try {
@@ -239,6 +334,11 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
       const pois = ((res.data.pois || []) as AmapRawPoi[])
         .map((raw) => parseRawPoi(raw, position.lng, position.lat))
         .filter((p): p is AmapPOI => p !== null)
+        .filter(isOrdinaryDineInPoi)
+        .filter(p => ct !== 'local_cuisine' || !hasRegionalCuisineConflict(
+          p,
+          [input.city, input.areaName].filter(Boolean).join(' '),
+        ))
       if (pois.length > 0) cuisinePOIs.set(ct, pois)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -249,8 +349,8 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
   if (cuisinePOIs.size === 0) return null
 
   // Step 2: enrich each POI with Haversine distance + rating/cost/rank scores.
-  type ScoredPOI = AmapPOI & { _dist: number; _rating: number; _cost: number; _idx: number }
-  const allScored: ScoredPOI[] = []
+  type ScoredPOI = FoodCandidate & { _dist: number; _rating: number; _cost: number; _idx: number }
+  let allScored: ScoredPOI[] = []
   for (const [ct, pois] of cuisinePOIs) {
     for (let i = 0; i < pois.length; i++) {
       const p = pois[i]
@@ -268,6 +368,34 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
   }
 
   if (allScored.length === 0) return null
+
+  // Use the same one-credit evidence flow as the pure food list. Candidate
+  // names come from verified, in-radius Amap results and are bounded inside
+  // searchSocialFoodEvidence, keeping one focused Tavily basic request.
+  const comparisonContext = {
+    maxDistance: distance,
+    cuisinePattern: cuisinePatternFor(input),
+  }
+  const initialComparisonRanking = rankFoodCandidates(allScored, comparisonContext)
+  const socialResults = await searchSocialFoodEvidence(
+    socialSearchArea(input),
+    initialComparisonRanking.map(candidate => candidate.poi.name),
+  )
+  const evidenceByPoiId = new Map(
+    attachSocialEvidence(allScored, socialResults)
+      .map(candidate => [candidate.id, candidate.socialEvidence] as const),
+  )
+  allScored = allScored.map(candidate => ({
+    ...candidate,
+    socialEvidence: evidenceByPoiId.get(candidate.id),
+  }))
+  const comparisonRanking = rankFoodCandidates(allScored, comparisonContext)
+  const comparisonRankingById = new Map(
+    comparisonRanking.map(candidate => [candidate.poi.id, candidate] as const),
+  )
+  const hasAnySocialEvidence = comparisonRanking.some(
+    candidate => candidate.recommendationType === 'social_hot',
+  )
 
   // Step 3: group by cuisine type, cross-check with name regex to prevent
   // misclassification (e.g. "额尔敦传统涮" matches local_cuisine search but its
@@ -304,8 +432,8 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
       scorer: (p) => p._rating },
     { key: 'distance', label: '距离最近', slogan: '步行可达，方便省时',
       scorer: (p) => -p._dist },
-    { key: 'popularity', label: '最多打卡', slogan: '最多打卡，人气爆棚',
-      scorer: (p) => p._rating * 0.6 + (1 / (p._idx + 1)) * 4 },
+    { key: 'recommendation', label: '综合推荐', slogan: '综合表现，透明可查',
+      scorer: (p) => comparisonRankingById.get(p.id)?.score ?? 0 },
   ]
 
   // Step 5: per dimension, pick top N shops per cuisine. Shops can repeat
@@ -334,6 +462,8 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
 
       for (let pi = 0; pi < picks.length; pi++) {
         const best = picks[pi]
+        const rankedCandidate = comparisonRankingById.get(best.id)
+        if (!rankedCandidate) continue
         used.add(best.id)
         globallyUsed.add(best.id)
 
@@ -349,9 +479,20 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
           visitDurationMinutes: 35,
           notes: `${rankPrefix}【${cuLabel}】${best.address}，距您${distStr}${ratingStr}${costStr}`,
           amapPoiId: best.id,
+          parentPoiId: best.parentId,
+          typecode: best.typecode,
+          preferenceScope: 'food',
           lng: best.lng,
           lat: best.lat,
           distanceMeters: best._dist,
+          socialEvidence: best.socialEvidence,
+          recommendationType: rankedCandidate.recommendationType,
+          socialScore: rankedCandidate.socialScore,
+          rankingReason: rankedCandidate.rankingReason,
+          evidenceSummary: rankedCandidate.evidenceSummary,
+          popularityReason: best.socialEvidence?.length
+            ? rankedCandidate.rankingReason
+            : undefined,
         })
       }
     }
@@ -375,12 +516,38 @@ export async function generateCuisineComparison(input: PlanInput): Promise<Route
         ? '同品类按口碑评分排序，帮你挑最稳的一家'
         : dim.key === 'distance'
           ? '同品类按步行距离排序，省时省脚'
-          : '同品类按人气热度排序，跟着大家走',
+          : '综合公开平台证据、高德评分、品类与距离排序',
       tips: dim.key === 'rating'
         ? '评分来自高德地图用户评价，仅供参考'
-        : dim.key === 'popularity'
-          ? '综合评分和搜索热度排序'
+        : dim.key === 'recommendation'
+          ? hasAnySocialEvidence
+            ? '有平台标签的餐厅附具体公开链接，其余为高德高分补充'
+            : '未找到可核验平台链接，本组按高德评分、品类与距离排序'
           : '距离由近到远排列',
+      candidateStops: allScored.map((candidate) => {
+        const rankedCandidate = comparisonRankingById.get(candidate.id)
+        return {
+          name: candidate.name,
+          address: candidate.address,
+          visitDurationMinutes: 35,
+          notes: candidate.address,
+          amapPoiId: candidate.id,
+          parentPoiId: candidate.parentId,
+          typecode: candidate.typecode,
+          preferenceScope: 'food',
+          lng: candidate.lng,
+          lat: candidate.lat,
+          distanceMeters: candidate._dist,
+          socialEvidence: candidate.socialEvidence,
+          recommendationType: rankedCandidate?.recommendationType,
+          socialScore: rankedCandidate?.socialScore,
+          rankingReason: rankedCandidate?.rankingReason,
+          evidenceSummary: rankedCandidate?.evidenceSummary,
+          popularityReason: candidate.socialEvidence?.length
+            ? rankedCandidate?.rankingReason
+            : undefined,
+        }
+      }),
     })
   }
 
@@ -408,7 +575,7 @@ ${stopList}
 
 ## 任务
 为每家店写一句点评（12字以内），说明推荐理由或招牌菜。
-保持原有维度分类（评分最高/距离最近/最多打卡/最具性价比），不要改动店铺分配。
+保持原有维度分类（评分最高/距离最近/综合推荐），不要改动店铺分配。
 人均价格和评分信息保持不变。
 
 只输出 JSON：

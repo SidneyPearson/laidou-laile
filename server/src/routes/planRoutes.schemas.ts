@@ -18,10 +18,38 @@ const lat = z.number().finite().min(-90).max(90)
 const lng = z.number().finite().min(-180).max(180)
 const customText = z.string().trim().min(1).max(20)
 
+// ── /suggest-order ─────────────────────────────────
+const routeAnchor = z.object({
+  hotspotId: z.string().trim().regex(/^[a-z0-9-]{3,80}$/),
+  amapPoiId: z.string().trim().min(1).max(50),
+})
+
+export const suggestOrderRequestSchema = z.object({
+  city: z.string().trim().min(1).max(20),
+  places: z.array(routeAnchor).min(2).max(6),
+  startPeriod: z.enum(['morning', 'afternoon', 'evening']).optional(),
+  weather: z.object({
+    weather: z.string().trim().max(20),
+    isRainy: z.boolean(),
+    note: z.string().trim().max(120).optional(),
+  }).optional(),
+}).superRefine((value, ctx) => {
+  const hotspotIds = value.places.map(place => place.hotspotId)
+  const poiIds = value.places.map(place => place.amapPoiId)
+  if (new Set(hotspotIds).size !== hotspotIds.length || new Set(poiIds).size !== poiIds.length) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['places'],
+      message: '地点不能重复',
+    })
+  }
+})
+
 // ── /generate ──────────────────────────────────────
 export const generateRequestSchema = z.object({
   lat,
   lng,
+  areaName: z.string().trim().min(1).max(80).optional(),
   timeOption,
   distance: distanceOption,
   preferences: z.array(preferenceTag).min(1).max(3),
@@ -35,7 +63,7 @@ export const generateRequestSchema = z.object({
 export type GenerateRequest = z.infer<typeof generateRequestSchema>
 
 // ── Route (used by /refine & /replace-stop) ────────
-const stopSchema = z.object({
+export const stopSchema = z.object({
   name: z.string().min(1).max(80),
   address: z.string().max(200),
   visitDurationMinutes: z.number().int().min(1).max(300),
@@ -48,10 +76,23 @@ const stopSchema = z.object({
   openTime: z.string().max(10).optional(),
   closeTime: z.string().max(10).optional(),
   openNow: z.boolean().optional(),
+  socialEvidence: z.array(z.object({
+    platform: z.enum(['美团', '抖音', '小红书']),
+    title: z.string().max(120),
+    url: z.string().url().max(2000),
+    // Optional while accepting route payloads produced before evidence scoring.
+    confidence: z.number().finite().min(0).max(1).optional(),
+  })).max(3).optional(),
+  recommendationType: z.enum(['social_hot', 'amap_fallback']).optional(),
+  socialScore: z.number().finite().min(0).max(100).optional(),
+  rankingReason: z.string().max(200).optional(),
+  evidenceSummary: z.string().max(200).optional(),
+  popularityReason: z.string().max(200).optional(),
 })
 
 const routeSchema = z.object({
   id: z.string().max(100),
+  kind: z.enum(['route', 'food_list']).optional(),
   name: z.string().min(1).max(30),
   tagline: z.string().max(60),
   stops: z.array(stopSchema).min(1).max(12),
@@ -79,6 +120,9 @@ export const refineRequestSchema = z.object({
   timeMinutes: z.number().int().min(30).max(600).default(240),
   distance: z.number().int().min(0).max(50000).default(0),
   preferences: z.array(preferenceTag).max(3).default([]),
+  customCuisine: z.array(customText).max(5).optional(),
+  customScenic: z.array(customText).max(5).optional(),
+  customWander: z.array(customText).max(5).optional(),
   origin: z.object({ lat, lng }).optional(),
 }).superRefine((v, ctx) => {
   const max = v.route.stops.length
@@ -104,6 +148,9 @@ export const replaceStopRequestSchema = z.object({
   adcode: z.string().max(10).optional(),
   timeMinutes: z.number().int().min(30).max(600).optional(),
   origin: z.object({ lat, lng }).optional(),
+  customCuisine: z.array(customText).max(5).optional(),
+  customScenic: z.array(customText).max(5).optional(),
+  customWander: z.array(customText).max(5).optional(),
 }).superRefine((v, ctx) => {
   if (v.stopIndex >= v.route.stops.length) {
     ctx.addIssue({

@@ -4,10 +4,14 @@ import { getWeather } from './amap/weather.js'
 import { generatePlan, buildFallbackRoutes } from './aiPlannerService.js'
 import type { Route, PreferenceTag, TimeOption, CuisineType, ScenicType, WanderType, DistanceOption } from '../types/route.js'
 import { applyRoutePolicies } from './planner/routePolicy.js'
+import { buildCategoryKeywords, buildCategoryTypecodePrefixes } from './planner/preferenceCriteria.js'
+import type { QualityDiagnostics } from './planner/qualityDiagnostics.js'
+import { findMissingPreferences, preferenceLabels } from './planner/preferenceCoverage.js'
 
 interface GenerateParams {
   lat: number
   lng: number
+  areaName?: string
   timeOption: TimeOption
   distance: DistanceOption
   preferences: PreferenceTag[]
@@ -26,6 +30,15 @@ interface GenerateResult {
   weather: { weather: string; temperature: string; isRainy: boolean } | null
   source: 'ai' | 'fallback'
   fallbackReason: string | null
+  diagnostics?: QualityDiagnostics
+}
+
+function countQualifiedStops(routes: Route[]): number {
+  const identities = new Set<string>()
+  for (const stop of routes.flatMap(route => route.stops)) {
+    identities.add(stop.amapPoiId || `${stop.name}\u0000${stop.lng}\u0000${stop.lat}`)
+  }
+  return identities.size
 }
 
 /**
@@ -36,7 +49,7 @@ interface GenerateResult {
  */
 export async function generateRoutes(params: GenerateParams): Promise<GenerateResult> {
   const { lat, lng, timeOption, distance, preferences, cuisineTypes, scenicTypes, wanderTypes,
-    customCuisine, customScenic, customWander } = params
+    customCuisine, customScenic, customWander, areaName } = params
 
   // Step 1: geocode + weather (no POI search — LLM goes first)
   const geoInfo = await reverseGeocode(lat, lng)
@@ -46,6 +59,7 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
   const city = distance === 0
     ? (geoInfo.city || geoInfo.district || '当前城市')
     : (geoInfo.district ? `${geoInfo.district}${geoInfo.township || ''}` : '当前位置')
+  const recallAreaName = areaName?.trim() || city
 
   // City-level adcode for city-wide Amap searches (e.g. 310105 → 310000)
   const cityAdcode = geoInfo.adcode ? geoInfo.adcode.slice(0, 3) + '000' : ''
@@ -60,6 +74,7 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
   // Step 2: LLM-first generation (LLM → verify via Amap)
   const plan = await generatePlan({
     position: { lat, lng },
+    areaName: recallAreaName,
     city,
     weather,
     timeMinutes: timeOption,
@@ -93,10 +108,15 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
   console.log('🔄 LLM failed or returned no routes, falling back to Amap around-search...')
   const pois = await searchNearbyPOIs({
     lat, lng, distance, timeOption, preferences,
+    areaName: recallAreaName,
     cuisineTypes, scenicTypes, wanderTypes,
     adcode: searchAdcode,
     wideMode: distance === 0,
-    customKeywords: [...(customCuisine ?? []), ...(customScenic ?? []), ...(customWander ?? [])],
+    customKeywordsByPreference: {
+      food: customCuisine ?? [],
+      scenic: customScenic ?? [],
+      wander: customWander ?? [],
+    },
   })
 
   const fallbackRoutes = buildFallbackRoutes(pois, timeOption, preferences)
@@ -105,11 +125,30 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
     timeMinutes: timeOption,
     explorationDistance: distance,
     preferences,
-    customKeywords: [...(customCuisine ?? []), ...(customScenic ?? []), ...(customWander ?? [])],
+    customKeywordsByPreference: {
+      food: customCuisine ?? [],
+      scenic: customScenic ?? [],
+      wander: customWander ?? [],
+    },
+    categoryKeywordsByPreference: buildCategoryKeywords({
+      cuisineTypes, scenicTypes, wanderTypes, city, areaName: recallAreaName,
+    }),
+    categoryTypecodePrefixesByPreference: buildCategoryTypecodePrefixes({
+      cuisineTypes, scenicTypes, wanderTypes, city, areaName: recallAreaName,
+    }),
   })
+  const missingPreferences = findMissingPreferences(
+    guardedFallback.routes,
+    fallbackRoutes,
+    preferences,
+  )
+  const fallbackOutputRoutes = missingPreferences.length > 0 ? [] : guardedFallback.routes
+  const coverageReason = missingPreferences.length > 0
+    ? `附近候选不足，无法同时满足${preferenceLabels(missingPreferences)}偏好`
+    : null
 
   return {
-    routes: guardedFallback.routes,
+    routes: fallbackOutputRoutes,
     locationName,
     weatherNote: weatherInfo?.note || null,
     weather: weatherInfo ? {
@@ -118,6 +157,15 @@ export async function generateRoutes(params: GenerateParams): Promise<GenerateRe
       isRainy: weatherInfo.isRainy,
     } : null,
     source: 'fallback',
-    fallbackReason: guardedFallback.fallbackReason || plan.fallbackReason || 'AI服务暂不可用，已为您生成基础路线',
+    fallbackReason: coverageReason || guardedFallback.fallbackReason || plan.fallbackReason || 'AI服务暂不可用，已为您生成基础路线',
+    // searchNearbyPOIs currently returns candidates after its own quality
+    // filtering, so only this boundary and the final policy output are
+    // measurable here. Per-stage rejection counts remain explicitly unknown.
+    diagnostics: {
+      recalled: pois.length,
+      rejectedByType: 'unknown',
+      rejectedByDistance: 'unknown',
+      qualified: countQualifiedStops(fallbackOutputRoutes),
+    },
   }
 }

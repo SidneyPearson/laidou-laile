@@ -1,15 +1,12 @@
 <script setup lang="ts">
+import { openAmapNavigation } from '../utils/amapNavigation'
+
 defineProps<{
   name: string
   lng: number
   lat: number
   mini?: boolean
 }>()
-
-function openAmap(name: string, lng: number, lat: number) {
-  const uri = `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=walk&callnative=1`
-  window.open(uri, '_blank')
-}
 </script>
 
 <template>
@@ -19,7 +16,7 @@ function openAmap(name: string, lng: number, lat: number) {
       'active:text-primary-600 transition-colors',
       mini ? 'text-xs' : 'text-sm',
     ]"
-    @click="openAmap(name, lng, lat)"
+    @click="openAmapNavigation(name, lng, lat)"
   >
     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>

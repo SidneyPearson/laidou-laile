@@ -1,0 +1,69 @@
+import { Hono } from 'hono'
+import { z, ZodError } from 'zod'
+import type { Bindings } from '../config/env.js'
+import { D1CurationRepository } from '../repositories/d1CurationRepository.js'
+import { selectMainRecommendations, spotCategorySchema } from '../domain/curation.js'
+import { CURATED_SEED_CITIES } from '../data/cities/index.js'
+import type { CurationRepository } from '../repositories/curationRepository.js'
+import { badRequest } from '../middleware/errorHandler.js'
+
+const recommendationQuerySchema = z.object({
+  category: spotCategorySchema.optional(),
+  personas: z.string().trim().max(800).optional().transform(value =>
+    (value ?? '').split(',').map(item => item.trim()).filter(Boolean).slice(0, 20)),
+  rainy: z.enum(['true', 'false']).optional().transform(value => value === 'true'),
+}).strict()
+
+function queryContext(url: string) {
+  return recommendationQuerySchema.parse(
+    Object.fromEntries(new URL(url).searchParams.entries()),
+  )
+}
+
+export interface RecommendationRouteDependencies {
+  repository?: (db: D1Database) => CurationRepository
+}
+
+export function createRecommendationRoutes(dependencies: RecommendationRouteDependencies = {}) {
+  const routes = new Hono<{ Bindings: Bindings }>()
+  routes.get('/', async c => {
+    try {
+      const context = queryContext(c.req.url)
+      const repository = dependencies.repository?.(c.env.DB) ?? new D1CurationRepository(c.env.DB)
+      const [publishedCities, managedCities] = await Promise.all([
+        repository.listPublishedCities(),
+        repository.listCities({ page: 1, pageSize: 100 }),
+      ])
+      const managedAdcodes = [...managedCities.items.map(city => city.adcode)]
+      for (let page = 2; page <= managedCities.totalPages; page++) {
+        const result = await repository.listCities({ page, pageSize: 100 })
+        managedAdcodes.push(...result.items.map(city => city.adcode))
+      }
+      const data = await Promise.all(publishedCities.map(async city => ({
+        adcode: city.adcode,
+        province: city.provinceName,
+        name: city.name,
+        attractions: selectMainRecommendations(await repository.listPublished(city.adcode), context).map(spot => ({
+          id: spot.id, name: spot.name, lat: spot.lat, lng: spot.lng, category: spot.category, tier: spot.tier,
+        })),
+      })))
+      // V0.1 favors editorial consistency over edge caching: opening the H5
+      // city picker after an admin publish/unpublish must read the latest D1 state.
+      c.header('Cache-Control', 'no-store')
+      return c.json({ cities: data, source: 'd1', managedAdcodes })
+    } catch (err) {
+      if (err instanceof ZodError) return badRequest(c, err)
+      console.error('D1 recommendation fallback:', err instanceof Error ? err.message : 'database unavailable')
+      return c.json({
+        cities: CURATED_SEED_CITIES.map(city => ({
+          adcode: city.adcode, province: city.provinceName, name: city.name,
+          attractions: city.spots.filter(spot => spot.tier === 'S' || spot.tier === 'A').map(spot => ({ id: spot.id, name: spot.name, lat: spot.lat, lng: spot.lng, category: spot.category, tier: spot.tier })),
+        })),
+        source: 'static_fallback',
+        fallbackReason: 'D1_UNAVAILABLE',
+        managedAdcodes: CURATED_SEED_CITIES.map(city => city.adcode),
+      }, 503)
+    }
+  })
+  return routes
+}

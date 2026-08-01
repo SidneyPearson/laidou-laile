@@ -38,6 +38,7 @@ export async function generateThemedRoutes(
 
   const pois = await searchNearbyPOIs({
     lat: position.lat, lng: position.lng,
+    areaName: input.areaName,
     distance, timeOption: timeMinutes as 60 | 120 | 240 | 480,
     preferences,
     adcode,
@@ -135,6 +136,9 @@ ${poiTable}
           visitDurationMinutes: s.visitDurationMinutes || 40,
           notes: s.notes || poi.address,
           amapPoiId: poi.id,
+          parentPoiId: poi.parentId,
+          typecode: poi.typecode,
+          preferenceScope: preferences[0],
           lng: poi.lng,
           lat: poi.lat,
           distanceMeters: dist,
@@ -154,6 +158,19 @@ ${poiTable}
           direction: r.direction,
           reason: r.reason,
           axes: r.axes,
+          candidateStops: candidates.map((candidate) => ({
+            name: candidate.name,
+            address: candidate.address,
+            visitDurationMinutes: estimateVisitDuration(candidate),
+            notes: candidate.address,
+            amapPoiId: candidate.id,
+            parentPoiId: candidate.parentId,
+            typecode: candidate.typecode,
+            preferenceScope: preferences[0],
+            lng: candidate.lng,
+            lat: candidate.lat,
+            distanceMeters: candidate.distance,
+          })),
         })
       }
     }
@@ -192,6 +209,9 @@ export function buildSimpleThemedRoutes(
         visitDurationMinutes: estimateVisitDuration(p),
         notes: `${p.address}，距您${fmtDist(dist)}`,
         amapPoiId: p.id,
+        parentPoiId: p.parentId,
+        typecode: p.typecode,
+        preferenceScope: _preferences[0],
         lng: p.lng,
         lat: p.lat,
         distanceMeters: dist,
@@ -206,6 +226,19 @@ export function buildSimpleThemedRoutes(
       totalDurationMinutes: stops.length * 40 + Math.ceil((walkDist / 100) * 1.5),
       walkingDistanceMeters: walkDist,
       tips: '',
+      candidateStops: candidates.map((candidate) => ({
+        name: candidate.name,
+        address: candidate.address,
+        visitDurationMinutes: estimateVisitDuration(candidate),
+        notes: candidate.address,
+        amapPoiId: candidate.id,
+        parentPoiId: candidate.parentId,
+        typecode: candidate.typecode,
+        preferenceScope: _preferences[0],
+        lng: candidate.lng,
+        lat: candidate.lat,
+        distanceMeters: candidate.distance,
+      })),
     })
   }
   return routes.length > 0 ? routes : null

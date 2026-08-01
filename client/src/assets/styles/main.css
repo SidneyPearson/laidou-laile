@@ -16,7 +16,8 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply text-stone-900;
+    background: #f7f6f2;
     height: 100%;
     overflow-x: hidden;
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -32,6 +33,7 @@
     @apply bg-primary-500 text-white font-semibold rounded-2xl
            active:bg-primary-600 transition-colors
            disabled:opacity-50 disabled:cursor-not-allowed;
+    box-shadow: 0 10px 24px rgba(91, 140, 94, 0.24);
   }
 
   .card {

@@ -35,6 +35,10 @@ export interface AmapPOI {
   cost: string | null
   /** Amap parent POI id; internal only, used to collapse scenic sub-POIs. */
   parentId?: string | null
+  /** Raw provider photos retained for the admin verification review only. */
+  photos?: Array<{ url: string; title: string }>
+  /** Best provider photo URL, used as the Amap fallback cover before the gradient. */
+  photoUrl?: string
 }
 
 /** Amap around-search response */

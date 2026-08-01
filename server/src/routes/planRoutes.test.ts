@@ -40,6 +40,22 @@ const validRoute = {
   tips: '提前预约',
 }
 
+const unsupportedSocialRoute = {
+  ...validRoute,
+  stops: [{
+    ...validStop,
+    recommendationType: 'social_hot' as const,
+    socialScore: 85,
+    evidenceSummary: '小红书热门',
+    popularityReason: '抖音与小红书推荐',
+    socialEvidence: [{
+      platform: '小红书' as const,
+      title: '旧版来源没有置信度',
+      url: 'https://www.xiaohongshu.com/explore/legacy',
+    }],
+  }],
+}
+
 function post(path: string, body: unknown, headers: Record<string, string> = {}) {
   return app.request(path, {
     method: 'POST',
@@ -86,6 +102,27 @@ describe('POST /api/plan/generate', () => {
     expect(res.headers.get('cache-control')).toBe('no-store')
   })
 
+  it('enforces evidence invariants on generated routes before API output', async () => {
+    serviceMocks.generateRoutes.mockResolvedValueOnce({
+      routes: [unsupportedSocialRoute],
+      weatherNote: null,
+      weather: null,
+      locationName: '上海市',
+      source: 'ai',
+      fallbackReason: null,
+    })
+
+    const res = await post('/api/plan/generate', { ...valid, lat: 31.231 })
+    const json = await res.json() as { routes: typeof unsupportedSocialRoute[] }
+    expect(json.routes[0].stops[0]).toMatchObject({
+      recommendationType: 'amap_fallback',
+      socialScore: 0,
+      evidenceSummary: '高德高分补充',
+    })
+    expect(json.routes[0].stops[0].socialEvidence).toBeUndefined()
+    expect(json.routes[0].stops[0].popularityReason).toBeUndefined()
+  })
+
   it('keeps custom tags separate from enum-backed options', async () => {
     const res = await post('/api/plan/generate', {
       ...valid,
@@ -96,6 +133,17 @@ describe('POST /api/plan/generate', () => {
     expect(serviceMocks.generateRoutes).toHaveBeenCalledWith(expect.objectContaining({
       cuisineTypes: ['hotpot'],
       customCuisine: ['潮汕牛肉锅'],
+    }))
+  })
+
+  it('forwards an optional selected area name to route generation', async () => {
+    const res = await post('/api/plan/generate', {
+      ...valid,
+      areaName: '宽窄巷子',
+    })
+    expect(res.status).toBe(200)
+    expect(serviceMocks.generateRoutes).toHaveBeenCalledWith(expect.objectContaining({
+      areaName: '宽窄巷子',
     }))
   })
 
@@ -146,8 +194,38 @@ describe('POST /api/plan/generate', () => {
     serviceMocks.generateRoutes.mockResolvedValueOnce({ routes: [] })
     const res = await post('/api/plan/generate', { ...valid, lat: 31.24 })
     expect(res.status).toBe(404)
-    const json = await res.json() as { error: { code: string } }
+    const json = await res.json() as { error: { code: string; message: string } }
     expect(json.error.code).toBe('NO_POIS_FOUND')
+    expect(json.error.message).toBe('附近暂未找到合适的地点')
+  })
+
+  it('keeps the NO_POIS_FOUND envelope while explaining a measured shortage', async () => {
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined)
+    serviceMocks.generateRoutes.mockResolvedValueOnce({
+      routes: [],
+      diagnostics: {
+        recalled: 18,
+        rejectedByType: 3,
+        rejectedByDistance: 15,
+        qualified: 0,
+      },
+    })
+
+    const res = await post('/api/plan/generate', { ...valid, lat: 31.241 })
+    expect(res.status).toBe(404)
+    const json = await res.json() as { error: { code: string; message: string } }
+    expect(json.error).toEqual({
+      code: 'NO_POIS_FOUND',
+      message: '已找到18个候选，但合格地点均超出当前距离；可尝试扩大探索范围',
+    })
+    expect(log).toHaveBeenCalledTimes(1)
+    expect(log).toHaveBeenCalledWith('route candidate shortage', {
+      recalled: 18,
+      rejectedByType: 3,
+      rejectedByDistance: 15,
+      qualified: 0,
+    })
+    log.mockRestore()
   })
 
   it('dedupes identical concurrent requests inside one isolate', async () => {
@@ -206,14 +284,27 @@ describe('POST /api/plan/refine', () => {
   }
 
   it('returns routes: [refined]', async () => {
-    const res = await post('/api/plan/refine', valid)
+    const res = await post('/api/plan/refine', { ...valid, customCuisine: ['本帮面'] })
     expect(res.status).toBe(200)
     const json = await res.json() as { routes: unknown[] }
     expect(json.routes).toEqual([validRoute])
     expect(serviceMocks.refinePlan).toHaveBeenCalledWith(expect.objectContaining({
       route: validRoute,
       position: { lat: validStop.lat, lng: validStop.lng },
+      customCuisine: ['本帮面'],
     }))
+  })
+
+  it('enforces evidence invariants on refined routes before API output', async () => {
+    serviceMocks.refinePlan.mockResolvedValueOnce(unsupportedSocialRoute)
+    const res = await post('/api/plan/refine', { ...valid, city: '北京' })
+    const json = await res.json() as { routes: typeof unsupportedSocialRoute[] }
+    expect(json.routes[0].stops[0]).toMatchObject({
+      recommendationType: 'amap_fallback',
+      socialScore: 0,
+      evidenceSummary: '高德高分补充',
+    })
+    expect(json.routes[0].stops[0].socialEvidence).toBeUndefined()
   })
 
   it('rejects out-of-range removeStopIndices', async () => {
@@ -251,13 +342,26 @@ describe('POST /api/plan/replace-stop', () => {
   }
 
   it('returns route on success', async () => {
-    const res = await post('/api/plan/replace-stop', valid)
+    const res = await post('/api/plan/replace-stop', { ...valid, customCuisine: ['本帮面'] })
     expect(res.status).toBe(200)
     const json = await res.json() as { route: unknown }
     expect(json.route).toEqual(validRoute)
     expect(serviceMocks.replaceStop).toHaveBeenCalledWith(expect.objectContaining({
       stopIndex: 0,
+      customCuisine: ['本帮面'],
     }))
+  })
+
+  it('enforces evidence invariants on replaced routes before API output', async () => {
+    serviceMocks.replaceStop.mockResolvedValueOnce(unsupportedSocialRoute)
+    const res = await post('/api/plan/replace-stop', { ...valid, distance: 3000 })
+    const json = await res.json() as { route: typeof unsupportedSocialRoute }
+    expect(json.route.stops[0]).toMatchObject({
+      recommendationType: 'amap_fallback',
+      socialScore: 0,
+      evidenceSummary: '高德高分补充',
+    })
+    expect(json.route.stops[0].socialEvidence).toBeUndefined()
   })
 
   it('rejects an invalid stopIndex', async () => {

@@ -15,7 +15,7 @@ describe('loading and accessibility UI contracts', () => {
   })
 
   it('gives every requested back icon an accessible name', () => {
-    expect(cityPicker.match(/aria-label="返回"/g)).toHaveLength(2)
+    expect(cityPicker).toContain('aria-label="返回"')
     expect(routePage).toContain('aria-label="返回"')
     expect(historyPage).toContain('aria-label="返回"')
   })

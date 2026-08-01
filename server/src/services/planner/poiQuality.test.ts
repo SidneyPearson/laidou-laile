@@ -10,6 +10,9 @@ describe('classifyPoiQuality', () => {
     ['美的星级服务站', '生活服务;维修站点', '071600'],
     ['湖滨发行站', '生活服务', '070000'],
     ['上城区青少年活动中心', '科教文化服务', '140000'],
+    ['杭州浙一水建驾考中心', '科教文化服务;驾驶培训', '141400'],
+    ['浙江省教育考试服务中心', '科教文化服务;考试服务', '140900'],
+    ['中共北京路商业步行街支部委员会', '政府机构及社会团体', '130000'],
   ])('rejects non-visitor venue %s', (name, type, typecode) => {
     expect(classifyPoiQuality({ name, type, typecode }).decision).toBe('reject')
   })
@@ -17,6 +20,12 @@ describe('classifyPoiQuality', () => {
   it('keeps a real museum despite the education type prefix', () => {
     expect(classifyPoiQuality({
       name: '孙庆海历史博物馆', type: '科教文化服务;博物馆', typecode: '140100',
+    }).decision).not.toBe('reject')
+  })
+
+  it('does not globally reject an ordinary shop needed by shopping routes', () => {
+    expect(classifyPoiQuality({
+      name: '花鳖专卖店', type: '购物服务;专卖店', typecode: '061200',
     }).decision).not.toBe('reject')
   })
 

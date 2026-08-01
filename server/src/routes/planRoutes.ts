@@ -8,7 +8,11 @@ import {
   generateRequestSchema,
   refineRequestSchema,
   replaceStopRequestSchema,
+  suggestOrderRequestSchema,
 } from './planRoutes.schemas.js'
+import { suggestOrder, SuggestOrderError } from '../services/planner/suggestOrder.js'
+import { formatShortageReason } from '../services/planner/qualityDiagnostics.js'
+import { enforceEvidencePolicy } from '../services/planner/evidencePolicy.js'
 
 const planRoutes = new Hono<{ Bindings: Env }>()
 
@@ -88,6 +92,39 @@ async function parseJsonBody(c: import('hono').Context): Promise<unknown | Respo
   }
 }
 
+// ── POST /suggest-order ──
+// Only reorders the exact curated place references supplied by the user.
+// Never searches for, generates, adds, or replaces a place.
+planRoutes.post('/suggest-order', async (c) => {
+  const raw = await parseJsonBody(c)
+  if (raw instanceof Response) return raw
+
+  let input
+  try {
+    input = suggestOrderRequestSchema.parse(raw)
+  } catch (err) {
+    if (err instanceof ZodError) return badRequest(c, err)
+    throw err
+  }
+
+  try {
+    const key = await dedupeKey('/suggest-order', input)
+    const result = await withRequestDedupe(key, () => suggestOrder(input))
+    c.header('Cache-Control', 'no-store')
+    return c.json(result)
+  } catch (err) {
+    if (err instanceof SuggestOrderError) {
+      return c.json({
+        error: { code: err.code, message: err.message },
+      }, 422)
+    }
+    console.error('suggestOrder failed:', err instanceof Error ? err.message : String(err))
+    return c.json({
+      error: { code: 'SUGGEST_ORDER_FAILED', message: '暂时无法给出参考顺序，请保留原顺序' },
+    }, 500)
+  }
+})
+
 // ── POST /generate ──
 // Synchronous: LLM + Amap typically completes within 10-20s, well within
 // the 30s wall-time limit. No more KV/polling complexity.
@@ -108,6 +145,7 @@ planRoutes.post('/generate', async (c) => {
     const result = await withRequestDedupe(key, () => generateRoutes({
       lat: input.lat,
       lng: input.lng,
+      areaName: input.areaName,
       timeOption: input.timeOption,
       distance: input.distance,
       preferences: input.preferences,
@@ -120,14 +158,22 @@ planRoutes.post('/generate', async (c) => {
     }))
 
     if (result.routes.length === 0) {
+      if (result.diagnostics) {
+        console.info('route candidate shortage', result.diagnostics)
+      }
       return c.json({
-        error: { code: 'NO_POIS_FOUND', message: '附近暂未找到合适的地点' },
+        error: {
+          code: 'NO_POIS_FOUND',
+          message: result.diagnostics
+            ? formatShortageReason(result.diagnostics)
+            : '附近暂未找到合适的地点',
+        },
       }, 404)
     }
 
     c.header('Cache-Control', 'no-store')
     return c.json({
-      routes: result.routes,
+      routes: result.routes.map(enforceEvidencePolicy),
       generatedAt: new Date().toISOString(),
       weatherNote: result.weatherNote,
       weather: result.weather,
@@ -170,6 +216,9 @@ planRoutes.post('/refine', async (c) => {
     timeMinutes: input.timeMinutes,
     distance: input.distance,
     preferences: input.preferences,
+    customCuisine: input.customCuisine,
+    customScenic: input.customScenic,
+    customWander: input.customWander,
   }))
 
   if (!refined) {
@@ -179,7 +228,7 @@ planRoutes.post('/refine', async (c) => {
   }
 
   c.header('Cache-Control', 'no-store')
-  return c.json({ routes: [refined] })
+  return c.json({ routes: [enforceEvidencePolicy(refined)] })
 })
 
 // ── POST /replace-stop ──
@@ -204,6 +253,9 @@ planRoutes.post('/replace-stop', async (c) => {
     adcode: input.adcode,
     timeMinutes: input.timeMinutes,
     origin: input.origin,
+    customCuisine: input.customCuisine,
+    customScenic: input.customScenic,
+    customWander: input.customWander,
   }))
 
   if (!replaced) {
@@ -213,7 +265,7 @@ planRoutes.post('/replace-stop', async (c) => {
   }
 
   c.header('Cache-Control', 'no-store')
-  return c.json({ route: replaced })
+  return c.json({ route: enforceEvidencePolicy(replaced) })
 })
 
 export default planRoutes

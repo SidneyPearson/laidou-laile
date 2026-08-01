@@ -1,4 +1,4 @@
-const WATER_ACCESS_RE = /岛|洲|湖心|潭塔|小瀛洲/
+const WATER_ACCESS_RE = /岛|洲|湖心|潭塔|小瀛洲|游船|码头/
 
 export function buildTransportHint(
   explorationDistance: number,
@@ -26,6 +26,8 @@ export function replaceUnsupportedTransportClaim(tips: string, hint: string): st
   let cleaned = tips
     .replace(/可步行\+共享单车结合[。；;]?/g, '')
     .replace(/步行\+共享单车[。；;]?/g, '')
+    .replace(/全程步行即可[，,]?距离很近[。；;]?/g, '')
+    .replace(/范围较小[，,]?建议全程步行[。；;]?/g, '')
     .trim()
   if (!hint.includes('共享单车')) {
     cleaned = cleaned.replace(/[^。！？]*共享单车[^。！？]*[。！？]?/g, '').trim()

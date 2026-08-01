@@ -56,6 +56,19 @@ describe('buildFallbackRoutes', () => {
     expect(routes[0].name).toContain('休闲')
   })
 
+  it('interleaves food and scenic candidates so mixed routes retain both selected preferences', () => {
+    const routes = buildFallbackRoutes([
+      poi({ id: 'scenic-1', typecode: '110000', distance: 80 }),
+      poi({ id: 'scenic-2', typecode: '110000', distance: 100 }),
+      poi({ id: 'scenic-3', typecode: '110000', distance: 120 }),
+      poi({ id: 'food-1', typecode: '050115', distance: 180 }),
+      poi({ id: 'food-2', typecode: '050118', distance: 220 }),
+    ], 240, ['food', 'scenic'])
+
+    const firstScopes = new Set(routes[0].stops.map(stop => stop.preferenceScope))
+    expect(firstScopes).toEqual(new Set(['food', 'scenic']))
+  })
+
   it('sorts stops within a route by ascending Amap distance', () => {
     const pois = [
       poi({ id: 'far', distance: 900, lng: 121.500, lat: 31.230 }),

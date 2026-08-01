@@ -1,0 +1,79 @@
+<script setup lang="ts">
+import type { TodaySpot } from '../../types/todayPlan'
+import SpotCover from '../explore/SpotCover.vue'
+
+defineProps<{
+  spot: TodaySpot
+  index: number
+  total: number
+}>()
+
+const emit = defineEmits<{
+  up: []
+  down: []
+  remove: []
+  details: []
+  navigate: []
+}>()
+</script>
+
+<template>
+  <article class="overflow-hidden rounded-[22px] bg-white shadow-[0_6px_22px_rgba(44,44,44,0.06)]">
+    <div class="flex">
+      <button
+        class="relative h-32 w-[36%] flex-shrink-0 overflow-hidden text-left"
+        :aria-label="`查看${spot.name}详情`"
+        @click="emit('details')"
+      >
+        <SpotCover :spot="spot" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+        <span class="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-stone-900 text-xs font-bold text-white shadow">
+          {{ index + 1 }}
+        </span>
+      </button>
+
+      <div class="min-w-0 flex-1 p-3">
+        <button class="block w-full text-left" @click="emit('details')">
+          <p class="truncate text-sm font-bold text-stone-900">{{ spot.name }}</p>
+          <p class="mt-1 truncate text-[10px] text-stone-400">{{ spot.district }} · {{ spot.suggestedDuration }}</p>
+          <p class="mt-1 line-clamp-2 text-[10px] leading-4 text-stone-500">{{ spot.address }}</p>
+        </button>
+
+        <div class="mt-3 flex items-center gap-1.5">
+          <button
+            class="rounded-xl bg-stone-100 px-2.5 py-1.5 text-[10px] font-semibold text-stone-600 disabled:opacity-30"
+            :disabled="index === 0"
+            aria-label="上移"
+            @click="emit('up')"
+          >
+            ↑ 上移
+          </button>
+          <button
+            class="rounded-xl bg-stone-100 px-2.5 py-1.5 text-[10px] font-semibold text-stone-600 disabled:opacity-30"
+            :disabled="index === total - 1"
+            aria-label="下移"
+            @click="emit('down')"
+          >
+            ↓ 下移
+          </button>
+          <button
+            class="ml-auto px-1 py-1.5 text-[10px] font-semibold text-red-400"
+            @click="emit('remove')"
+          >
+            删除
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 border-t border-stone-100">
+      <button class="py-2.5 text-[10px] font-semibold text-stone-500" @click="emit('details')">
+        查看详情
+      </button>
+      <button class="border-l border-stone-100 py-2.5 text-[10px] font-semibold text-primary-700" @click="emit('navigate')">
+        打开高德导航
+      </button>
+    </div>
+  </article>
+</template>
+

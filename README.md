@@ -9,10 +9,10 @@
 | 层 | 技术 |
 |----|------|
 | 前端 | Vue 3 + Vite + TypeScript + TailwindCSS |
-| 后端 | Hono (Cloudflare Pages `_worker.js` 高级模式) |
-| AI | DeepSeek `deepseek-v4-pro`（单一模型，无 fallback） |
+| 后端 | Hono + Cloudflare D1 (Cloudflare Pages `_worker.js` 高级模式) |
+| AI | DeepSeek `deepseek-v4-flash`（单一模型，无 fallback） |
 | 地图 | 高德地图 JS API（前端）+ 高德 Web Services（后端，POI 搜索/验证/天气） |
-| 测试 | Vitest（147 个测试用例，全 mock 确定性） |
+| 测试 | Vitest（347 个测试用例，全 mock、确定性，不连接真实第三方 API 或 D1） |
 | 部署 | Cloudflare Pages（`laidou-laile.pages.dev`） |
 | CI | GitHub Actions |
 
@@ -92,7 +92,7 @@ npm run dev -w client
 ### 运行测试
 
 ```bash
-# 运行所有测试（147 个，全 mock，不消耗第三方 API）
+# 运行所有测试（347 个，全 mock，不消耗第三方 API）
 npm test
 
 # 查看测试覆盖率
@@ -123,6 +123,13 @@ npm run build
 | `POST /api/plan/refine` | 优化已有路线（删除/新增需求） | LLM 25s |
 | `POST /api/plan/replace-stop` | 替换路线中单个地点 | 仅 Amap 搜索 |
 | `GET /api/health` | 健康检查 | — |
+| `GET /api/recommendations/cities` | 读取 D1 已发布城市地点；故障时显式标记静态降级 | — |
+| `/api/admin/auth/*` | 单管理员登录、登出、当前会话 | — |
+| `/api/admin/cities` | 城市分页、创建和编辑 | — |
+| `/api/admin/spots` | 地点筛选、编辑、验证、发布和批量发布 | — |
+| `/api/admin/city-refresh/*` | 城市复核到期提醒、任务、提示词和人工审核 | — |
+| `/api/admin/refresh-runs/*` | AI JSON 预览/导入、无变化确认、完成或取消复核 | — |
+| `/api/admin/refresh-candidates/*` | 候选高德验证和接受/拒绝/忽略 | — |
 
 限流策略：
 - 请求体最大 64 KB（超限返回 413）
@@ -192,16 +199,23 @@ npm run build && npx wrangler pages deploy client/dist --project-name laidou-lai
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `LLM_BASE_URL` | `https://api.deepseek.com/v1` | DeepSeek API 地址 |
-| `LLM_MODEL` | `deepseek-v4-pro` | 模型名称 |
+| `LLM_MODEL` | `deepseek-v4-flash` | 模型名称 |
 | `LLM_TIMEOUT_MS` | `35000` | LLM 请求超时 |
 | `AMAP_TIMEOUT_MS` | `10000` | 高德 API 超时 |
 | `NODE_ENV` | `production` | 运行环境 |
+| `ADMIN_ALLOWED_ORIGINS` | `http://localhost:9090` | 后台写请求允许的精确 Origin，逗号分隔 |
+| `ADMIN_SESSION_TTL_SECONDS` | `28800` | HttpOnly 后台会话有效期（秒） |
+
+后台还需要 Secrets：`ADMIN_PASSWORD_HASH`、`ADMIN_SESSION_SECRET`；D1 binding 名必须为 `DB`。完整命令见 [`docs/admin-curation-v0.1.md`](docs/admin-curation-v0.1.md)。
 
 ## 已知限制
 
 - **未接入分布式限流**：当前只有同 isolate 软去重。生产环境需要自定义域名后在 Cloudflare 配置 Rate Limiting Rules
 - **未实现营业时间校验**：`Stop` 类型预留了 `openTime/closeTime/openNow` 字段，但当前未使用
 - **Amap JS SDK 必须配置域名白名单**：否则地图无法加载（见密钥配置说明）
+- **后台 V0.1 为单管理员**：无 RBAC、图片上传、自动抓取或自动发布；完整 D1 初始化、安全配置、三城种子和回滚说明见 [`docs/admin-curation-v0.1.md`](docs/admin-curation-v0.1.md)
+- **城市复核 V0.2 完全人工触发**：不运行 Cron、不自动联网，也不调用 DeepSeek；操作流程和 JSON 约定见 [`docs/weekly-city-refresh-v0.2.md`](docs/weekly-city-refresh-v0.2.md)
+- **静态热点仍保留用于透明回滚**：D1 正常时只读已发布地点；仅 D1 不可用时返回 `source: static_fallback`，不能把旧数据冒充后台最新数据
 
 ## 许可
 

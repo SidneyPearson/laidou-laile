@@ -18,10 +18,11 @@ export interface HistoryEntry {
   request: HistoryRequest
   routes: Route[]
   weather: { weather: string; temperature: string; isRainy: boolean } | null
+  anchorName?: string
 }
 
 const STORAGE_KEY = 'citywalk_history'
-const MAX_ENTRIES = 20
+export const MAX_HISTORY_ENTRIES = 20
 
 // ── Singleton state ──
 const entries = ref<HistoryEntry[]>([])
@@ -30,20 +31,71 @@ function loadFromStorage(): HistoryEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
-    return JSON.parse(raw) as HistoryEntry[]
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(isHistoryEntry).slice(0, MAX_HISTORY_ENTRIES)
   } catch {
     return []
   }
 }
 
-function saveToStorage(list: HistoryEntry[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-  } catch {
-    // Storage full — remove oldest entries
-    const trimmed = list.slice(0, MAX_ENTRIES - 5)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
+function isHistoryEntry(value: unknown): value is HistoryEntry {
+  if (!value || typeof value !== 'object') return false
+  const entry = value as Partial<HistoryEntry>
+  return typeof entry.id === 'string'
+    && typeof entry.createdAt === 'string'
+    && typeof entry.locationName === 'string'
+    && !!entry.request
+    && typeof entry.request.timeOption === 'number'
+    && typeof entry.request.distance === 'number'
+    && Array.isArray(entry.request.preferences)
+    && Array.isArray(entry.routes)
+    && entry.routes.every(route =>
+      !!route
+      && typeof route === 'object'
+      && typeof route.name === 'string'
+      && Array.isArray(route.stops))
+}
+
+/** Persist newest entries first, dropping only the oldest on quota pressure. */
+function saveToStorage(list: HistoryEntry[]): HistoryEntry[] | null {
+  let candidate = list.slice(0, MAX_HISTORY_ENTRIES)
+  while (candidate.length > 0) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(candidate))
+      return candidate
+    } catch {
+      candidate = candidate.slice(0, -1)
+    }
   }
+  if (list.length > 0) return null
+  try {
+    localStorage.setItem(STORAGE_KEY, '[]')
+    return []
+  } catch {
+    return null
+  }
+}
+
+function routeFingerprint(entry: Omit<HistoryEntry, 'id' | 'createdAt'>): string {
+  const request = entry.request
+  const routes = entry.routes.map(route => ({
+    name: route.name,
+    stops: route.stops.map(stop => stop.amapPoiId || `${stop.name}:${stop.lng},${stop.lat}`),
+  }))
+  return JSON.stringify({
+    locationName: entry.locationName,
+    anchorName: entry.anchorName || '',
+    request: {
+      timeOption: request.timeOption,
+      distance: request.distance,
+      preferences: [...request.preferences].sort(),
+      cuisineTypes: [...(request.cuisineTypes ?? [])].sort(),
+      scenicTypes: [...(request.scenicTypes ?? [])].sort(),
+      wanderTypes: [...(request.wanderTypes ?? [])].sort(),
+    },
+    routes,
+  })
 }
 
 export function useHistory() {
@@ -55,30 +107,41 @@ export function useHistory() {
   const hasEntries = computed(() => entries.value.length > 0)
 
   /** Add a new history entry (newest first) */
-  function addEntry(entry: Omit<HistoryEntry, 'id' | 'createdAt'>) {
+  function addEntry(entry: Omit<HistoryEntry, 'id' | 'createdAt'>): HistoryEntry | null {
+    const fingerprint = routeFingerprint(entry)
+    const duplicate = entries.value.find(existing => routeFingerprint(existing) === fingerprint)
     const newEntry: HistoryEntry = {
       ...entry,
-      id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      id: duplicate?.id
+        || crypto.randomUUID?.()
+        || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       createdAt: new Date().toISOString(),
     }
-    entries.value.unshift(newEntry)
-    if (entries.value.length > MAX_ENTRIES) {
-      entries.value = entries.value.slice(0, MAX_ENTRIES)
+    const previous = entries.value
+    const next = [
+      newEntry,
+      ...previous.filter(existing => existing.id !== duplicate?.id),
+    ].slice(0, MAX_HISTORY_ENTRIES)
+    const persisted = saveToStorage(next)
+    if (persisted === null || persisted.length === 0) {
+      entries.value = previous
+      return null
     }
-    saveToStorage(entries.value)
+    entries.value = persisted
     return newEntry
   }
 
   /** Remove a history entry by id */
   function removeEntry(id: string) {
-    entries.value = entries.value.filter((e) => e.id !== id)
-    saveToStorage(entries.value)
+    const next = entries.value.filter((e) => e.id !== id)
+    const persisted = saveToStorage(next)
+    if (persisted !== null) entries.value = persisted
   }
 
   /** Clear all history */
   function clearAll() {
-    entries.value = []
-    saveToStorage([])
+    const persisted = saveToStorage([])
+    if (persisted !== null) entries.value = []
   }
 
   /** Format preference summary for display */
