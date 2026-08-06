@@ -1,4 +1,3 @@
-import { POPULAR_CITIES } from './popularCities'
 import type {
   CategoryOption,
   ExploreCategory,
@@ -25,6 +24,7 @@ export const EXPLORE_CATEGORIES: CategoryOption[] = [
   { id: 'street', name: '步行街', emoji: '🚶' },
   { id: 'mall', name: '购物商场', emoji: '🛍️' },
   { id: 'food', name: '美食探店', emoji: '🥢' },
+  { id: 'museum', name: '博物馆人文', emoji: '🏛️' },
 ]
 
 const ALL_PERSONAS: Persona[] = ['fast', 'couple', 'family', 'lazy', 'urban']
@@ -63,7 +63,7 @@ const SHANGHAI_SPOTS: InspirationSpot[] = [
     city: '上海',
     name: '上海博物馆东馆',
     district: '浦东新区',
-    category: 'landmark',
+    category: 'museum',
     reason: '室内内容密度高，适合作为炎热或下雨天的一站式文化体验。',
     tags: ['博物馆', '室内', '亲子'],
     suitablePersonas: ['family', 'lazy', 'urban'],
@@ -203,7 +203,7 @@ const SHANGHAI_SPOTS: InspirationSpot[] = [
 const BEIJING_SPOTS: InspirationSpot[] = [
   {
     id: 'beijing-palace-museum', city: '北京', name: '故宫博物院', district: '东城区',
-    category: 'landmark', reason: '北京中轴线最核心的一站，适合单独留出半天并提前预约。',
+    category: 'museum', reason: '北京中轴线最核心的一站，适合单独留出半天并提前预约。',
     tags: ['世界遗产', '博物馆'], suitablePersonas: ['fast', 'couple', 'family'],
     suggestedDuration: '建议半天', bestTime: '上午入场', theme: 'museum', mock: true,
   },
@@ -308,33 +308,11 @@ const HANGZHOU_SPOTS: InspirationSpot[] = [
   },
 ]
 
-const FALLBACK_THEMES: SpotTheme[] = ['city', 'river', 'lane', 'garden']
-
-function buildCityFallback(cityName: string): InspirationSpot[] {
-  const city = POPULAR_CITIES.find(item => item.name === cityName)
-  if (!city) return []
-
-  return city.attractions.map((attraction, index) => ({
-    id: `${cityName}-${index}`,
-    city: cityName,
-    name: attraction.name,
-    district: '城市演示数据',
-    category: 'landmark',
-    reason: '当前为页面交互演示，下一阶段将接入高德校验后的城市推荐数据。',
-    tags: ['演示数据', '待校验'],
-    suitablePersonas: ALL_PERSONAS,
-    suggestedDuration: '时长待接入',
-    bestTime: '时段待接入',
-    theme: FALLBACK_THEMES[index % FALLBACK_THEMES.length],
-    mock: true,
-  }))
-}
-
 export function getExploreSpots(cityName: string): InspirationSpot[] {
   if (cityName === '上海') return SHANGHAI_SPOTS
   if (cityName === '北京') return BEIJING_SPOTS
   if (cityName === '杭州') return HANGZHOU_SPOTS
-  return buildCityFallback(cityName)
+  return []
 }
 
 export function filterAndRankSpots(

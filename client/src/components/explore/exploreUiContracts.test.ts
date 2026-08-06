@@ -21,8 +21,9 @@ describe('V0.3 city exploration UI contracts', () => {
   })
 
   it('passes coordinates to the city page without persisting them', () => {
-    expect(homePage).toContain("lat: String(lat)")
-    expect(homePage).toContain("lng: String(lng)")
+    // The home page routes to the city page with the selected city's coordinates.
+    expect(homePage).toContain("lat: String(city.center.lat)")
+    expect(homePage).toContain("lng: String(city.center.lng)")
     expect(homePage).toContain("name: 'city'")
   })
 

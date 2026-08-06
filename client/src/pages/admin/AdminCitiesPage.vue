@@ -173,7 +173,7 @@ onMounted(load)
               <label>城市状态<select v-model="form.status" class="admin-input mt-1"><option v-for="status in CITY_STATUSES" :key="status" :value="status">{{ CITY_STATUS_LABELS[status] }}</option></select></label>
               <label>人工复核周期<select v-model.number="form.reviewIntervalDays" class="admin-input mt-1"><option :value="7">每 7 天</option><option :value="14">每 14 天</option><option :value="30">每 30 天</option></select></label>
               <label class="md:col-span-2">城市简介<textarea v-model="form.intro" rows="4" placeholder="城市简介" class="admin-input mt-1"></textarea></label>
-              <label class="md:col-span-2">高德封面地址<input v-model="form.coverImageUrl" type="url" placeholder="高德 HTTPS 图片地址（可空）" class="admin-input mt-1"></label>
+              <label class="md:col-span-2">封面地址<input v-model="form.coverImageUrl" type="url" placeholder="任意 HTTPS 图片地址（可空）" class="admin-input mt-1"></label>
               <div class="flex flex-wrap gap-2 border-t border-[var(--admin-line)] pt-4 md:col-span-2"><button class="admin-button-primary" :disabled="saving">{{ saving ? '保存中…' : '保存城市档案' }}</button><button type="button" class="admin-button-secondary" @click="editing = null">取消</button></div>
             </form>
           </div>

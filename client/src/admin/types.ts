@@ -129,6 +129,18 @@ export interface DashboardStats {
   staleSpots: number
 }
 
+/** Homepage persona card — fixed ids (the Persona contract), display-only. */
+export interface AdminHomePersona {
+  id: 'fast' | 'couple' | 'family' | 'lazy' | 'urban'
+  title: string
+  subtitle: string
+  imageUrl: string | null
+  sortOrder: number
+  enabled: boolean
+  version: number
+  updatedAt?: string
+}
+
 export type RefreshRunStatus =
   | 'draft' | 'prompt_generated' | 'result_imported' | 'reviewing'
   | 'completed' | 'cancelled' | 'failed'

@@ -15,7 +15,7 @@ function fakeDb(): D1Database {
 }
 
 const env = {
-  NODE_ENV: 'development', AMAP_WEB_API_KEY: 'x', LLM_API_KEY: 'x', LLM_BASE_URL: 'https://api.deepseek.com/v1', LLM_MODEL: 'deepseek-v4-flash', LLM_TIMEOUT_MS: 35000, AMAP_TIMEOUT_MS: 10000,
+  NODE_ENV: 'development', AMAP_WEB_API_KEY: 'x', AMAP_TIMEOUT_MS: 10000,
   ADMIN_PASSWORD_HASH: 'not-a-valid-hash', ADMIN_SESSION_SECRET: 'session-secret-at-least-thirty-two-characters', ADMIN_ALLOWED_ORIGINS: 'http://localhost:9090', ADMIN_SESSION_TTL_SECONDS: 3600,
   DB: fakeDb(),
 } satisfies Bindings

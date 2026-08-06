@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AdminCity, AdminSpot, DashboardStats, Page, RefreshDueResponse, RefreshPreview, RefreshRunDetail } from './types'
+import type { AdminCity, AdminHomePersona, AdminSpot, DashboardStats, Page, RefreshDueResponse, RefreshPreview, RefreshRunDetail } from './types'
 
 export class AdminApiError extends Error { constructor(public code:string,message:string,public details?:unknown){super(message)} }
 const adminApi=axios.create({baseURL:'/api/admin',timeout:15000,withCredentials:true,headers:{'Content-Type':'application/json'}})
@@ -19,6 +19,8 @@ export async function verifySpot(id:string,expectedVersion:number){return (await
 export async function publishSpot(id:string,expectedVersion:number){return (await adminApi.post<AdminSpot>(`/spots/${id}/publish`,{expectedVersion})).data}
 export async function unpublishSpot(id:string,expectedVersion:number){return (await adminApi.post<AdminSpot>(`/spots/${id}/unpublish`,{expectedVersion})).data}
 export async function batchPublish(spots:Array<{id:string;expectedVersion:number}>){return (await adminApi.post('/spots/batch-publish',{spots})).data}
+export async function listHomePersonas(){return (await adminApi.get<{items:AdminHomePersona[];total:number}>('/home-personas')).data.items}
+export async function updateHomePersona(id:string,data:{title?:string;subtitle?:string|null;imageUrl?:string|null;sortOrder?:number;enabled?:boolean;expectedVersion:number}){return (await adminApi.patch<AdminHomePersona>(`/home-personas/${id}`,data)).data}
 export async function refreshDue(){return (await adminApi.get<RefreshDueResponse>('/city-refresh/due')).data}
 export async function startCityRefresh(adcode:string){return (await adminApi.post(`/cities/${adcode}/refresh-runs`,{})).data}
 export async function getRefreshRun(runId:string){return (await adminApi.get<RefreshRunDetail>(`/refresh-runs/${runId}`)).data}

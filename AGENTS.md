@@ -1,15 +1,20 @@
 # AGENTS.md
 
 > 给 AI 编程助手的交接文档。新对话开始时先读这份，再动代码。
-> 最后更新：2026-07-31（分支 `codex/route-quality-completion`，工作树有大量未提交改动）。
+> 最后更新：2026-08-01（已移除实时 LLM 规划栈；分支 `codex/route-quality-completion`）。
 
 ---
 
 ## 1. 项目一句话
 
-**「来都来了」** — 基于用户当前位置的城市漫游 H5：选偏好 + 时长 + 距离，
-LLM（DeepSeek）提名地点 → 高德地图 POI 验证补坐标 → 返回 1~3 条差异化路线。
+**「来都来了」** — 城市灵感 H5：用户选城市/定位 → 浏览**后台策展**的城市灵感地点（静态 seed + 高德校验，逐步迁到 D1）→
+加入「今日计划」并按距离给出参考顺序。
 后台是「城市内容编辑部」，编辑城市档案、地点台账，并按 7/14/30 天周期做城市内容复核。
+
+> ⚠️ **2026-08-01 已移除实时 LLM 规划栈**：旧的「选偏好/时长 → DeepSeek 提名 → 高德验证 → 1~3 条差异化路线」
+> 整套（`/api/plan/generate|refine|replace-stop`、`services/llm/`、`services/planner/`、`routeGenerator`、
+> 前台 `RoutePage`/`HistoryPage`）已删除。`/api/plan/suggest-order` 保留，它是**纯确定性距离排序**，不调 LLM。
+> 不要按本文档旧版本里的 LLM 流程找代码。
 
 - 前端 H5 + 后台共用一个 Vue 3 SPA（hash 路由）。
 - 后端是 Hono，跑在 Cloudflare Pages 的 `_worker.js` 高级模式里，前后端同域。
@@ -61,11 +66,9 @@ Wrangler 按全文件名追踪，已在本地与历史环境应用过，不要�
 ```
 main.ts / App.vue / router/index.ts   # hash history
 pages/
-  HomePage.vue            # 首页：选时长/距离/偏好/菜系等
-  RoutePage.vue           # 路线结果页（核心 H5）
-  CityExplorePage.vue     # 城市探索
-  TodayPlanPage.vue       # 今日计划
-  HistoryPage.vue         # 历史
+  HomePage.vue            # 首页：定位/选城市 → 进入城市灵感
+  CityExplorePage.vue     # 城市灵感（浏览策展地点）
+  TodayPlanPage.vue       # 今日计划（已选地点 + 参考顺序）
   admin/
     AdminLoginPage.vue
     AdminDashboardPage.vue    # 今日编务
@@ -87,46 +90,28 @@ assets/styles/main.css        # 含 .admin-shell 作用域的后台设计系统�
 worker.ts                       # 入口：路由装配 + initLlmClient
 config/env.ts                   # Zod 校验的 Bindings
 routes/
-  planRoutes.ts                 # POST /api/plan — H5 路线生成入口
-  exploreRoutes.ts              # 探索相关
-  cityRoutes.ts                 # 公开城市列表
-  recommendationRoutes.ts
+  planRoutes.ts                 # POST /api/plan/suggest-order — 仅距离排序，无 LLM
+  exploreRoutes.ts              # POST /api/explore/recommend — 城市灵感
+  cityRoutes.ts                 # GET /api/city/context — 反查城市+天气
+  recommendationRoutes.ts       # GET /api/recommendations/cities — D1 已发布城市（当前前台未接）
   adminAuthRoutes.ts            # 登录/登出/会话（限流在 admin_login_attempts 表）
   adminRoutes.ts                # 城市/地点 CRUD、dashboard、发布
   adminRefreshRoutes.ts         # 城市复核五步工作流
   *.schemas.ts / *.test.ts      # Zod schema + 同目录测试
 services/
-  routeGenerator.ts             # 主流程：geo+weather → generatePlan → fallback
-  aiPlannerService.ts           # 旧的再导出层（薄）
-  llm/
-    client.ts                   # fetch 调 DeepSeek，AbortController 超时，无重试无模型 fallback
-    prompt.ts                   # SYSTEM_PROMPT + buildUserPrompt + buildRefinePrompt
-    schema.ts                   # LLM JSON 输出的 Zod schema
-  planner/
-    generatePlan.ts             # LLM-first 主编排（分流/重试/高德验证/策略/差异化）
-    refinePlan.ts               # 用户改路线时 LLM 补 stop
-    foodPlanner.ts              # 美食榜单/菜系对比（也调 LLM）
-    themedPlanner.ts            # 景点/逛街主题路线（POI 先，LLM 策展）
-    fallbackPlanner.ts          # 高德 POI 纯规则编排
-    verifyRoutes.ts             # LLM 提名 → 高德 text search 验证 + 补坐标/图片
-    replaceStop.ts              # 替换 stop 并重新验证
-    routePolicy.ts              # 可达性/距离/时间预算/偏好硬筛
-    routeMetrics.ts / distancePolicy.ts / timeBudget.ts
-    preferenceCriteria.ts / preferenceCoverage.ts
-    poiAllocation.ts / poiMatching.ts / poiQuality.ts
-    foodRanking.ts / foodSuitability.ts / socialFoodSearch.ts
-    localCuisinePolicy.ts       # 外地菜系冲突剔除
-    keywordRelevance.ts / recallPolicy.ts / evidencePolicy.ts
-    structural divergence 见 ../structuralDivergence.ts（≥30° 结构差异）
-    countPresentation.ts / foodPresentation.ts / routeTitle.ts / transportHint.ts / suggestOrder.ts
+  poiQuality.ts                 # POI 质量硬筛（拒绝内部/不对外开放等），explore 与 admin 共用
+  explore/
+    exploreService.ts           # 城市灵感编排：静态 seed → persona 排序 → 高德校验
+    hotspotRepository.ts        # 读 cities/{shanghai,beijing,hangzhou} 静态 seed
+    hotspotVerifier.ts          # 调 amap/placeVerifier 校验坐标/图片
+    personaRanker.ts            # 按 persona 排序（纯函数）
+    suggestOrder.ts             # 「帮我顺一下」最近邻距离排序（纯确定性，不调 LLM）
   amap/
     client.ts                   # 高德 Web Service fetch 封装 + 超时
-    geocode.ts / weather.ts / poiSearch.ts
-    amapSearchScheduler.ts      # 控制高德调用节奏
+    placeVerifier.ts            # verifyPlace：text search 验单个地点 + 补坐标/图片
+    geocode.ts / weather.ts
     imagePolicy.ts
-  explore/
   weeklyRefreshService.ts
-  structuralDivergence.ts       # axes 三维向量差异 ≥30°
 repositories/                   # D1 SQL 访问（curationRepository / cityRefreshRepository）
 domain/                         # 领域类型
 middleware/adminAuth.ts         # Cookie 会话校验
@@ -143,56 +128,27 @@ auth/adminCrypto.ts             # PBKDF2 hash、HMAC session token
 
 ---
 
-## 4. LLM 调用方式（重点）
+## 4. 公开 H5 流程（无 LLM）
 
-### 配置（2026-07-31 刚改）
-```
-LLM_BASE_URL = https://api.deepseek.com/v1
-LLM_MODEL    = deepseek-v4-flash      # 单一模型，无 fallback 模型
-LLM_TIMEOUT_MS = 35000                # 默认上限；每个调用点会单独覆盖
-```
-改的位置：`server/src/config/env.ts`、`server/wrangler.toml [vars]`、相关测试的字面量、README。
-**不要**在 `client.ts` 里加第二模型降级——这与当前架构方向相违背。
+当前公开端是**策展内容浏览**，不调用任何 LLM：
 
-### 请求协议
-OpenAI 兼容 Chat Completions，`POST /chat/completions`：
-- `response_format: { type: 'json_object' }` 强制 JSON
-- `Authorization: Bearer ${LLM_API_KEY}`
-- 原生 fetch + `AbortController`，无 SDK、无自动重试
-
-### 调用点（每个都自己传超时）
 ```
-planner/generatePlan.ts  主路径 25s，schema 失败重试 18s（temperature 0.3）
-planner/refinePlan.ts    路线微调
-planner/foodPlanner.ts   美食榜单/菜系对比，两处调用
-planner/themedPlanner.ts 景点/逛街策展
-```
-函数名 `chatCompletionWithFallback` 里的 "Fallback" **不是指模型 fallback**，
-而是指**业务层**在 LLM 失败/验证失败/覆盖不足时降级到高德规则路径（`source: 'fallback'`）。
-
-### 主流程（`services/routeGenerator.ts → generateRoutes`）
-```
-1. reverseGeocode(lng,lat) + getWeather(adcode)     高德，并行
-2. generatePlan()
-   ├─ 按请求形状分流：
-   │    · onlyFood 无菜系       → generateFoodList（LLM 榜单）
-   │    · 短时 + 菜系           → generateCuisineComparison（LLM 3 卡）
-   │    · 短时 + 纯景点/逛街    → generateScenic/WanderRoutes（高德先 + LLM 策展）
-   │    · 半日/一日/多偏好      → LLM-first 主路径
-   ├─ buildUserPrompt → chatCompletionWithFallback (25s)
-   ├─ parseAndValidate (Zod)
-   │    └─ 失败：把错误塞回 prompt，同模型重试 1 次 (18s, temp 0.3)
-   ├─ verifyAndEnrichRoutes：每个 stop 高德 text search 验证 → 补 lng/lat/amapPoiId/address/images
-   ├─ applyRoutePolicies：距离/时间/类型/偏好硬筛
-   ├─ findMissingPreferences：偏好覆盖不足 → 判失败
-   └─ enforceDivergence：多路线 axes 三维向量 ≥30°，不达标丢路线
-3. 任何一步抛错或覆盖不足：
-   searchNearbyPOIs (高德 around-search) → buildFallbackRoutes（纯规则）
-   返回 { source: 'fallback', fallbackReason }
+HomePage（定位/选城市）
+  └─ GET /api/city/context         reverseGeocode + 高德天气，确认城市/adcode
+  └─ CityExplorePage
+       └─ POST /api/explore/recommend
+             exploreService：读 services/explore/cities/*.ts 静态 seed
+               → personaRanker 排序 → hotspotVerifier（amap/placeVerifier.verifyPlace 补坐标/图片）
+       └─ 选中地点 → useTodayPlan（localStorage，key laidou-v03-today-plan）
+  └─ TodayPlanPage
+       └─ POST /api/plan/suggest-order   suggestOrder.ts 最近邻距离排序，纯确定性，不调 LLM/不搜索
 ```
 
-**核心不变式：LLM 只负责提名（name/notes/duration），地址坐标 POI ID 图片一律由高德回填。**
-LLM 编造的店名如果高德搜不到，直接丢弃，用 gapFillKeywords 补位。
+- 后端**唯一**需要的第三方 key 是 `AMAP_WEB_API_KEY`（`LLM_API_KEY` / `TAVILY_API_KEY` 已移除）。
+- `verifyPlace` 在 `services/amap/placeVerifier.ts`：高德 text search + 名称相似度 + Haversine，
+  内部用 `services/poiQuality.ts` 的 `filterUsablePois` 剔除内部/不对外开放地点。admin 与 explore 共用。
+- D1 已发布城市数据走 `routes/recommendationRoutes.ts` → `repositories/d1CurationRepository`，
+  目前前台尚未接入（预留），explore 仍读静态 seed。
 
 ---
 
@@ -232,9 +188,7 @@ LLM 编造的店名如果高德搜不到，直接丢弃，用 gapFillKeywords �
 - 远程 D1 首次上线需要：`db:migrate:remote` → `db:seed:remote` → 配 secrets → deploy。
 - Secrets（`wrangler pages secret put <NAME> --project-name laidou-laile`）：
   ```
-  LLM_API_KEY
   AMAP_WEB_API_KEY
-  TAVILY_API_KEY          # 可选，开启社交美食证据
   ADMIN_PASSWORD_HASH
   ADMIN_SESSION_SECRET    # ≥32 字符
   ```
@@ -260,16 +214,9 @@ LLM 编造的店名如果高德搜不到，直接丢弃，用 gapFillKeywords �
 
 ## 8. 当前在飞/未完成的工作
 
+- 2026-08-01：移除实时 LLM 规划栈（见第 1 节警示），保留后台策展 + 城市灵感/今日计划；改动尚未提交/部署。
 - 后台视觉与交互已完成「城市内容编辑部」重构（5 个 admin 组件 + 6 个页面重写 + 后端 409 状态保护 + 测试扩展）。
-- LLM 模型刚从 `deepseek-v4-pro` 切到 `deepseek-v4-flash`（2026-07-31），代码与测试均已同步，但尚未提交/部署。
-- 路线质量相关改动（routePolicy、poiQuality、timeBudget、transportHint、food 系列、social evidence 等）仍在同一分支未提交，近期 commit 见：
-  ```
-  7915681 fix: reject non-visitor route candidates
-  47f27b9 docs: plan route quality and social evidence work
-  c5075c3 docs: design route quality and social evidence optimization
-  3f5e541 docs: design social food ranking
-  ec75d2f docs: design route quality completion
-  ```
+- 城市灵感目前读 `services/explore/cities/*.ts` 静态 seed；后续方向是迁到 D1 已发布 spots（`recommendationRoutes` 已预留）。
 - 生产 D1 远程是空的（0 表），未执行 migrate/seed；Pages `DB` binding 是否已在控制台配置也需要用户确认。
 - 远程 secrets 尚未配置。
 
@@ -280,19 +227,8 @@ LLM 编造的店名如果高德搜不到，直接丢弃，用 gapFillKeywords �
 **"启动项目"** → 让用户在独立终端跑 `npm run dev:server` + `npm run dev:client`，
 地址 http://localhost:9090/ ，后台入口 http://localhost:9090/#/admin/login 。
 
-**"改 LLM 模型"** → 同时改 `server/src/config/env.ts` 默认值、`server/wrangler.toml [vars].LLM_MODEL`、
-测试里硬编码的字面量（`adminAuthRoutes.test.ts` / `adminRoutes.test.ts` / `adminRefreshRoutes.test.ts`）、README。
-不要加模型级 fallback。
-
 **"跑测试"** → `npm test`。单独跑后端 `npm test -w server`，前端 `npm test -w client`。
 `npx vitest run path/to/file.test.ts` 可以跑单个文件。
-
-**"看 LLM 走了 AI 还是 fallback"** → 后端控制台日志关键字：
-- `📐 Divergence drop` — AI 成功但被差异化策略精简
-- `🔄 Day trip mode` — 半日/一日裁成 1 条
-- `AI planning failed:` — LLM 抛错
-- `🔄 LLM failed or returned no routes, falling back to Amap around-search...` — 进入高德兜底
-- 响应体里的 `source: 'ai' | 'fallback'` 和 `fallbackReason` 直接给前端显示。
 
 **"后台登录密码忘了"** → 本地从 `.dev.vars` 的 `ADMIN_PASSWORD_HASH` 反推不出来；
 直接重新生成：`npm run admin:hash -w server`，把结果写回 `.dev.vars`（本地）或
@@ -303,8 +239,8 @@ LLM 编造的店名如果高德搜不到，直接丢弃，用 gapFillKeywords �
 ## 10. 给新会话的第一建议
 
 1. 先 `git status` 看工作树，别误动未提交改动。
-2. 读 `README.md` 第 1~3 节了解产品上下文，再读本文件第 4 节（LLM 流程）。
+2. 读本文件第 4 节（公开 H5 流程）。实时 LLM 规划栈已删除，不要再找 `routeGenerator`/`planner/`。
 3. 涉及后台：看 `client/src/assets/styles/main.css` 里 `.admin-shell` 段 + `client/src/admin/types.ts` 的 label map。
-4. 涉及路线生成：从 `server/src/services/routeGenerator.ts` 进，再下钻到 `planner/generatePlan.ts`。
+4. 涉及城市灵感：从 `server/src/routes/exploreRoutes.ts` → `services/explore/exploreService.ts` 进。
 5. 涉及 DB：先看 `server/migrations/` 最新的 SQL，再看 `server/src/repositories/` 对应仓库方法。
 6. 不要自行 commit / push / deploy，等用户明确说"提交"。

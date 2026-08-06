@@ -21,10 +21,10 @@ describe('city inspiration mock data', () => {
     }
   })
 
-  it('uses generic transparent cards for a city without curated preview data', () => {
-    const spots = getExploreSpots('成都')
-    expect(spots).toHaveLength(4)
-    expect(spots.every(spot => spot.tags.includes('演示数据'))).toBe(true)
+  it('returns no fabricated cards for a city without curated preview data', () => {
+    // H5 reads real cities from D1; the local demo must not invent cards for
+    // cities the admin has not actually published.
+    expect(getExploreSpots('成都')).toEqual([])
   })
 
   it('filters by the selected category', () => {

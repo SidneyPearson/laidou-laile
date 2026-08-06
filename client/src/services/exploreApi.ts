@@ -27,6 +27,9 @@ export interface ExploreRecommendRequest {
   cursor?: number
   limit?: number
   isRainy?: boolean
+  /** User's real location (only sent after geolocation authorization). */
+  lat?: number
+  lng?: number
 }
 
 export interface ExploreRecommendResponse {

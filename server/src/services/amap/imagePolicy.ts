@@ -12,6 +12,17 @@ export function safeAmapImageUrl(value: string | null | undefined): string | nul
   } catch { return null }
 }
 
+/** Validate an admin-supplied image URL: require HTTPS and strip credentials,
+ *  but do NOT restrict the host (editors may use any image CDN). */
+export function safeHttpsImageUrl(value: string | null | undefined): string | null {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:' || url.username || url.password) return null
+    return url.toString()
+  } catch { return null }
+}
+
 export function safeAmapImages(photos: Array<{ url: string; title: string }> | undefined): Array<{ url: string; title: string }> {
   return (photos ?? []).flatMap(photo => {
     const url = safeAmapImageUrl(photo.url)

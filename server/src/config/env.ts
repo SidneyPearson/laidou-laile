@@ -3,13 +3,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production']).default('production'),
   AMAP_WEB_API_KEY: z.string().min(1),
-  LLM_API_KEY: z.string().min(1),
-  LLM_BASE_URL: z.string().default('https://api.deepseek.com/v1'),
-  LLM_MODEL: z.string().default('deepseek-v4-flash'),
-  LLM_TIMEOUT_MS: z.coerce.number().default(35000),
   AMAP_TIMEOUT_MS: z.coerce.number().default(10000),
-  /** Optional enhancement. Missing/invalid search credentials degrade to Amap-only lists. */
-  TAVILY_API_KEY: z.string().min(1).optional(),
   ADMIN_PASSWORD_HASH: z.string().min(1),
   ADMIN_SESSION_SECRET: z.string().min(32),
   ADMIN_ALLOWED_ORIGINS: z.string().min(1).default('http://localhost:9090').refine(value => {

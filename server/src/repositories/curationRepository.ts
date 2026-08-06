@@ -16,6 +16,7 @@ export interface DashboardStats { publishedCities: number; draftSpots: number; p
 export interface CurationRepository {
   listCities(query: CityListQuery): Promise<Page<CityRecord>>
   listPublishedCities(): Promise<CityRecord[]>
+  findPublishedCity(nameOrAdcode: string): Promise<CityRecord | null>
   createCity(input: CityWrite, now: string): Promise<CityRecord>
   updateCity(adcode: string, input: Partial<Omit<CityWrite, 'adcode'>>, now: string): Promise<CityRecord | null>
   listSpots(query: SpotListQuery): Promise<Page<SpotRecord>>

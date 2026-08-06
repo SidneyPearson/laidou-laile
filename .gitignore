@@ -10,3 +10,12 @@ dist/
 .vercel
 .env*
 *.tsbuildinfo
+raw-images/homepage/*
+!raw-images/homepage/.gitkeep
+
+# Local agent worklogs
+.workbuddy/
+
+# Local design mockups
+docs/design/
+*.bak

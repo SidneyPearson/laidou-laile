@@ -1,0 +1,21 @@
+# Cloudflare Pages configuration for the laidou-laile deployment.
+# The H5 client is built into client/dist; the Hono API is bundled as
+# client/dist/_worker.js (Advanced Mode) and shares this D1 binding.
+name = "laidou-laile"
+pages_build_output_dir = "client/dist"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Non-secret runtime vars. Secrets (AMAP_WEB_API_KEY, ADMIN_PASSWORD_HASH,
+# ADMIN_SESSION_SECRET) are set via `wrangler pages secret put`.
+[vars]
+NODE_ENV = "production"
+AMAP_TIMEOUT_MS = "10000"
+ADMIN_ALLOWED_ORIGINS = "https://laidou-laile.pages.dev,https://codex-route-quality-completi.laidou-laile.pages.dev,http://localhost:9090"
+ADMIN_SESSION_TTL_SECONDS = "28800"
+
+# Curation database shared by preview and production.
+[[d1_databases]]
+binding = "DB"
+database_name = "citywalk-curation"
+database_id = "60dcd9a5-9f47-48de-9f1e-9404f2569248"

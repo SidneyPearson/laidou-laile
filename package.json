@@ -14,7 +14,9 @@
     "build": "npm run build -w client && npm run bundle -w server",
     "typecheck": "npm run build -w server && npm run typecheck -w client",
     "test": "npm run test -w server && npm run test -w client",
-    "start": "npm run start -w server"
+    "start": "npm run start -w server",
+    "img:compress": "bash scripts/compress-homepage-images.sh",
+    "img:deploy": "npm run img:compress && npm run build"
   },
   "devDependencies": {
     "@vitejs/plugin-basic-ssl": "^2.3.0"

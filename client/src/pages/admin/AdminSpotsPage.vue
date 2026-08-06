@@ -48,6 +48,19 @@ const filters = reactive({
 const pageLabel = computed(() => totalPages.value === 0 ? '0 / 0' : `${filters.page} / ${totalPages.value}`)
 const hasFilters = computed(() => Boolean(filters.keyword || filters.cityAdcode || filters.category || filters.tier || filters.verificationStatus || filters.publicationStatus))
 
+// The active filters as a route query object. Carried onto spot-edit links so
+// "返回" can restore the exact filtered list instead of resetting to all cities.
+const listQuery = computed<Record<string, string>>(() => {
+  const q: Record<string, string> = {}
+  for (const [key, value] of Object.entries(filters)) {
+    if (key === 'pageSize') continue
+    if (value === '' || value === null || value === undefined) continue
+    if (key === 'page' && value === 1) continue
+    q[key] = String(value)
+  }
+  return q
+})
+
 async function syncQuery() {
   const query = Object.fromEntries(Object.entries(filters)
     .filter(([key, value]) => key !== 'pageSize' && value !== '' && !(key === 'page' && value === 1))
@@ -224,7 +237,7 @@ onMounted(async () => {
         <article v-for="spot in spots" :key="spot.id" class="ledger-row">
           <div class="flex min-w-0 gap-3">
             <input v-model="selected" type="checkbox" :value="spot.id" :aria-label="`选择 ${spot.name}`" class="mt-1 h-4 w-4 flex-none accent-primary-600">
-            <div class="min-w-0"><RouterLink :to="`/admin/spots/${spot.id}`" class="font-semibold text-[var(--admin-accent)] hover:underline">{{ spot.name }}</RouterLink><p class="mt-1 truncate font-mono text-[11px] text-[var(--admin-muted)]">{{ spot.id }} · v{{ spot.version }} · {{ spot.cityAdcode }}</p></div>
+            <div class="min-w-0"><RouterLink :to="{ path: `/admin/spots/${spot.id}`, query: listQuery }" class="font-semibold text-[var(--admin-accent)] hover:underline">{{ spot.name }}</RouterLink><p class="mt-1 truncate font-mono text-[11px] text-[var(--admin-muted)]">{{ spot.id }} · v{{ spot.version }} · {{ spot.cityAdcode }}</p></div>
           </div>
           <div class="flex flex-wrap items-start gap-2 lg:block"><AdminBadge :label="SPOT_CATEGORY_LABELS[spot.category]" tone="neutral" /><div class="mt-0 lg:mt-2"><AdminBadge :label="SPOT_TIER_LABELS[spot.tier]" :tone="spot.tier === 'S' || spot.tier === 'A' ? 'accent' : 'neutral'" /></div></div>
           <div class="flex flex-wrap items-start gap-2 lg:block"><AdminBadge :label="VERIFICATION_STATUS_LABELS[spot.verificationStatus]" :tone="verificationTone(spot.verificationStatus)" /><div class="mt-0 lg:mt-2"><AdminBadge :label="PUBLICATION_STATUS_LABELS[spot.publicationStatus]" :tone="publicationTone(spot.publicationStatus)" /></div></div>

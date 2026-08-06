@@ -3,7 +3,6 @@ import { z, ZodError } from 'zod'
 import type { Bindings } from '../config/env.js'
 import { D1CurationRepository } from '../repositories/d1CurationRepository.js'
 import { selectMainRecommendations, spotCategorySchema } from '../domain/curation.js'
-import { CURATED_SEED_CITIES } from '../data/cities/index.js'
 import type { CurationRepository } from '../repositories/curationRepository.js'
 import { badRequest } from '../middleware/errorHandler.js'
 
@@ -39,14 +38,23 @@ export function createRecommendationRoutes(dependencies: RecommendationRouteDepe
         const result = await repository.listCities({ page, pageSize: 100 })
         managedAdcodes.push(...result.items.map(city => city.adcode))
       }
-      const data = await Promise.all(publishedCities.map(async city => ({
-        adcode: city.adcode,
-        province: city.provinceName,
-        name: city.name,
-        attractions: selectMainRecommendations(await repository.listPublished(city.adcode), context).map(spot => ({
-          id: spot.id, name: spot.name, lat: spot.lat, lng: spot.lng, category: spot.category, tier: spot.tier,
-        })),
-      })))
+      const withSpots = await Promise.all(publishedCities.map(async city => {
+        const spots = selectMainRecommendations(await repository.listPublished(city.adcode), context)
+        return { city, spots }
+      }))
+      // Only expose published cities that actually have at least one published,
+      // verified spot — a published city with no public content must not show.
+      const data = withSpots
+        .filter(({ spots }) => spots.length > 0)
+        .map(({ city, spots }) => ({
+          adcode: city.adcode,
+          province: city.provinceName,
+          name: city.name,
+          coverImageUrl: city.coverImageUrl,
+          attractions: spots.map(spot => ({
+            id: spot.id, name: spot.name, lat: spot.lat, lng: spot.lng, category: spot.category, tier: spot.tier,
+          })),
+        }))
       // V0.1 favors editorial consistency over edge caching: opening the H5
       // city picker after an admin publish/unpublish must read the latest D1 state.
       c.header('Cache-Control', 'no-store')
@@ -55,13 +63,10 @@ export function createRecommendationRoutes(dependencies: RecommendationRouteDepe
       if (err instanceof ZodError) return badRequest(c, err)
       console.error('D1 recommendation fallback:', err instanceof Error ? err.message : 'database unavailable')
       return c.json({
-        cities: CURATED_SEED_CITIES.map(city => ({
-          adcode: city.adcode, province: city.provinceName, name: city.name,
-          attractions: city.spots.filter(spot => spot.tier === 'S' || spot.tier === 'A').map(spot => ({ id: spot.id, name: spot.name, lat: spot.lat, lng: spot.lng, category: spot.category, tier: spot.tier })),
-        })),
+        cities: [],
         source: 'static_fallback',
         fallbackReason: 'D1_UNAVAILABLE',
-        managedAdcodes: CURATED_SEED_CITIES.map(city => city.adcode),
+        managedAdcodes: [],
       }, 503)
     }
   })

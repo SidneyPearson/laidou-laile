@@ -22,6 +22,16 @@ export class D1CurationRepository implements CurationRepository {
     ).all()
     return rows.results.map(mapCity)
   }
+  async findPublishedCity(nameOrAdcode: string) {
+    const value = nameOrAdcode.trim()
+    if (!value) return null
+    // Match by 6-digit adcode, or by name with/without a trailing 市/省.
+    const name = value.replace(/[市省]$/, '')
+    const row = /^\d{6}$/.test(value)
+      ? await this.db.prepare("SELECT * FROM cities WHERE status='published' AND adcode=?").bind(value).first()
+      : await this.db.prepare("SELECT * FROM cities WHERE status='published' AND (name=? OR name=?)").bind(name, value).first()
+    return row ? mapCity(row) : null
+  }
   async createCity(i: CityWrite, now: string) { await this.db.prepare('INSERT INTO cities(adcode,province_name,name,slug,intro,cover_image_url,status,priority,review_interval_days,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').bind(i.adcode,i.provinceName,i.name,i.slug,i.intro??null,i.coverImageUrl??null,i.status,i.priority,i.reviewIntervalDays??7,now,now).run(); return mapCity(await this.db.prepare('SELECT * FROM cities WHERE adcode=?').bind(i.adcode).first()) }
   async updateCity(adcode: string, i: Partial<Omit<CityWrite,'adcode'>>, now: string) {
     const current = await this.db.prepare('SELECT * FROM cities WHERE adcode=?').bind(adcode).first<any>(); if (!current) return null

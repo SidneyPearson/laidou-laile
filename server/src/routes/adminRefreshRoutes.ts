@@ -9,7 +9,7 @@ import type { CityRefreshRepository, RefreshCandidateRecord } from '../repositor
 import { D1CurationRepository } from '../repositories/d1CurationRepository.js'
 import type { CurationRepository, SpotWrite } from '../repositories/curationRepository.js'
 import { safeAmapImages } from '../services/amap/imagePolicy.js'
-import { verifyPlace } from '../services/amap/poiSearch.js'
+import { verifyPlace } from '../services/amap/placeVerifier.js'
 import { buildRefreshPreview, RefreshImportError } from '../services/weeklyRefreshService.js'
 import { parseJsonBody } from '../utils/requestBody.js'
 import {

@@ -1,11 +1,8 @@
-import { getCityHotspots } from './hotspotRepository.js'
-import { filterAndRankHotspots } from './personaRanker.js'
-import { verifyHotspotSeeds } from './hotspotVerifier.js'
+import type { CurationRepository } from '../../repositories/curationRepository.js'
+import { selectInspirationSpots } from './d1Source.js'
 import type {
   ExploreCategory,
   ExploreRecommendation,
-  HotspotSeed,
-  InspirationSpot,
   Persona,
 } from '../../types/explore.js'
 
@@ -17,40 +14,41 @@ interface RecommendInput {
   cursor: number
   limit: number
   isRainy: boolean
+  lat?: number
+  lng?: number
 }
 
-interface ExploreDependencies {
-  getHotspots?: (city: string, adcode?: string) => HotspotSeed[]
-  verify?: (seeds: HotspotSeed[]) => Promise<InspirationSpot[]>
+export interface ExploreDependencies {
+  repository: CurationRepository
 }
 
+/** Read published+verified spots for the requested city from D1 and shape them
+ *  for the H5 city-inspiration feed. D1 spots are already Amap-verified, so this
+ *  does no network calls. Returns null when the city is not published. */
 export async function recommendCitySpots(
   input: RecommendInput,
-  dependencies: ExploreDependencies = {},
+  dependencies: ExploreDependencies,
 ): Promise<ExploreRecommendation | null> {
-  const getHotspots = dependencies.getHotspots ?? getCityHotspots
-  const verify = dependencies.verify ?? verifyHotspotSeeds
-  const seeds = getHotspots(input.city, input.adcode)
-  if (seeds.length === 0) return null
+  const city = input.adcode
+    ? await dependencies.repository.findPublishedCity(input.adcode)
+    : await dependencies.repository.findPublishedCity(input.city)
+  if (!city) return null
 
-  const ranked = filterAndRankHotspots(
-    seeds,
-    input.persona,
-    input.category,
-    input.isRainy,
-  )
-
-  const start = Math.min(input.cursor, ranked.length)
-  // Verify extra candidates so failed Amap matches can be backfilled.
-  const candidateEnd = Math.min(start + input.limit * 2, ranked.length)
-  const candidates = ranked.slice(start, candidateEnd)
-  const verified = await verify(candidates)
-  const spots = verified.slice(0, input.limit)
-  const consumed = candidates.length
+  const spots = await dependencies.repository.listPublished(city.adcode)
+  const { spots: page, nextCursor } = selectInspirationSpots(spots, city.name, {
+    persona: input.persona,
+    category: input.category,
+    isRainy: input.isRainy,
+    cursor: input.cursor,
+    limit: input.limit,
+    ...(Number.isFinite(input.lat) && Number.isFinite(input.lng)
+      ? { userLat: input.lat, userLng: input.lng }
+      : {}),
+  })
 
   return {
-    spots,
-    nextCursor: start + consumed < ranked.length ? start + consumed : null,
+    spots: page,
+    nextCursor,
     source: 'curated_amap_verified',
   }
 }

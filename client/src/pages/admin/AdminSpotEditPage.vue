@@ -20,6 +20,21 @@ import AdminPageHeader from '../../components/admin/AdminPageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+// Filters carried over from the spot ledger (cityAdcode, category, …) so
+// "返回" restores the exact filtered list instead of resetting to all cities.
+const BACK_QUERY_KEYS = ['cityAdcode', 'category', 'tier', 'verificationStatus', 'publicationStatus', 'keyword', 'page'] as const
+const backQuery = computed<Record<string, string>>(() => {
+  const q: Record<string, string> = {}
+  for (const key of BACK_QUERY_KEYS) {
+    const raw = route.query[key]
+    const value = Array.isArray(raw) ? raw[0] : raw
+    if (typeof value === 'string' && value !== '' && !(key === 'page' && value === '1')) q[key] = value
+  }
+  return q
+})
+const backToList = computed(() => ({ path: '/admin/spots', query: backQuery.value }))
+
 const error = ref('')
 const saving = ref(false)
 const verifying = ref(false)
@@ -87,7 +102,7 @@ async function save() {
   try {
     if (isNew.value) {
       const row = await createSpot(payload())
-      await router.replace(`/admin/spots/${row.id}`)
+      await router.replace({ path: `/admin/spots/${row.id}`, query: { ...route.query } })
       fill(row)
     } else {
       const { id, publicationStatus, ...changes } = payload()
@@ -141,7 +156,7 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
       description="人工分类、推荐级别和编辑理由不会被高德验证自动覆盖。事实字段发生变化后需要重新保存和验证。"
     >
       <template #meta><div class="mt-3 flex flex-wrap gap-2"><AdminBadge v-if="!isNew" :label="verificationLabel(form.verificationStatus)" :tone="verificationTone()" /><AdminBadge v-if="!isNew" :label="PUBLICATION_STATUS_LABELS[form.publicationStatus as keyof typeof PUBLICATION_STATUS_LABELS]" :tone="form.publicationStatus === 'published' ? 'success' : 'neutral'" /><AdminBadge :label="dirty ? '有未保存修改' : '编辑稿已保存'" :tone="dirty ? 'warning' : 'success'" /></div></template>
-      <template #actions><RouterLink to="/admin/spots" class="admin-button-secondary">返回地点库</RouterLink><button v-if="!isNew" type="button" class="admin-button-secondary" :disabled="verifying" @click="verify">{{ verifying ? '验证中…' : '高德验证' }}</button></template>
+      <template #actions><RouterLink :to="backToList" class="admin-button-secondary">返回地点库</RouterLink><button v-if="!isNew" type="button" class="admin-button-secondary" :disabled="verifying" @click="verify">{{ verifying ? '验证中…' : '高德验证' }}</button></template>
     </AdminPageHeader>
 
     <p v-if="error" role="alert" class="admin-alert admin-alert-error mt-5">{{ error }}</p>
@@ -227,7 +242,7 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
 
       <div class="admin-panel sticky bottom-3 z-20 flex flex-wrap items-center justify-between gap-3 p-3 xl:col-span-2">
         <p class="text-xs text-[var(--admin-muted)]">{{ dirty ? '编辑稿尚未保存' : '当前编辑稿已保存' }}<span v-if="!isNew"> · v{{ form.version }}</span></p>
-        <div class="flex gap-2"><RouterLink to="/admin/spots" class="admin-button-secondary">返回</RouterLink><button class="admin-button-primary px-6" :disabled="saving">{{ saving ? '保存中…' : '保存编辑稿' }}</button></div>
+        <div class="flex gap-2"><RouterLink :to="backToList" class="admin-button-secondary">返回</RouterLink><button class="admin-button-primary px-6" :disabled="saving">{{ saving ? '保存中…' : '保存编辑稿' }}</button></div>
       </div>
     </form>
   </section>

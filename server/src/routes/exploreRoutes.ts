@@ -2,14 +2,21 @@ import { Hono } from 'hono'
 import { recommendCitySpots } from '../services/explore/exploreService.js'
 import { exploreRecommendRequestSchema } from './exploreRoutes.schemas.js'
 import { zodErrorToBody } from '../middleware/errorHandler.js'
+import type { Bindings } from '../config/env.js'
+import { D1CurationRepository } from '../repositories/d1CurationRepository.js'
+import type { CurationRepository } from '../repositories/curationRepository.js'
+
+type RecommendFn = typeof recommendCitySpots
 
 interface ExploreRouteDependencies {
-  recommend?: typeof recommendCitySpots
+  recommend?: RecommendFn
+  repository?: (db: D1Database) => CurationRepository
 }
 
 export function createExploreRoutes(dependencies: ExploreRouteDependencies = {}) {
   const recommend = dependencies.recommend ?? recommendCitySpots
-  const routes = new Hono()
+  const repositoryFor = dependencies.repository ?? ((db: D1Database) => new D1CurationRepository(db))
+  const routes = new Hono<{ Bindings: Bindings }>()
 
   routes.post('/recommend', async (c) => {
     const contentLength = Number(c.req.header('content-length') || 0)
@@ -37,7 +44,8 @@ export function createExploreRoutes(dependencies: ExploreRouteDependencies = {})
     const parsed = exploreRecommendRequestSchema.safeParse(raw)
     if (!parsed.success) return c.json(zodErrorToBody(parsed.error), 400)
 
-    const result = await recommend(parsed.data)
+    const repository = repositoryFor(c.env.DB)
+    const result = await recommend(parsed.data, { repository })
     if (!result) {
       return c.json({
         error: { code: 'CITY_NOT_SUPPORTED', message: '这座城市的精选内容还在准备中' },

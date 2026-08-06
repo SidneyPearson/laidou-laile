@@ -47,7 +47,11 @@ function queryNumber(value: unknown): number | null {
 const initialCity = String(route.query.city || '当前城市')
 const cityName = ref(initialCity)
 const district = ref('')
-const adcode = ref<string | undefined>()
+const adcode = ref<string | undefined>(
+  typeof route.query.adcode === 'string' && route.query.adcode
+    ? route.query.adcode
+    : undefined,
+)
 const weather = ref<CityContextResponse['weather']>(null)
 const contextLoading = ref(false)
 const contextError = ref('')
@@ -56,7 +60,7 @@ const source = computed(() => String(route.query.source || 'manual'))
 const persona = ref<Persona>(loadPersona())
 const initialCategory = String(route.query.category || 'all')
 const category = ref<ExploreCategory>(
-  ['all', 'landmark', 'district', 'theme_park', 'nature', 'street', 'mall', 'food'].includes(initialCategory)
+  ['all', 'landmark', 'district', 'theme_park', 'nature', 'street', 'mall', 'food', 'museum'].includes(initialCategory)
     ? initialCategory as ExploreCategory
     : 'all',
 )
@@ -249,7 +253,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          class="min-w-0 rounded-full border border-stone-200 bg-white px-4 py-2 text-left shadow-sm"
+          class="min-w-0 flex-1 rounded-full border border-stone-200 bg-white px-4 py-2 text-left shadow-sm"
           @click="router.push({ name: 'home' })"
         >
           <p class="truncate text-xs font-bold text-stone-800">
@@ -258,17 +262,6 @@ onBeforeUnmount(() => {
           <p class="mt-0.5 truncate text-[9px] text-stone-400">
             {{ district || (source === 'gps' ? '来自当前定位' : '手动选择') }} · {{ weatherSummary }}
           </p>
-        </button>
-
-        <button
-          class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white text-stone-500 shadow-sm transition active:scale-95"
-          aria-label="历史路线"
-          @click="router.push({ name: 'history' })"
-        >
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 2" />
-          </svg>
         </button>
       </div>
     </header>

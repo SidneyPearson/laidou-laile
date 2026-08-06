@@ -9,6 +9,7 @@ export type ExploreCategory =
   | 'street'
   | 'mall'
   | 'food'
+  | 'museum'
 
 export type SpotTheme =
   | 'river'
@@ -19,34 +20,6 @@ export type SpotTheme =
   | 'market'
   | 'city'
   | 'night'
-
-export interface CuratedCoverImage {
-  url: string
-  sourceName: string
-  sourcePageUrl: string
-}
-
-export interface HotspotSeed {
-  id: string
-  city: string
-  adcode: string
-  name: string
-  /** Canonical keyword used for Amap matching; may be narrower than display name. */
-  searchName: string
-  district: string
-  category: Exclude<ExploreCategory, 'all'>
-  reason: string
-  tags: string[]
-  suitablePersonas: Persona[]
-  suggestedDuration: string
-  bestTime: string
-  theme: SpotTheme
-  seedLng: number
-  seedLat: number
-  indoorFriendly?: boolean
-  reservationNote?: string
-  officialCoverImage?: CuratedCoverImage
-}
 
 export interface InspirationSpot {
   id: string
@@ -75,6 +48,9 @@ export interface InspirationSpot {
   coverImageSourceName?: string
   coverImageSourceUrl?: string
   reservationNote: string
+  /** Straight-line distance from the request's lat/lng, in meters. Only
+   *  present when the request supplied the user's coordinates. */
+  distanceMeters?: number
 }
 
 export interface ExploreRecommendation {

@@ -20,10 +20,6 @@ const sessionSecret = 'session-secret-at-least-thirty-two-characters'
 const env = {
   NODE_ENV: 'development',
   AMAP_WEB_API_KEY: 'x',
-  LLM_API_KEY: 'x',
-  LLM_BASE_URL: 'https://api.deepseek.com/v1',
-  LLM_MODEL: 'deepseek-v4-flash',
-  LLM_TIMEOUT_MS: 35000,
   AMAP_TIMEOUT_MS: 10000,
   ADMIN_PASSWORD_HASH: 'unused',
   ADMIN_SESSION_SECRET: sessionSecret,
@@ -77,6 +73,7 @@ class FakeRepository implements CurationRepository {
     return { items: [], page: query.page, pageSize: query.pageSize, total: 0, totalPages: 0 }
   }
   async listPublishedCities(): Promise<CityRecord[]> { return [] }
+  async findPublishedCity(): Promise<CityRecord | null> { return null }
   async createCity(_input: CityWrite, _now: string): Promise<CityRecord> { throw new Error('unused') }
   async updateCity(_adcode: string, _input: Partial<Omit<CityWrite, 'adcode'>>, _now: string): Promise<CityRecord | null> { return null }
   async listSpots(query: SpotListQuery): Promise<Page<SpotRecord>> {

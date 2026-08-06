@@ -1,8 +1,6 @@
 import { Hono } from 'hono'
 import { getEnv, type Bindings } from './config/env.js'
 import { initAmapClient } from './services/amap/client.js'
-import { initLlmClient } from './services/llm/client.js'
-import { initSocialFoodSearch } from './services/planner/socialFoodSearch.js'
 import planRoutes from './routes/planRoutes.js'
 import exploreRoutes from './routes/exploreRoutes.js'
 import cityRoutes from './routes/cityRoutes.js'
@@ -10,20 +8,20 @@ import { createAdminAuthRoutes } from './routes/adminAuthRoutes.js'
 import { createAdminRoutes } from './routes/adminRoutes.js'
 import { createRecommendationRoutes } from './routes/recommendationRoutes.js'
 import { createAdminRefreshRoutes } from './routes/adminRefreshRoutes.js'
+import { createAdminHomePersonaRoutes } from './routes/adminHomePersonaRoutes.js'
+import { createHomePersonaRoutes } from './routes/homePersonaRoutes.js'
 import { AppError } from './middleware/errorHandler.js'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
 // ── Lazy one-time initialization (per isolate) ──
 // Must call getEnv() to apply Zod defaults for vars not set in Pages env
-// (e.g. AMAP_TIMEOUT_MS, LLM_TIMEOUT_MS).
+// (e.g. AMAP_TIMEOUT_MS).
 let initialized = false
 function ensureInit(env: Bindings) {
   if (!initialized) {
     const validatedEnv = getEnv(env)
     initAmapClient(validatedEnv)
-    initLlmClient(validatedEnv)
-    initSocialFoodSearch(validatedEnv.TAVILY_API_KEY)
     initialized = true
   }
 }
@@ -38,7 +36,9 @@ app.route('/api/plan', planRoutes)
 app.route('/api/admin/auth', createAdminAuthRoutes())
 app.route('/api/admin', createAdminRoutes())
 app.route('/api/admin', createAdminRefreshRoutes())
+app.route('/api/admin', createAdminHomePersonaRoutes())
 app.route('/api/recommendations/cities', createRecommendationRoutes())
+app.route('/api/home/personas', createHomePersonaRoutes())
 app.route('/api/explore', exploreRoutes)
 app.route('/api/city', cityRoutes)
 

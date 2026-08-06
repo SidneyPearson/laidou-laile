@@ -11,12 +11,14 @@ const auth = useAdminAuth()
 const navItems = [
   { label: '今日编务', to: '/admin', family: 'dashboard' },
   { label: '城市档案', to: '/admin/cities', family: 'cities' },
+  { label: '首页画像', to: '/admin/personas', family: 'personas' },
   { label: '地点库', to: '/admin/spots', family: 'spots' },
 ]
 
 function isActive(family: string) {
   if (family === 'dashboard') return route.path === '/admin'
   if (family === 'cities') return route.path.startsWith('/admin/cities') || route.path.startsWith('/admin/refresh-runs')
+  if (family === 'personas') return route.path.startsWith('/admin/personas')
   return route.path.startsWith('/admin/spots')
 }
 

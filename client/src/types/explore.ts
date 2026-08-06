@@ -9,6 +9,7 @@ export type ExploreCategory =
   | 'street'
   | 'mall'
   | 'food'
+  | 'museum'
 
 export type SpotTheme =
   | 'river'
@@ -62,4 +63,6 @@ export interface InspirationSpot {
   coverImageSourceName?: string
   coverImageSourceUrl?: string
   reservationNote?: string
+  /** Straight-line distance from the user, meters; only when request sent coords. */
+  distanceMeters?: number
 }

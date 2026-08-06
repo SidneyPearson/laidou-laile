@@ -8,6 +8,10 @@
 --
 -- 回退策略（官方图 → 高德图 → 渐变封面）由前端 SpotCover.vue 实现，此处只负责数据沉淀。
 
+-- 确保上海城市行存在（远端空库首次迁移时，下面的 spots INSERT 需要该外键）。
+INSERT OR IGNORE INTO cities (adcode, province_name, name, slug, intro, cover_image_url, status, priority, created_at, updated_at)
+VALUES ('310000', '上海', '上海', 'shanghai', '江河入海处的现代都市，城市地标、街区与文化场馆并存。', NULL, 'draft', 100, '2026-07-26T00:00:00.000Z', '2026-07-27T00:00:00.000Z');
+
 -- ── 1) 为现有上海 spot 补全官方封面图 ──
 UPDATE spots
 SET cover_image_url = 'https://english.shanghai.gov.cn/cmsres/21/212ff40f030346cfa5767dcb2cb36663/4e209901f4e8fe80c02b366c3ea258e5.jpg',

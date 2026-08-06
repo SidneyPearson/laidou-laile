@@ -22,6 +22,39 @@ const city: CityRecord = {
   updatedAt: '',
 }
 
+const baseSpot: SpotRecord = {
+  id: 'bund',
+  cityAdcode: '310000',
+  name: '外滩',
+  searchName: '外滩',
+  amapName: '外滩',
+  amapPoiId: 'B0TEST',
+  district: '黄浦区',
+  address: null,
+  lng: 121.49,
+  lat: 31.24,
+  category: 'classic_landmark',
+  tier: 'A',
+  priority: 1,
+  reason: '推荐',
+  tierReason: '理由',
+  personas: [],
+  tags: [],
+  suggestedDuration: null,
+  bestTime: null,
+  indoorFriendly: false,
+  reservationRequired: false,
+  reservationNote: null,
+  coverImageUrl: null,
+  verificationStatus: 'verified',
+  verifiedAt: '',
+  publicationStatus: 'published',
+  sourceKind: null,
+  version: 1,
+  createdAt: '',
+  updatedAt: '',
+}
+
 function repository(overrides: Partial<CurationRepository> = {}): CurationRepository {
   return {
     async listCities(query) {
@@ -34,6 +67,7 @@ function repository(overrides: Partial<CurationRepository> = {}): CurationReposi
       }
     },
     async listPublishedCities() { return [city] },
+    async findPublishedCity() { return null },
     async listPublished() { return [] },
     async createCity() { throw new Error('unused') },
     async updateCity() { return null },
@@ -65,15 +99,33 @@ describe('city recommendation routes', () => {
     expect(response.status).toBe(400)
   })
 
-  it('returns managed published cities without restoring draft spots', async () => {
-    const response = await app(repository()).request('/api/recommendations/cities', {}, env)
+  it('exposes only published cities that carry at least one published, verified spot', async () => {
+    const repo = repository({
+      async listPublished() {
+        return [{
+          ...baseSpot,
+          id: 'bund',
+          name: '外滩',
+          category: 'classic_landmark',
+          tier: 'A',
+        }]
+      },
+    })
+    const response = await app(repo).request('/api/recommendations/cities', {}, env)
     expect(response.status).toBe(200)
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(await response.json()).toMatchObject({
       source: 'd1',
       managedAdcodes: ['310000'],
-      cities: [{ adcode: '310000', attractions: [] }],
+      cities: [{ adcode: '310000', coverImageUrl: null, attractions: [{ id: 'bund' }] }],
     })
+  })
+
+  it('hides a published city whose spots are all draft/unverified (empty result, not a restore)', async () => {
+    // listPublished already returns [] by default, simulating no public spots.
+    const response = await app(repository()).request('/api/recommendations/cities', {}, env)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ source: 'd1', cities: [] })
   })
 
   it('returns a transparent 503 static fallback when D1 is unavailable', async () => {
