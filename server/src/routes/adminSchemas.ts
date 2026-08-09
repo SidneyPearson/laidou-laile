@@ -1,10 +1,11 @@
 import { z } from 'zod'
 import { cityStatusSchema, publicationStatusSchema, spotCategorySchema, spotTierSchema, verificationStatusSchema } from '../domain/curation.js'
-import { safeHttpsImageUrl } from '../services/amap/imagePolicy.js'
+import { safeCoverImageUrl } from '../services/amap/imagePolicy.js'
 
 const shortText = z.string().trim().min(1).max(120)
 const nullableUrl = z.string().trim().url().max(1000).nullable().optional()
-const nullableHttpsImage = nullableUrl.refine(value => value == null || safeHttpsImageUrl(value) !== null, '封面必须是 https:// 开头的图片地址')
+const nullableHttpsImage = z.string().trim().max(1000).nullable().optional()
+  .refine(value => value == null || safeCoverImageUrl(value) !== null, '封面必须是 https:// 图片地址或本地上传的 /covers/ 路径')
 export const paginationSchema = z.object({ page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(100).default(20) }).strict()
 
 export const cityListSchema = paginationSchema.extend({ keyword: z.string().trim().max(80).optional() }).strict()

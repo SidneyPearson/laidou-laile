@@ -38,6 +38,7 @@ function repo(city: CityRecord | null, spots: SpotRecord[]): CurationRepository 
     updateSpot: async () => null,
     setVerification: async () => null,
     setPublication: async () => null,
+    deleteSpot: async () => null,
     dashboard: async () => ({ publishedCities: 0, draftSpots: 0, pendingReview: 0, publishedSpots: 0, verificationFailed: 0, staleSpots: 0 }),
     audit: async () => {},
   } as CurationRepository

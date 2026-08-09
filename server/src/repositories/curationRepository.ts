@@ -25,6 +25,7 @@ export interface CurationRepository {
   updateSpot(id: string, expectedVersion: number, input: Partial<SpotWrite>, now: string): Promise<'conflict' | SpotRecord | null>
   setVerification(id: string, expectedVersion: number, input: VerificationWrite, now: string): Promise<'conflict' | SpotRecord | null>
   setPublication(id: string, expectedVersion: number, status: PublicationStatus, now: string): Promise<'conflict' | SpotRecord | null>
+  deleteSpot(id: string, expectedVersion: number): Promise<'conflict' | 'published' | null>
   dashboard(now: string): Promise<DashboardStats>
   audit(action: string, entityType: string, entityId: string, payload: unknown, now: string): Promise<void>
   listPublished(cityAdcode?: string): Promise<SpotRecord[]>

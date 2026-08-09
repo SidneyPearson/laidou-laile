@@ -77,6 +77,7 @@ function repository(overrides: Partial<CurationRepository> = {}): CurationReposi
     async updateSpot() { return null },
     async setVerification() { return null },
     async setPublication() { return null },
+    async deleteSpot() { return null },
     async dashboard() { return { publishedCities: 0, draftSpots: 0, pendingReview: 0, publishedSpots: 0, verificationFailed: 0, staleSpots: 0 } },
     async audit() {},
     ...overrides,

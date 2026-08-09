@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createCity, listCities, refreshDue, updateCity } from '../../admin/api'
+import { sanitizeCoverName } from '../../admin/localImageUpload'
 import {
   CITY_STATUSES,
   CITY_STATUS_LABELS,
@@ -12,6 +13,12 @@ import {
 } from '../../admin/types'
 import AdminBadge from '../../components/admin/AdminBadge.vue'
 import AdminPageHeader from '../../components/admin/AdminPageHeader.vue'
+
+// Dev-only local cover uploader (browser compression + write to
+// client/public/covers via the Vite middleware). Excluded from prod bundle.
+const LocalCoverImageUploader = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('../../components/admin/LocalCoverImageUploader.vue'))
+  : null
 
 const router = useRouter()
 const cities = ref<AdminCity[]>([])
@@ -33,6 +40,9 @@ const form = reactive({
   priority: 0,
   reviewIntervalDays: 7 as 7 | 14 | 30,
 })
+
+// Cover file key: stable per city, e.g. city-shanghai → /covers/city-shanghai.jpg.
+const coverUploadName = computed(() => sanitizeCoverName(`city-${form.slug || form.adcode}`))
 
 async function load() {
   loading.value = true
@@ -173,7 +183,14 @@ onMounted(load)
               <label>城市状态<select v-model="form.status" class="admin-input mt-1"><option v-for="status in CITY_STATUSES" :key="status" :value="status">{{ CITY_STATUS_LABELS[status] }}</option></select></label>
               <label>人工复核周期<select v-model.number="form.reviewIntervalDays" class="admin-input mt-1"><option :value="7">每 7 天</option><option :value="14">每 14 天</option><option :value="30">每 30 天</option></select></label>
               <label class="md:col-span-2">城市简介<textarea v-model="form.intro" rows="4" placeholder="城市简介" class="admin-input mt-1"></textarea></label>
-              <label class="md:col-span-2">封面地址<input v-model="form.coverImageUrl" type="url" placeholder="任意 HTTPS 图片地址（可空）" class="admin-input mt-1"></label>
+              <label class="md:col-span-2">封面地址<input v-model="form.coverImageUrl" type="text" placeholder="HTTPS 图片地址或本地上传的 /covers/ 路径（可空）" class="admin-input mt-1"></label>
+              <component
+                :is="LocalCoverImageUploader"
+                v-if="LocalCoverImageUploader"
+                class="md:col-span-2"
+                :name="coverUploadName"
+                @uploaded="(path: string) => { form.coverImageUrl = path }"
+              />
               <div class="flex flex-wrap gap-2 border-t border-[var(--admin-line)] pt-4 md:col-span-2"><button class="admin-button-primary" :disabled="saving">{{ saving ? '保存中…' : '保存城市档案' }}</button><button type="button" class="admin-button-secondary" @click="editing = null">取消</button></div>
             </form>
           </div>

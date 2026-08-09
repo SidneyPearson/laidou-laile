@@ -152,6 +152,7 @@ class FakeCurationRepository implements CurationRepository {
     return spot({ id: this.createdWrite?.id, name: this.createdWrite?.name, publicationStatus: 'draft', verificationStatus: input.verificationStatus, amapPoiId: input.amapPoiId, version: 2 })
   }
   async setPublication(): Promise<'conflict' | SpotRecord | null> { return null }
+  async deleteSpot(): Promise<'conflict' | 'published' | null> { return null }
   async dashboard(): Promise<DashboardStats> { return { publishedCities: 1, draftSpots: 0, pendingReview: 0, publishedSpots: 1, verificationFailed: 0, staleSpots: 0 } }
   async audit(action: string): Promise<void> { this.audits.push(action) }
   async listPublished(): Promise<SpotRecord[]> { return [spot()] }

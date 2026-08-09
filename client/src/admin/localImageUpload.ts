@@ -57,10 +57,11 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob>
   })
 }
 
-/** Compress an uploaded File to a JPEG data URL sized for the given persona. */
-export async function compressImageForPersona(id: string, file: File): Promise<{ dataUrl: string; spec: { file: string; maxEdge: number; quality: number }; bytes: number }> {
-  const spec = localPersonaImage(id)
-  if (!spec) throw new Error('该画像不支持本地替换图')
+/** Compress an uploaded File to a JPEG data URL with the given constraints. */
+export async function compressImageToJpeg(
+  file: File,
+  spec: { maxEdge: number; quality: number },
+): Promise<{ dataUrl: string; bytes: number }> {
   if (!file.type.startsWith('image/')) throw new Error('请选择图片文件')
 
   const original = await fileToDataUrl(file)
@@ -85,7 +86,15 @@ export async function compressImageForPersona(id: string, file: File): Promise<{
     reader.readAsDataURL(blob)
   })
 
-  return { dataUrl, spec, bytes: blob.size }
+  return { dataUrl, bytes: blob.size }
+}
+
+/** Compress an uploaded File to a JPEG data URL sized for the given persona. */
+export async function compressImageForPersona(id: string, file: File): Promise<{ dataUrl: string; spec: { file: string; maxEdge: number; quality: number }; bytes: number }> {
+  const spec = localPersonaImage(id)
+  if (!spec) throw new Error('该画像不支持本地替换图')
+  const { dataUrl, bytes } = await compressImageToJpeg(file, spec)
+  return { dataUrl, spec, bytes }
 }
 
 export async function uploadLocalPersonaImage(
@@ -103,4 +112,43 @@ export async function uploadLocalPersonaImage(
     throw new Error(body?.error?.message || body?.error?.code || '上传失败')
   }
   return body as LocalUploadResult
+}
+
+/* -------------------- covers (city / spot) -------------------- */
+
+/** Covers are shown much larger than persona cards, so they get a bigger
+ *  budget: longest edge 1200px, slightly higher JPEG quality. */
+export const COVER_IMAGE_SPEC = { maxEdge: 1200, quality: 0.8 } as const
+
+/** Safe cover file key: lowercase slug, used as `/covers/<name>.jpg`. */
+export function sanitizeCoverName(raw: string): string {
+  const cleaned = raw.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '')
+  return cleaned.slice(0, 80)
+}
+
+export interface LocalCoverUploadResult {
+  ok: boolean
+  /** Same-origin public path, e.g. `/covers/shanghai-the-bund.jpg`. */
+  path: string
+  bytes: number
+}
+
+/** Upload a browser-compressed cover JPEG; the Vite dev middleware writes it
+ *  to client/public/covers/<name>.jpg so it ships verbatim with the build and
+ *  stays reachable at a stable same-origin path after deploy. */
+export async function uploadLocalCoverImage(
+  name: string,
+  dataUrl: string,
+): Promise<LocalCoverUploadResult> {
+  const res = await fetch('/__local-dev/cover-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ name, dataUrl }),
+  })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(body?.error?.message || body?.error?.code || '上传失败')
+  }
+  return body as LocalCoverUploadResult
 }

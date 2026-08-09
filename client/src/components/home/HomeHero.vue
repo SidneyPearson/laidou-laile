@@ -8,7 +8,6 @@ const props = defineProps<{
   city: RecommendationCity | null
   weather: CityContextResponse['weather']
   weatherLoading: boolean
-  locating: boolean
 }>()
 
 const emit = defineEmits<{
@@ -74,30 +73,24 @@ const weatherDesc = computed(() => {
         </button>
 
         <div class="topbar-pills">
-          <div class="top-pill top-pill--loc" aria-label="当前定位城市">
+          <!-- Location pill is the button: tapping it opens the same location
+               sheet as the first-visit popup (use my location / pick city). -->
+          <button class="top-pill top-pill--loc" aria-label="当前定位城市，点击更换" @click="emit('use-location')">
             <svg class="top-pill-ico top-pill-ico--accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 21s6-4.4 6-11a6 6 0 1 0-12 0c0 6.6 6 11 6 11Z" />
               <circle cx="12" cy="10" r="2" />
             </svg>
             <span class="top-pill-cityname">{{ cityName }}</span>
-          </div>
+          </button>
 
-          <button
-            class="top-pill top-pill--weather"
-            :disabled="locating"
-            aria-label="使用当前位置"
-            @click="emit('use-location')"
-          >
-            <svg v-if="citySelected" class="top-pill-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Weather pill is a static display, not a button. -->
+          <div class="top-pill top-pill--weather">
+            <svg class="top-pill-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.8A7 7 0 1 0 4 15.5" />
             </svg>
-            <svg v-else class="top-pill-ico top-pill-ico--accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 21s6-4.4 6-11a6 6 0 1 0-12 0c0 6.6 6 11 6 11Z" />
-              <circle cx="12" cy="10" r="2" />
-            </svg>
-            <span class="top-pill-temp">{{ citySelected ? weatherTemp : '定位' }}</span>
+            <span class="top-pill-temp">{{ citySelected ? weatherTemp : '--' }}</span>
             <small v-if="citySelected" class="top-pill-desc">{{ weatherDesc }}</small>
-          </button>
+          </div>
         </div>
       </header>
 
@@ -287,12 +280,12 @@ const weatherDesc = computed(() => {
   justify-content: center;
 }
 
-/* The center location pill is a static display (not a button) — no press
-   feedback, default cursor. The tappable city choice is the "热门城市" pill. */
-.top-pill--loc {
+/* The weather pill is a static display (not a button) — no press feedback,
+   default cursor. The tappable location control is the city pill. */
+.top-pill--weather {
   cursor: default;
 }
-.top-pill--loc:active {
+.top-pill--weather:active {
   transform: none;
   background: rgba(18, 24, 34, 0.78);
 }

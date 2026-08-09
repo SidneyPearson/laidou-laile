@@ -50,3 +50,38 @@ describe('GET /context', () => {
     })
   })
 })
+
+describe('GET /static-map', () => {
+  const env = {
+    AMAP_WEB_API_KEY: 'test-key',
+    AMAP_TIMEOUT_MS: 1000,
+  } as any
+
+  it('proxies a marked static map without exposing the Amap key to the client URL', async () => {
+    const fetchStaticMap = vi.fn().mockResolvedValue(new Response(new Uint8Array([1, 2, 3]), {
+      headers: { 'Content-Type': 'image/png' },
+    }))
+    const app = createCityRoutes({ fetchStaticMap })
+    const response = await app.request(
+      '/static-map?points=121.473700,31.230400;121.438000,31.194000',
+      undefined,
+      env,
+    )
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Type')).toBe('image/png')
+    expect(response.headers.get('Cache-Control')).toContain('max-age=86400')
+    const upstreamUrl = String(fetchStaticMap.mock.calls[0][0])
+    expect(upstreamUrl).toContain('key=test-key')
+    expect(upstreamUrl).toContain('markers=')
+    expect(upstreamUrl).toContain('paths=')
+  })
+
+  it('rejects malformed or excessive map points', async () => {
+    const fetchStaticMap = vi.fn()
+    const app = createCityRoutes({ fetchStaticMap })
+    const response = await app.request('/static-map?points=999,31', undefined, env)
+    expect(response.status).toBe(400)
+    expect(fetchStaticMap).not.toHaveBeenCalled()
+  })
+})

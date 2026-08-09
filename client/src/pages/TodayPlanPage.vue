@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import TodayPlanMap from '../components/today/TodayPlanMap.vue'
 import TodaySpotCard from '../components/today/TodaySpotCard.vue'
 import SpotDetailSheet from '../components/explore/SpotDetailSheet.vue'
+import CityTicketSheet from '../components/today/CityTicketSheet.vue'
 import { PERSONAS } from '../data/mockExploreSpots'
 import { useTodayPlan } from '../composables/useTodayPlan'
+import { useTodayJourney } from '../composables/useTodayJourney'
 import { suggestTodayOrder, ApiRequestError } from '../services/api'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import { haversineDist } from '../utils/geo'
+import { hapticSelect, hapticSuccess } from '../utils/haptics'
 import type { Persona } from '../types/explore'
 import type { TodaySpot } from '../types/todayPlan'
 
 const router = useRouter()
 const plan = useTodayPlan()
+const journey = useTodayJourney()
 const selectedSpot = ref<TodaySpot | null>(null)
 const suggesting = ref(false)
 const suggestionError = ref('')
@@ -22,6 +26,10 @@ const suggestionReminders = ref<string[]>([])
 const referenceActive = ref(false)
 const originalOrder = ref<string[] | null>(null)
 const pendingOrder = ref<string[] | null>(null)
+const picking = ref(false)
+const pickedName = ref('')
+const showTicket = ref(false)
+let pickTimer: ReturnType<typeof setInterval> | null = null
 
 function savedPersona(): Persona {
   if (typeof localStorage === 'undefined') return 'couple'
@@ -62,6 +70,32 @@ const pressureNote = computed(() => {
   }
   return `你选了 ${plan.count.value} 个地方，预计停留约 ${durationLabel.value}。顺序可以继续自由调整。`
 })
+const planIds = computed(() => plan.spots.value.map(spot => spot.id))
+const completedSet = computed(() => new Set(journey.completedIds.value))
+const currentSpot = computed(() =>
+  plan.spots.value.find(spot => spot.id === journey.currentId.value) || null,
+)
+const completedSpots = computed(() =>
+  plan.spots.value.filter(spot => completedSet.value.has(spot.id)),
+)
+const remainingSpots = computed(() =>
+  plan.spots.value.filter(spot => !completedSet.value.has(spot.id)),
+)
+const journeyProgress = computed(() =>
+  plan.count.value > 0 ? Math.round(completedSpots.value.length / plan.count.value * 100) : 0,
+)
+const rhythm = computed(() => {
+  let score = 1
+  if (plan.count.value >= 3 || plan.totalStayMinutes.value >= 240) score += 1
+  if (plan.count.value >= 5 || plan.totalStayMinutes.value >= 420 || maxSpanMeters.value >= 10_000) score += 1
+  if (plan.count.value >= 6 || plan.totalStayMinutes.value >= 540 || maxSpanMeters.value >= 18_000) score += 1
+  return [
+    { label: '松弛散步局', note: '慢慢走，给偶遇留点空间。' },
+    { label: '刚刚好的一天', note: '有安排，也有喘息的余地。' },
+    { label: '城市特种兵', note: '节奏偏满，交通衔接很重要。' },
+    { label: '这不是计划，是拉练', note: '建议删掉一站，快乐会更多。' },
+  ][score - 1]
+})
 const suggestedNames = computed(() => {
   if (!pendingOrder.value) return ''
   const byId = new Map(plan.spots.value.map(spot => [spot.id, spot.name]))
@@ -81,6 +115,57 @@ function removeSpot(id: string) {
   plan.removeSpot(id)
   if (selectedSpot.value?.id === id) selectedSpot.value = null
   clearSuggestionForSetChange()
+}
+
+function startJourney() {
+  if (!journey.start(planIds.value)) return
+  hapticSuccess()
+}
+
+function resetJourney() {
+  journey.reset()
+  pickedName.value = ''
+  showTicket.value = false
+}
+
+function completeCurrent() {
+  const spot = currentSpot.value
+  if (!spot || !journey.completeSpot(spot.id, planIds.value)) return
+  hapticSuccess()
+  pickedName.value = ''
+}
+
+function completeSpot(id: string) {
+  if (!journey.completeSpot(id, planIds.value)) return
+  hapticSuccess()
+}
+
+function pickNext() {
+  if (picking.value || remainingSpots.value.length < 2) return
+  picking.value = true
+  let ticks = 0
+  pickTimer = setInterval(() => {
+    const candidates = remainingSpots.value
+    pickedName.value = candidates[ticks % candidates.length]?.name || ''
+    if (ticks % 4 === 0) hapticSelect()
+    ticks += 1
+    if (ticks < 14) return
+    if (pickTimer) clearInterval(pickTimer)
+    pickTimer = null
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)]
+    if (chosen) {
+      journey.chooseNext(chosen.id, planIds.value)
+      pickedName.value = chosen.name
+    }
+    picking.value = false
+  }, 85)
+}
+
+function journeyStateOf(id: string): 'current' | 'completed' | 'upcoming' | undefined {
+  if (journey.status.value === 'idle') return undefined
+  if (completedSet.value.has(id)) return 'completed'
+  if (journey.currentId.value === id) return 'current'
+  return 'upcoming'
 }
 
 function moveSpot(id: string, direction: -1 | 1) {
@@ -153,6 +238,12 @@ function restoreOriginalOrder() {
   suggestionReason.value = ''
   suggestionReminders.value = []
 }
+
+watch(planIds, ids => journey.syncWithSpots(ids), { immediate: true })
+
+onBeforeUnmount(() => {
+  if (pickTimer) clearInterval(pickTimer)
+})
 </script>
 
 <template>
@@ -187,11 +278,81 @@ function restoreOriginalOrder() {
         <p class="mt-4 rounded-2xl bg-white/10 px-3 py-2.5 text-[10px] leading-4 text-white/75">
           {{ pressureNote }}
         </p>
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="font-bold text-lime-300">{{ rhythm.label }}</span>
+            <span class="text-white/40">松弛 ··· 特种兵</span>
+          </div>
+          <div class="relative mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-emerald-300 to-lime-300 transition-all duration-500"
+              :style="{ width: `${Math.max(16, Math.min(100, (plan.count.value / 6) * 100))}%` }"
+            />
+          </div>
+          <p class="mt-2 text-[9px] text-white/45">{{ rhythm.note }}</p>
+        </div>
       </section>
 
-      <TodayPlanMap :spots="plan.spots.value" :connected="referenceActive" />
+      <section
+        v-if="journey.status.value === 'idle'"
+        class="overflow-hidden rounded-[24px] border border-lime-200 bg-gradient-to-br from-lime-100 to-white p-5"
+      >
+        <p class="text-[10px] font-bold tracking-[0.12em] text-lime-800">READY TO GO</p>
+        <h2 class="mt-1 text-xl font-black text-stone-900">准备好，就开始今天</h2>
+        <p class="mt-2 text-[11px] leading-5 text-stone-500">开始后会记录到过的地点，并始终把下一站放在最醒目的位置。</p>
+        <button class="mt-4 w-full rounded-2xl bg-stone-900 py-3.5 text-sm font-bold text-lime-300 active:scale-[0.99]" @click="startJourney">
+          开始今天 →
+        </button>
+      </section>
 
-      <section v-if="plan.count.value >= 2">
+      <section
+        v-else-if="journey.status.value === 'active' && currentSpot"
+        class="overflow-hidden rounded-[26px] bg-stone-900 p-5 text-white shadow-[0_16px_38px_rgba(20,25,18,.2)]"
+      >
+        <div class="flex items-center justify-between text-[10px]">
+          <span class="font-bold text-lime-300">正在进行 · {{ completedSpots.length }}/{{ plan.count.value }}</span>
+          <span class="text-white/45">{{ journeyProgress }}%</span>
+        </div>
+        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+          <div class="h-full rounded-full bg-lime-300 transition-all duration-500" :style="{ width: `${journeyProgress}%` }" />
+        </div>
+        <p class="mt-5 text-[10px] text-white/45">下一站</p>
+        <h2 class="mt-1 text-2xl font-black">{{ pickedName || currentSpot.name }}</h2>
+        <p class="mt-1 text-[10px] text-white/45">{{ currentSpot.district }} · {{ currentSpot.suggestedDuration }}</p>
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <button class="rounded-2xl bg-white/10 py-3 text-xs font-bold" @click="navigate(currentSpot)">导航过去</button>
+          <button class="rounded-2xl bg-lime-300 py-3 text-xs font-black text-stone-900" @click="completeCurrent">✓ 到过了</button>
+        </div>
+        <button
+          v-if="remainingSpots.length >= 2"
+          class="mt-2 w-full rounded-2xl border border-white/10 py-3 text-[11px] font-bold text-white/65 disabled:opacity-50"
+          :disabled="picking"
+          @click="pickNext"
+        >
+          {{ picking ? `🎲 正在抽：${pickedName}` : '🎲 纠结救星：帮我抽下一站' }}
+        </button>
+      </section>
+
+      <section v-else class="rounded-[26px] bg-lime-300 p-5 text-stone-900 shadow-[0_14px_34px_rgba(180,240,20,.2)]">
+        <p class="text-[10px] font-black tracking-[0.14em]">TODAY COMPLETED</p>
+        <h2 class="mt-2 text-2xl font-black">今天没有白来。</h2>
+        <p class="mt-2 text-[11px] leading-5 text-stone-700">{{ plan.count.value }} 个地点全部到达，给今天留一张城市票根吧。</p>
+        <button class="mt-4 w-full rounded-2xl bg-stone-900 py-3.5 text-sm font-bold text-lime-300" @click="showTicket = true">
+          生成今日城市票根 →
+        </button>
+        <button class="mt-2 w-full py-2 text-[10px] font-bold text-stone-700 underline decoration-stone-500/40 underline-offset-4" @click="resetJourney">
+          重新开始这趟行程
+        </button>
+      </section>
+
+      <TodayPlanMap
+        :spots="plan.spots.value"
+        :connected="referenceActive || journey.status.value !== 'idle'"
+        :current-id="journey.currentId.value"
+        :completed-ids="journey.completedIds.value"
+      />
+
+      <section v-if="plan.count.value >= 2 && journey.status.value === 'idle'">
         <button
           class="btn-primary flex w-full items-center justify-center py-3.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-45"
           :disabled="suggesting || !sameCity"
@@ -253,11 +414,14 @@ function restoreOriginalOrder() {
           :spot="spot"
           :index="index"
           :total="plan.count.value"
+          :journey-active="journey.status.value !== 'idle'"
+          :journey-state="journeyStateOf(spot.id)"
           @up="moveSpot(spot.id, -1)"
           @down="moveSpot(spot.id, 1)"
           @remove="removeSpot(spot.id)"
           @details="selectedSpot = spot"
           @navigate="navigate(spot)"
+          @complete="completeSpot(spot.id)"
         />
       </section>
     </div>
@@ -283,6 +447,17 @@ function restoreOriginalOrder() {
         @close="selectedSpot = null"
         @navigate="navigate(selectedSpot)"
         @toggle-today="removeSpot(selectedSpot.id)"
+      />
+    </Transition>
+
+    <Transition name="slide-up">
+      <CityTicketSheet
+        v-if="showTicket"
+        :city="cityLabel"
+        :persona="currentPersona.name"
+        :spots="completedSpots"
+        :duration="durationLabel"
+        @close="showTicket = false"
       />
     </Transition>
   </main>

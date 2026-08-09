@@ -25,6 +25,7 @@ import { ApiRequestError } from '../services/api'
 import { PERSONAS, EXPLORE_CATEGORIES, getExploreSpots, filterAndRankSpots } from '../data/mockExploreSpots'
 import { usePersona } from '../composables/usePersona'
 import { useTodayPlan } from '../composables/useTodayPlan'
+import { useTodayJourney } from '../composables/useTodayJourney'
 import { useGeolocation } from '../composables/useGeolocation'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import {
@@ -37,7 +38,8 @@ import type { InspirationSpot, Persona } from '../types/explore'
 const router = useRouter()
 const { persona, setPersona } = usePersona()
 const todayPlan = useTodayPlan()
-const { coords, isMock, loading: locating, error: locError, requestLocation, setManualLocation } = useGeolocation()
+const todayJourney = useTodayJourney()
+const { coords, isMock, error: locError, requestLocation, setManualLocation } = useGeolocation()
 
 const cities = ref<RecommendationCity[]>([])
 const selectedCity = ref<RecommendationCity | null>(null)
@@ -54,6 +56,13 @@ const selectedSpot = ref<InspirationSpot | null>(null)
 let weatherController: AbortController | null = null
 let spotsController: AbortController | null = null
 let spotsRequestId = 0
+
+/** Weather is keyed by coordinates: when the located city was just resolved
+ *  via /api/city/context (which already returns weather), the follow-up
+ *  loadWeatherAndSpots must not refetch the same endpoint for the same
+ *  coords — that duplicated the request on every "use my location" tap. */
+let weatherCoordsKey: string | null = null
+const coordsKey = (c: { lat: number; lng: number }) => `${c.lat.toFixed(4)},${c.lng.toFixed(4)}`
 
 const currentPersonaOption = () =>
   PERSONAS.find(p => p.id === persona.value) ?? PERSONAS[0]
@@ -160,24 +169,28 @@ async function loadWeatherAndSpots() {
     spotsLoading.value = false
     return
   }
+  const center = city.center
 
   weatherController?.abort()
-  weatherController = new AbortController()
-  weatherLoading.value = true
-  fetchCityContext(city.center.lat, city.center.lng, weatherController.signal)
-    .then((ctx) => {
-      if (selectedCity.value?.adcode === city.adcode) {
-        weather.value = ctx.weather
-      }
-    })
-    .catch((err) => {
-      if (!(err instanceof ApiRequestError) || err.code !== 'CANCELLED') {
-        weather.value = null
-      }
-    })
-    .finally(() => {
-      weatherLoading.value = false
-    })
+  if (weatherCoordsKey !== coordsKey(center)) {
+    weatherController = new AbortController()
+    weatherLoading.value = true
+    fetchCityContext(center.lat, center.lng, weatherController.signal)
+      .then((ctx) => {
+        if (selectedCity.value?.adcode === city.adcode) {
+          weather.value = ctx.weather
+          weatherCoordsKey = coordsKey(center)
+        }
+      })
+      .catch((err) => {
+        if (!(err instanceof ApiRequestError) || err.code !== 'CANCELLED') {
+          weather.value = null
+        }
+      })
+      .finally(() => {
+        weatherLoading.value = false
+      })
+  }
 
   await loadSpots()
 }
@@ -235,6 +248,14 @@ function openPicker() {
   showLocationSheet.value = false
 }
 
+// Tapping the location pill on the hero opens the same sheet as the
+// first-visit popup, so the user picks "use my location" or "choose city
+// manually" instead of being hit with a bare browser permission prompt.
+function openLocationSheet() {
+  showPicker.value = false
+  showLocationSheet.value = true
+}
+
 async function handleUseLocation() {
   showLocationSheet.value = false
   await requestLocation(false)
@@ -256,7 +277,13 @@ async function handleUseLocation() {
   // name and continue with recommendation API.
   try {
     const ctx = await fetchCityContext(center.lat, center.lng)
+    // Reverse geocoding returns the *district* adcode (e.g. 310105 长宁区),
+    // while recommended cities carry the *city-level* adcode (310000). Match
+    // by city name so a located district still resolves to its published
+    // city (and gets its cover image).
+    const locatedName = ctx.city.replace(/市$/, '')
     const matched = cities.value.find(c => c.adcode === ctx.adcode)
+      ?? cities.value.find(c => c.name.replace(/市$/, '') === locatedName)
     selectedCity.value = matched ?? {
       adcode: ctx.adcode,
       name: ctx.city,
@@ -265,6 +292,9 @@ async function handleUseLocation() {
       center,
     }
     weather.value = ctx.weather
+    // Mark these coords as already weather-resolved so loadWeatherAndSpots
+    // doesn't call /api/city/context a second time for the same location.
+    weatherCoordsKey = coordsKey(center)
   } catch {
     /* keep transient city, spots will fall back to local demo */
   }
@@ -299,16 +329,31 @@ function handleStart() {
     showPicker.value = true
     return
   }
+  // After browser geolocation, keep the user's actual position when entering
+  // the city page. `selectedCity.center` is only the curated city's
+  // representative spot (often the first published attraction), not the
+  // user's current location.
+  const center = coords.value && !isMock.value
+    ? coords.value
+    : city.center
   router.push({
     name: 'city',
     query: {
       city: city.name,
-      lat: String(city.center.lat),
-      lng: String(city.center.lng),
-      source: 'manual',
+      lat: String(center.lat),
+      lng: String(center.lng),
+      source: coords.value && !isMock.value ? 'location' : 'manual',
       ...(city.adcode ? { adcode: city.adcode } : {}),
     },
   })
+}
+
+/** A hero unlock starts a new recommendation round. Other Explore entry
+ *  points keep using handleStart() so they can resume the current plan. */
+function handleFreshStart() {
+  todayPlan.clear()
+  todayJourney.reset()
+  handleStart()
 }
 
 function handleSpotSelect(spot: InspirationSpot) {
@@ -431,9 +476,8 @@ watch(persona, () => {
       :city="selectedCity"
       :weather="weather"
       :weather-loading="weatherLoading"
-      :locating="locating"
       @open-picker="openPicker"
-      @use-location="handleUseLocation"
+      @use-location="openLocationSheet"
     />
 
     <!-- Floating persona + CTA panel overlaps the hero -->
@@ -450,7 +494,7 @@ watch(persona, () => {
           hint="向右滑动为你推荐"
           ready-hint="正在为你推荐…"
           :disabled="!selectedCity?.center"
-          @unlock="handleStart"
+          @unlock="handleFreshStart"
         />
       </div>
     </section>

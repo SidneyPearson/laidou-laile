@@ -18,6 +18,7 @@ export async function updateSpot(id:string,data:unknown){return (await adminApi.
 export async function verifySpot(id:string,expectedVersion:number){return (await adminApi.post(`/spots/${id}/verify`,{expectedVersion})).data}
 export async function publishSpot(id:string,expectedVersion:number){return (await adminApi.post<AdminSpot>(`/spots/${id}/publish`,{expectedVersion})).data}
 export async function unpublishSpot(id:string,expectedVersion:number){return (await adminApi.post<AdminSpot>(`/spots/${id}/unpublish`,{expectedVersion})).data}
+export async function deleteSpot(id:string,expectedVersion:number){return (await adminApi.delete(`/spots/${id}`,{data:{expectedVersion}})).data}
 export async function batchPublish(spots:Array<{id:string;expectedVersion:number}>){return (await adminApi.post('/spots/batch-publish',{spots})).data}
 export async function listHomePersonas(){return (await adminApi.get<{items:AdminHomePersona[];total:number}>('/home-personas')).data.items}
 export async function updateHomePersona(id:string,data:{title?:string;subtitle?:string|null;imageUrl?:string|null;sortOrder?:number;enabled?:boolean;expectedVersion:number}){return (await adminApi.patch<AdminHomePersona>(`/home-personas/${id}`,data)).data}

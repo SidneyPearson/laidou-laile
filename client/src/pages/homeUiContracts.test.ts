@@ -36,8 +36,11 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homePage).toContain('distanceMeters')
     // CTA uses existing city route.
     expect(homePage).toContain("name: 'city'")
-    expect(homePage).toContain('lat: String(city.center.lat)')
-    expect(homePage).toContain('lng: String(city.center.lng)')
+    // Browser geolocation keeps the user's actual position; manual city
+    // selection falls back to the curated city's representative center.
+    expect(homePage).toContain('const center = coords.value && !isMock.value')
+    expect(homePage).toContain('lat: String(center.lat)')
+    expect(homePage).toContain('lng: String(center.lng)')
   })
 
   it('keeps the mobile bottom nav with a highlighted plan FAB', () => {

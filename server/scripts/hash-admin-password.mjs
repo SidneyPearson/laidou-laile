@@ -32,7 +32,10 @@ async function readHiddenPassword() {
 try {
   const password = await readHiddenPassword()
   if (password.length < 12) throw new Error('Password must contain at least 12 characters.')
-  const iterations = 310000
+  // Cloudflare Workers 的 Web Crypto 对 PBKDF2 迭代次数上限为 100000，
+  // 超过会在 verifyPassword 运行时抛 NotSupportedError。100000 同时满足
+  // server/src/auth/adminCrypto.ts 中 verifyPassword 的 >=100000 校验。
+  const iterations = 100000
   const salt = webcrypto.getRandomValues(new Uint8Array(16))
   const key = await webcrypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits'])
   const derived = new Uint8Array(await webcrypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, key, 256))

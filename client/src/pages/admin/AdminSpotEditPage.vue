@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createSpot, getSpot, listCities, updateSpot, verifySpot } from '../../admin/api'
+import { sanitizeCoverName } from '../../admin/localImageUpload'
 import {
   PUBLICATION_STATUSES,
   PUBLICATION_STATUS_LABELS,
@@ -17,6 +18,12 @@ import {
 import AdminBadge from '../../components/admin/AdminBadge.vue'
 import AdminFormSection from '../../components/admin/AdminFormSection.vue'
 import AdminPageHeader from '../../components/admin/AdminPageHeader.vue'
+
+// Dev-only local cover uploader (browser compression + write to
+// client/public/covers via the Vite middleware). Excluded from prod bundle.
+const LocalCoverImageUploader = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('../../components/admin/LocalCoverImageUploader.vue'))
+  : null
 
 const route = useRoute()
 const router = useRouter()
@@ -46,6 +53,15 @@ const tagsText = ref('')
 const sources = ref<SpotSource[]>([])
 const cities = ref<AdminCity[]>([])
 const imageCandidates = ref<Array<{ url: string; title: string }>>([])
+
+// Local uploads join the candidate grid so they can be compared against the
+// Amap candidates before picking (the choice still only lands on 保存).
+function handleLocalCoverUploaded(path: string) {
+  if (!imageCandidates.value.some(image => image.url === path)) {
+    imageCandidates.value = [{ url: path, title: '本地上传' }, ...imageCandidates.value]
+  }
+  form.coverImageUrl = path
+}
 
 function fill(spot: AdminSpot) {
   Object.assign(form, spot)
@@ -222,8 +238,16 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
         <section class="admin-panel overflow-hidden">
           <div class="border-b border-[var(--admin-line)] px-4 py-3"><p class="admin-eyebrow">Visual Record</p><h2 class="mt-1 font-bold">封面与图片候选</h2></div>
           <div class="min-h-48 bg-gradient-to-br from-primary-100 to-orange-200"><img v-if="form.coverImageUrl" :src="form.coverImageUrl" alt="地点封面预览" class="h-48 w-full object-cover" @error="form.coverImageUrl=null"><div v-else class="grid h-48 place-items-center text-sm text-primary-800/60">尚未选择封面</div></div>
-          <div class="p-4"><label>封面图片地址<input v-model="form.coverImageUrl" type="url" class="admin-input mt-1"></label></div>
-          <div v-if="imageCandidates.length" class="border-t border-[var(--admin-line)] p-4"><p class="text-xs font-semibold text-[var(--admin-muted)]">高德安全图片候选（选择后仍需保存）</p><div class="mt-3 grid grid-cols-2 gap-2"><button v-for="image in imageCandidates" :key="image.url" type="button" class="overflow-hidden rounded-lg border-2 bg-[var(--admin-surface-muted)] text-left" :class="form.coverImageUrl === image.url ? 'border-primary-500' : 'border-transparent'" @click="form.coverImageUrl = image.url"><img :src="image.url" :alt="image.title || '高德地点图片'" class="h-24 w-full object-cover"><span class="block truncate px-2 py-1 text-[11px] text-[var(--admin-muted)]">{{ image.title || '地点图片' }}</span></button></div></div>
+          <div class="space-y-3 p-4">
+            <label>封面图片地址<input v-model="form.coverImageUrl" type="text" placeholder="HTTPS 地址或本地上传的 /covers/ 路径" class="admin-input mt-1"></label>
+            <component
+              :is="LocalCoverImageUploader"
+              v-if="LocalCoverImageUploader"
+              :name="sanitizeCoverName(form.id)"
+              @uploaded="handleLocalCoverUploaded"
+            />
+          </div>
+          <div v-if="imageCandidates.length" class="border-t border-[var(--admin-line)] p-4"><p class="text-xs font-semibold text-[var(--admin-muted)]">图片候选（高德安全图片 / 本地上传，选择后仍需保存）</p><div class="mt-3 grid grid-cols-2 gap-2"><button v-for="image in imageCandidates" :key="image.url" type="button" class="overflow-hidden rounded-lg border-2 bg-[var(--admin-surface-muted)] text-left" :class="form.coverImageUrl === image.url ? 'border-primary-500' : 'border-transparent'" @click="form.coverImageUrl = image.url"><img :src="image.url" :alt="image.title || '地点图片'" class="h-24 w-full object-cover"><span class="block truncate px-2 py-1 text-[11px] text-[var(--admin-muted)]">{{ image.title || '地点图片' }}</span></button></div></div>
         </section>
 
         <section class="admin-panel p-4">

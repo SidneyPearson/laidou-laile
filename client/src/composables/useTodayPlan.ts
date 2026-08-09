@@ -76,20 +76,17 @@ function sanitizeSpot(value: unknown): TodaySpot | null {
   } as TodaySpot
 }
 
-function loadFromStorage() {
-  if (loaded) return
-  loaded = true
-  if (typeof localStorage === 'undefined') return
-
+function readStoredSpots(): TodaySpot[] {
+  if (typeof localStorage === 'undefined') return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return
+    if (!raw) return []
     const parsed = JSON.parse(raw) as Partial<StoredTodayPlan>
-    if (parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.spots)) return
+    if (parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.spots)) return []
 
     const seen = new Set<string>()
     const seenPoiIds = new Set<string>()
-    spots.value = parsed.spots
+    return parsed.spots
       .map(sanitizeSpot)
       .filter((spot): spot is TodaySpot => {
         if (!spot || seen.has(spot.id) || seenPoiIds.has(spot.amapPoiId)) return false
@@ -99,8 +96,20 @@ function loadFromStorage() {
       })
       .slice(0, TODAY_PLAN_LIMIT)
   } catch {
-    spots.value = []
+    return []
   }
+}
+
+function loadFromStorage() {
+  if (loaded) return
+  loaded = true
+  spots.value = readStoredSpots()
+}
+
+/** Reconcile state changed in another tab or before a hot reload. */
+function syncFromStorage() {
+  if (typeof localStorage === 'undefined') return
+  spots.value = readStoredSpots()
 }
 
 function persist() {
@@ -173,6 +182,7 @@ export function useTodayPlan() {
   }
 
   function addSpot(spot: InspirationSpot): AddTodaySpotResult {
+    syncFromStorage()
     if (
       hasSpot(spot.id)
       || (!!spot.amapPoiId && spots.value.some(item => item.amapPoiId === spot.amapPoiId))
@@ -190,6 +200,14 @@ export function useTodayPlan() {
     const next = spots.value.filter(spot => spot.id !== id)
     if (next.length === spots.value.length) return false
     spots.value = next
+    persist()
+    return true
+  }
+
+  function clear(): boolean {
+    syncFromStorage()
+    if (spots.value.length === 0) return false
+    spots.value = []
     persist()
     return true
   }
@@ -227,6 +245,7 @@ export function useTodayPlan() {
     hasSpot,
     addSpot,
     removeSpot,
+    clear,
     moveSpot,
     replaceOrder,
   }

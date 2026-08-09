@@ -6,6 +6,8 @@ import type { TodaySpot } from '../../types/todayPlan'
 const props = defineProps<{
   spots: TodaySpot[]
   connected?: boolean
+  currentId?: string | null
+  completedIds?: string[]
 }>()
 
 const { createMap, destroyMap, waitForSDK, mapInstance } = useAmapMap()
@@ -25,12 +27,21 @@ function drawPlaces() {
 
   clearOverlays()
   const AMap = (window as any).AMap
-  const markers = props.spots.map((spot, index) => new AMap.Marker({
-    position: [spot.lng, spot.lat],
-    title: spot.name,
-    anchor: 'center',
-    content: `<div style="width:28px;height:28px;border-radius:999px;background:#315f45;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.22)">${index + 1}</div>`,
-  }))
+  const completed = new Set(props.completedIds || [])
+  const markers = props.spots.map((spot, index) => {
+    const isCurrent = props.currentId === spot.id
+    const isCompleted = completed.has(spot.id)
+    const background = isCurrent ? '#b8f500' : isCompleted ? '#315f45' : '#78716c'
+    const color = isCurrent ? '#17210a' : '#fff'
+    const size = isCurrent ? 34 : 28
+    const content = isCompleted ? '✓' : String(index + 1)
+    return new AMap.Marker({
+      position: [spot.lng, spot.lat],
+      title: spot.name,
+      anchor: 'center',
+      content: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:${background};border:2px solid white;color:${color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:0 3px 14px rgba(0,0,0,.28)${isCurrent ? ';animation:today-map-pulse 1.5s ease-in-out infinite' : ''}">${content}</div>`,
+    })
+  })
   const polyline = props.connected && props.spots.length >= 2
     ? new AMap.Polyline({
       path: props.spots.map(spot => [spot.lng, spot.lat]),
@@ -63,7 +74,7 @@ onMounted(async () => {
 })
 
 watch(
-  () => `${props.connected ? '1' : '0'}:${props.spots.map(spot => `${spot.id}:${spot.lng},${spot.lat}`).join('|')}`,
+  () => `${props.connected ? '1' : '0'}:${props.currentId || ''}:${(props.completedIds || []).join(',')}:${props.spots.map(spot => `${spot.id}:${spot.lng},${spot.lat}`).join('|')}`,
   drawPlaces,
 )
 
@@ -88,8 +99,18 @@ onUnmounted(() => {
       v-else
       class="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-semibold text-stone-700 shadow-sm backdrop-blur"
     >
-      {{ connected ? '参考顺序 · 虚线仅供参考' : '只显示你加入的地点' }}
+      {{ currentId
+        ? '荧光点是下一站 · ✓ 表示已到过'
+        : completedIds?.length === spots.length && spots.length > 0
+          ? '今日地点已全部到达 ✓'
+          : connected ? '参考顺序 · 虚线仅供参考' : '只显示你加入的地点' }}
     </div>
   </div>
 </template>
 
+<style>
+@keyframes today-map-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 3px 14px rgba(0,0,0,.28); }
+  50% { transform: scale(1.12); box-shadow: 0 0 0 8px rgba(184,245,0,.22); }
+}
+</style>

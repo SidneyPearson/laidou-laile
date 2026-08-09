@@ -56,6 +56,16 @@ describe('useTodayPlan', () => {
     expect(restored.spots.value.map(spot => spot.id)).toEqual(['spot-1', 'spot-2'])
   })
 
+  it('clears the persisted plan for a new recommendation round', () => {
+    const plan = useTodayPlan()
+    expect(plan.addSpot(verifiedSpot(1)).status).toBe('added')
+
+    expect(plan.clear()).toBe(true)
+    expect(plan.count.value).toBe(0)
+    expect(localStorage.getItem('laidou-v03-today-plan')).toContain('"spots":[]')
+    expect(plan.clear()).toBe(false)
+  })
+
   it('rejects demo places and limits today to six unique places', () => {
     const plan = useTodayPlan()
     expect(plan.addSpot({
@@ -70,6 +80,22 @@ describe('useTodayPlan', () => {
     }
     expect(plan.addSpot(verifiedSpot(7)).status).toBe('limit')
     expect(plan.count.value).toBe(6)
+  })
+
+  it('reconciles a stale six-item memory state before enforcing the limit', () => {
+    const plan = useTodayPlan()
+    for (let index = 1; index <= 6; index++) {
+      expect(plan.addSpot(verifiedSpot(index)).status).toBe('added')
+    }
+
+    const onlySpot = { ...verifiedSpot(1), addedAt: new Date(0).toISOString() }
+    localStorage.setItem('laidou-v03-today-plan', JSON.stringify({
+      version: 1,
+      spots: [onlySpot],
+    }))
+
+    expect(plan.addSpot(verifiedSpot(7)).status).toBe('added')
+    expect(plan.spots.value.map(spot => spot.id)).toEqual(['spot-1', 'spot-7'])
   })
 
   it('moves, removes, and accepts only an exact replacement order', () => {

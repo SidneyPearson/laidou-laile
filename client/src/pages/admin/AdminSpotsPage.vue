@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   batchPublish,
+  deleteSpot,
   listCities,
   listSpots,
   publishSpot,
@@ -85,13 +86,36 @@ async function load() {
   }
 }
 
-async function action(kind: 'verify' | 'publish' | 'unpublish', spot: AdminSpot) {
+async function action(kind: 'verify' | 'publish' | 'unpublish' | 'delete', spot: AdminSpot) {
   error.value = ''
+  if (kind === 'delete') {
+    if (!confirm(`确定删除「${spot.name}」？此操作不可撤销。`)) return
+  }
   pendingIds.value = new Set([...pendingIds.value, spot.id])
   try {
     if (kind === 'verify') await verifySpot(spot.id, spot.version)
     if (kind === 'publish') await publishSpot(spot.id, spot.version)
     if (kind === 'unpublish') await unpublishSpot(spot.id, spot.version)
+    if (kind === 'delete') await deleteSpot(spot.id, spot.version)
+    if (kind === 'delete') {
+      // Remove it immediately. Do not reload the same page here: a briefly
+      // stale list response can otherwise put the just-deleted row back into
+      // the UI until the user manually refreshes the browser.
+      spots.value = spots.value.filter(item => item.id !== spot.id)
+      selected.value = selected.value.filter(id => id !== spot.id)
+      total.value = Math.max(0, total.value - 1)
+
+      // If the last row on a later page was deleted, show the previous page.
+      if (spots.value.length === 0 && filters.page > 1) {
+        filters.page -= 1
+        await syncQuery()
+        await load()
+      }
+      return
+    }
+    // Refresh the list after non-destructive actions. For unpublish→delete
+    // chains, load() also updates spot.version so a subsequent delete uses
+    // the fresh version instead of the stale one (which would 409).
     await load()
   } catch (caught: any) {
     error.value = caught.message + (caught.details ? `：${JSON.stringify(caught.details)}` : '')
@@ -242,7 +266,7 @@ onMounted(async () => {
           <div class="flex flex-wrap items-start gap-2 lg:block"><AdminBadge :label="SPOT_CATEGORY_LABELS[spot.category]" tone="neutral" /><div class="mt-0 lg:mt-2"><AdminBadge :label="SPOT_TIER_LABELS[spot.tier]" :tone="spot.tier === 'S' || spot.tier === 'A' ? 'accent' : 'neutral'" /></div></div>
           <div class="flex flex-wrap items-start gap-2 lg:block"><AdminBadge :label="VERIFICATION_STATUS_LABELS[spot.verificationStatus]" :tone="verificationTone(spot.verificationStatus)" /><div class="mt-0 lg:mt-2"><AdminBadge :label="PUBLICATION_STATUS_LABELS[spot.publicationStatus]" :tone="publicationTone(spot.publicationStatus)" /></div></div>
           <div class="min-w-0 text-sm"><p class="truncate">{{ spot.address ?? '尚无地址' }}</p><p class="mt-1 truncate font-mono text-[11px] text-[var(--admin-muted)]">{{ spot.amapPoiId ?? '无高德地点编号' }}</p><p class="mt-1 text-[11px] text-[var(--admin-muted)]">最后验证：{{ spot.verifiedAt ?? '未校验' }}</p></div>
-          <div class="flex flex-wrap justify-start gap-2 lg:justify-end"><button type="button" class="ledger-action" :disabled="pendingIds.has(spot.id)" @click="action('verify', spot)">验证</button><button v-if="spot.publicationStatus !== 'published'" type="button" class="ledger-action ledger-action-publish" :disabled="pendingIds.has(spot.id)" @click="action('publish', spot)">发布</button><button v-else type="button" class="ledger-action ledger-action-warning" :disabled="pendingIds.has(spot.id)" @click="action('unpublish', spot)">下架</button></div>
+          <div class="flex flex-wrap justify-start gap-2 lg:justify-end"><button type="button" class="ledger-action" :disabled="pendingIds.has(spot.id)" @click="action('verify', spot)">验证</button><button v-if="spot.publicationStatus !== 'published'" type="button" class="ledger-action ledger-action-publish" :disabled="pendingIds.has(spot.id)" @click="action('publish', spot)">发布</button><button v-else type="button" class="ledger-action ledger-action-warning" :disabled="pendingIds.has(spot.id)" @click="action('unpublish', spot)">下架</button><button v-if="spot.publicationStatus !== 'published'" type="button" class="ledger-action ledger-action-danger" :disabled="pendingIds.has(spot.id)" @click="action('delete', spot)">删除</button></div>
         </article>
       </div>
       <div v-else class="admin-empty-state"><p class="font-semibold text-[var(--admin-ink)]">没有符合条件的地点</p><p class="mt-1">调整筛选条件，或新增一条地点档案。</p></div>
@@ -260,4 +284,5 @@ onMounted(async () => {
 .ledger-action { @apply min-h-9 rounded-lg border border-[var(--admin-line)] bg-[var(--admin-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-info)] disabled:opacity-40; }
 .ledger-action-publish { color: var(--admin-success); }
 .ledger-action-warning { color: var(--admin-warning); }
+.ledger-action-danger { color: var(--admin-danger); }
 </style>

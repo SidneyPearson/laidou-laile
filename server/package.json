@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev src/worker.ts",
+    "dev:remote": "wrangler dev src/worker.ts --remote",
     "deploy": "wrangler deploy",
     "build": "tsc --noEmit",
     "bundle": "esbuild src/worker.ts --bundle --format=esm --platform=browser --outfile=../client/dist/_worker.js --define:process.env.NODE_ENV='\"production\"'",

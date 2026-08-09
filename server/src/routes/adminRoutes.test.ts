@@ -99,6 +99,13 @@ class FakeRepository implements CurationRepository {
     this.spot = { ...this.spot, publicationStatus: status, version: this.spot.version + 1 }
     return this.spot
   }
+  async deleteSpot(id: string, expectedVersion: number): Promise<'conflict' | 'published' | null> {
+    if (!this.spot || this.spot.id !== id) return null
+    if (this.spot.publicationStatus === 'published') return 'published'
+    if (this.spot.version !== expectedVersion) return 'conflict'
+    this.spot = null
+    return null
+  }
   async dashboard(_now: string): Promise<DashboardStats> {
     return { publishedCities: 0, draftSpots: 1, pendingReview: 0, publishedSpots: 0, verificationFailed: 0, staleSpots: 0 }
   }

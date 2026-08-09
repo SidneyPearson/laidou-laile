@@ -14,6 +14,11 @@ import AdminPageHeader from '../../components/admin/AdminPageHeader.vue'
 const LocalPersonaImageUploader = import.meta.env.DEV
   ? defineAsyncComponent(() => import('../../components/admin/LocalPersonaImageUploader.vue'))
   : null
+// Local cover uploader: writes to client/public/covers/ and fills the D1
+// image_url with a stable same-origin /covers/ path (deploy-time workflow).
+const LocalCoverImageUploader = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('../../components/admin/LocalCoverImageUploader.vue'))
+  : null
 
 const personas = ref<AdminHomePersona[]>([])
 const selectedId = ref<string | null>(null)
@@ -191,12 +196,22 @@ onMounted(load)
               <input v-model="form.subtitle" maxlength="40" placeholder="例如：浪漫 · 夜景 · 出片" class="admin-input mt-1">
             </label>
             <label class="md:col-span-2">
-              封面图片地址（HTTPS，留空用项目内置图）
-              <input v-model="form.imageUrl" type="url" placeholder="留空 = 内置打包图；或填 https://..." class="admin-input mt-1">
+              封面图片地址（HTTPS 或 /covers/ 路径，留空用项目内置图）
+              <input v-model="form.imageUrl" type="text" placeholder="留空 = 内置打包图；或填 https://... / /covers/..." class="admin-input mt-1">
               <span class="mt-1 block text-xs font-normal text-[var(--admin-muted)]">
-                {{ usingBundled ? '当前使用项目内置打包图。' : '当前使用自定义 HTTPS 图片；清空地址即可恢复内置图。' }}
+                {{ usingBundled ? '当前使用项目内置打包图。' : '当前使用自定义图片；清空地址即可恢复内置图。' }}
               </span>
             </label>
+
+            <!-- Dev-only local cover upload: writes /covers/persona-<id>.jpg and
+                 fills the field above (save to persist into D1). -->
+            <component
+              :is="LocalCoverImageUploader"
+              v-if="LocalCoverImageUploader"
+              class="md:col-span-2"
+              :name="`persona-${selectedId ?? ''}`"
+              @uploaded="(path: string) => { form.imageUrl = path }"
+            />
 
             <!-- Dev-only local image replacement: compresses in the browser and
                  writes the JPEG into the source tree. Never rendered in prod. -->

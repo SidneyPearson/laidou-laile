@@ -16,7 +16,9 @@ export default defineConfig({
     allowedHosts: ['.loca.lt', 'localhost'], // allow tunnel domains
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        // Default to the standard API port; override when a dev backend runs
+        // elsewhere (e.g. API_PROXY_TARGET=http://localhost:3001).
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
         changeOrigin: true,
         timeout: 120000,
       },

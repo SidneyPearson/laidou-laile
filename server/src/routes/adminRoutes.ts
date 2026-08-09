@@ -83,5 +83,14 @@ export function createAdminRoutes(dependencies: AdminRouteDependencies = {}) {
     const repo = repository(c.env.DB); const row = await repo.setPublication(c.req.param('id'), input.expectedVersion, 'draft', now()); if (row === 'conflict') return error(c, 409, 'VERSION_CONFLICT', '地点已被其他操作更新'); if (!row) return error(c, 404, 'NOT_FOUND', '地点不存在')
     await repo.audit('spot.unpublish', 'spot', row.id, { to: 'draft' }, now()); return c.json(row)
   })
+  routes.delete('/spots/:id', requireMutationOrigin, async c => {
+    const input = await body(c, versionSchema); if (input instanceof Response) return input
+    const id = c.req.param('id')!
+    const repo = repository(c.env.DB); const result = await repo.deleteSpot(id, input.expectedVersion)
+    if (result === 'published') return error(c, 422, 'STILL_PUBLISHED', '已发布的地点不能直接删除，请先下架')
+    if (result === 'conflict') return error(c, 409, 'VERSION_CONFLICT', '地点已被其他操作更新')
+    if (result === null) return error(c, 404, 'NOT_FOUND', '地点不存在')
+    await repo.audit('spot.delete', 'spot', id, { version: input.expectedVersion }, now()); return c.json({ ok: true })
+  })
   return routes
 }
