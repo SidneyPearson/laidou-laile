@@ -21,10 +21,10 @@ const emit = defineEmits<{
         </svg>
       </span>
       <span class="route-copy">
-        <strong>智能路线规划</strong>
+        <strong>今日安排</strong>
         <span class="route-sub">
-          <template v-if="count > 0">已选 {{ count }} 个地点，一键生成最优路线</template>
-          <template v-else>一键生成最优路线，节省时间玩得更尽兴</template>
+          <template v-if="count > 0">已选 {{ count }} 个地点 · 查看路线与顺序</template>
+          <template v-else>查看今天想去的地方与路线顺序</template>
         </span>
       </span>
       <span class="route-arrow" aria-hidden="true">

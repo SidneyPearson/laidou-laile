@@ -167,7 +167,7 @@ onMounted(load)
         <div v-else class="admin-empty-state">还没有城市档案，请新增第一座城市。</div>
       </section>
 
-      <section class="min-w-0">
+      <section class="admin-city-dossier min-w-0">
         <template v-if="editing">
           <div ref="dossierHeading" tabindex="-1" class="admin-panel p-5 outline-none md:p-6">
             <div class="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--admin-line)] pb-4">
@@ -225,4 +225,14 @@ label { @apply text-sm font-semibold text-[var(--admin-ink)]; }
 .city-row { @apply block w-full px-4 py-4 text-left transition; }
 .city-row:hover { background: var(--admin-surface-muted); }
 .city-row-active { background: var(--admin-accent-soft); box-shadow: inset 3px 0 0 var(--admin-accent); }
+
+@media (min-width: 1024px) {
+  .admin-city-dossier {
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
 </style>

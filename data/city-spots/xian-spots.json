@@ -1,0 +1,690 @@
+{
+  "city": {
+    "name": "西安",
+    "adcode": "610100"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "xian-spot-01",
+      "cityAdcode": "610100",
+      "name": "秦始皇帝陵博物院",
+      "searchName": "秦始皇帝陵博物院",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 100,
+      "reason": "兵马俑坑与秦陵考古成果构成世界级古代文明现场。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "世界遗产",
+        "兵马俑",
+        "考古"
+      ],
+      "suggestedDuration": "4-6小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "xian-spot-01-source-amap",
+          "title": "高德地图待核验：秦始皇帝陵博物院",
+          "url": "https://www.amap.com/search?query=%E7%A7%A6%E5%A7%8B%E7%9A%87%E5%B8%9D%E9%99%B5%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-02",
+      "cityAdcode": "610100",
+      "name": "西安城墙",
+      "searchName": "西安城墙",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "红十字会巷，西一路街道",
+      "lng": 108.9207577,
+      "lat": 34.2651226,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 95,
+      "reason": "保存完整的古城墙，可步行或骑行俯瞰城内外格局。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "城墙",
+        "骑行",
+        "古城"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:51.816Z",
+      "sources": [
+        {
+          "id": "xian-spot-02-source-amap",
+          "title": "高德地图待核验：西安城墙",
+          "url": "https://www.amap.com/search?query=%E8%A5%BF%E5%AE%89%E5%9F%8E%E5%A2%99",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-02-source-osm",
+          "title": "OpenStreetMap 地理编码：西安城墙, 红十字会巷, 西一路街道, 新城区, 西安市, 陕西省, 710004, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2651226&mlon=108.9207577#map=17/34.2651226/108.9207577",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:51.816Z",
+          "createdAt": "2026-08-09T14:37:51.816Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-03",
+      "cityAdcode": "610100",
+      "name": "陕西历史博物馆",
+      "searchName": "陕西历史博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "小寨路街道",
+      "lng": 108.9503368,
+      "lat": 34.2259093,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 90,
+      "reason": "周秦汉唐文物密度极高，是理解古都历史的核心场馆。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "历史",
+        "文物"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:54.134Z",
+      "sources": [
+        {
+          "id": "xian-spot-03-source-amap",
+          "title": "高德地图待核验：陕西历史博物馆",
+          "url": "https://www.amap.com/search?query=%E9%99%95%E8%A5%BF%E5%8E%86%E5%8F%B2%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：陕西历史博物馆, 91, 育华社区, 小寨路街道, 雁塔区, 西安市, 陕西省, 710000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2259093&mlon=108.9503368#map=17/34.2259093/108.9503368",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:54.134Z",
+          "createdAt": "2026-08-09T14:37:54.134Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-04",
+      "cityAdcode": "610100",
+      "name": "大雁塔文化休闲景区",
+      "searchName": "大雁塔文化休闲景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 85,
+      "reason": "唐代佛塔与城市广场相连，可串联大唐不夜城游览。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "古塔",
+        "唐文化",
+        "城市地标"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "xian-spot-04-source-amap",
+          "title": "高德地图待核验：大雁塔文化休闲景区",
+          "url": "https://www.amap.com/search?query=%E5%A4%A7%E9%9B%81%E5%A1%94%E6%96%87%E5%8C%96%E4%BC%91%E9%97%B2%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-05",
+      "cityAdcode": "610100",
+      "name": "大唐不夜城",
+      "searchName": "大唐不夜城",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "大雁塔街道",
+      "lng": 108.9599829,
+      "lat": 34.2154878,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 80,
+      "reason": "唐风景观、街头演艺与夜间灯光密集，是西安夜游核心区域。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "唐文化",
+        "演艺",
+        "夜景"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:59.258Z",
+      "sources": [
+        {
+          "id": "xian-spot-05-source-amap",
+          "title": "高德地图待核验：大唐不夜城",
+          "url": "https://www.amap.com/search?query=%E5%A4%A7%E5%94%90%E4%B8%8D%E5%A4%9C%E5%9F%8E",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：大唐不夜城, 大雁塔街道, 雁塔区, 西安市, 陕西省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2154878&mlon=108.9599829#map=17/34.2154878/108.9599829",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:59.258Z",
+          "createdAt": "2026-08-09T14:37:59.258Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-06",
+      "cityAdcode": "610100",
+      "name": "西安碑林博物馆",
+      "searchName": "西安碑林博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "三学街，三学街社区，柏树林街道",
+      "lng": 108.9481311,
+      "lat": 34.2550498,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 75,
+      "reason": "碑刻、书法与石刻艺术收藏系统，适合历史和书法爱好者。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "碑刻",
+        "书法",
+        "博物馆"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:38:01.030Z",
+      "sources": [
+        {
+          "id": "xian-spot-06-source-amap",
+          "title": "高德地图待核验：西安碑林博物馆",
+          "url": "https://www.amap.com/search?query=%E8%A5%BF%E5%AE%89%E7%A2%91%E6%9E%97%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：西安碑林博物馆, 15, 三学街, 三学街社区, 柏树林街道, 碑林区, 西安市, 陕西省, 710001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2550498&mlon=108.9481311#map=17/34.2550498/108.9481311",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:38:01.030Z",
+          "createdAt": "2026-08-09T14:38:01.030Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-07",
+      "cityAdcode": "610100",
+      "name": "华清宫",
+      "searchName": "华清宫",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "骊山街道",
+      "lng": 109.2075385,
+      "lat": 34.3649458,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 70,
+      "reason": "唐代宫苑遗址、温泉文化与骊山景观结合，可与兵马俑同日安排。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "唐文化",
+        "园林",
+        "历史"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "下午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:38:02.812Z",
+      "sources": [
+        {
+          "id": "xian-spot-07-source-amap",
+          "title": "高德地图待核验：华清宫",
+          "url": "https://www.amap.com/search?query=%E5%8D%8E%E6%B8%85%E5%AE%AB",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-07-source-osm",
+          "title": "OpenStreetMap 地理编码：华清宫, 骊山街道, 临潼区, 西安市, 陕西省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.3649458&mlon=109.2075385#map=17/34.3649458/109.2075385",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:38:02.812Z",
+          "createdAt": "2026-08-09T14:38:02.812Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-08",
+      "cityAdcode": "610100",
+      "name": "西安钟楼",
+      "searchName": "西安钟楼",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "南大街，钟楼社区，南院门街道",
+      "lng": 108.9430254,
+      "lat": 34.255754,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 65,
+      "reason": "古城中心的标志建筑，夜间灯光与环形街景辨识度高。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "古建筑",
+        "城市地标",
+        "夜景"
+      ],
+      "suggestedDuration": "1小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:38:04.875Z",
+      "sources": [
+        {
+          "id": "xian-spot-08-source-amap",
+          "title": "高德地图待核验：西安钟楼",
+          "url": "https://www.amap.com/search?query=%E8%A5%BF%E5%AE%89%E9%92%9F%E6%A5%BC",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：中国建设银行, 15, 南大街, 钟楼社区, 书院门社区, 南院门街道, 碑林区, 西安市, 陕西省, 710000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2557540&mlon=108.9430254#map=17/34.2557540/108.9430254",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:38:04.875Z",
+          "createdAt": "2026-08-09T14:38:04.875Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-09",
+      "cityAdcode": "610100",
+      "name": "回民街",
+      "searchName": "回民街",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "北院门，北院门街道",
+      "lng": 108.9389287,
+      "lat": 34.2633712,
+      "category": "food",
+      "tier": "A",
+      "priority": 60,
+      "reason": "清真饮食、老字号和街巷生活集中，适合边走边吃并探索支巷。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "小吃",
+        "市井",
+        "老街"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:38:06.884Z",
+      "sources": [
+        {
+          "id": "xian-spot-09-source-amap",
+          "title": "高德地图待核验：回民街",
+          "url": "https://www.amap.com/search?query=%E5%9B%9E%E6%B0%91%E8%A1%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：北院门, 北院门街道, 莲湖区, 西安市, 陕西省, 710001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2633712&mlon=108.9389287#map=17/34.2633712/108.9389287",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:38:06.884Z",
+          "createdAt": "2026-08-09T14:38:06.884Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-10",
+      "cityAdcode": "610100",
+      "name": "大明宫国家遗址公园",
+      "searchName": "大明宫国家遗址公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "大明宫国家遗址公园, 新城区, 西安市, 陕西省, 中国",
+      "lng": 108.9585109,
+      "lat": 34.293893,
+      "category": "nature",
+      "tier": "B",
+      "priority": 55,
+      "reason": "开阔遗址景观呈现唐代宫城尺度，适合骑行和历史主题散步。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "遗址",
+        "唐文化",
+        "公园"
+      ],
+      "suggestedDuration": "3-4小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:38:09.208Z",
+      "sources": [
+        {
+          "id": "xian-spot-10-source-amap",
+          "title": "高德地图待核验：大明宫国家遗址公园",
+          "url": "https://www.amap.com/search?query=%E5%A4%A7%E6%98%8E%E5%AE%AB%E5%9B%BD%E5%AE%B6%E9%81%97%E5%9D%80%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：大明宫国家遗址公园, 新城区, 西安市, 陕西省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2938930&mlon=108.9585109#map=17/34.2938930/108.9585109",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:38:09.208Z",
+          "createdAt": "2026-08-09T14:38:09.208Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-11",
+      "cityAdcode": "610100",
+      "name": "西安博物院",
+      "searchName": "西安博物院",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "荐福寺路，夏家庄社区，长安路街道",
+      "lng": 108.9355818,
+      "lat": 34.2388895,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 50,
+      "reason": "小雁塔、荐福寺与城市博物馆组合，环境安静且展陈完整。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "古塔",
+        "园林"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:38:10.958Z",
+      "sources": [
+        {
+          "id": "xian-spot-11-source-amap",
+          "title": "高德地图待核验：西安博物院",
+          "url": "https://www.amap.com/search?query=%E8%A5%BF%E5%AE%89%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：西安博物院, 荐福寺路, 夏家庄社区, 南稍门社区, 长安路街道, 碑林区, 西安市, 陕西省, 710064, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2388895&mlon=108.9355818#map=17/34.2388895/108.9355818",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:38:10.958Z",
+          "createdAt": "2026-08-09T14:38:10.958Z"
+        }
+      ]
+    },
+    {
+      "id": "xian-spot-12",
+      "cityAdcode": "610100",
+      "name": "长安十二时辰主题街区",
+      "searchName": "长安十二时辰主题街区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "南门，长延堡街道",
+      "lng": 108.9612517,
+      "lat": 34.2134935,
+      "category": "theme_park",
+      "tier": "B",
+      "priority": 45,
+      "reason": "以唐风布景、换装和沉浸演艺为主的室内主题空间。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "沉浸体验",
+        "唐文化",
+        "演艺"
+      ],
+      "suggestedDuration": "3-4小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:38:12.593Z",
+      "sources": [
+        {
+          "id": "xian-spot-12-source-amap",
+          "title": "高德地图待核验：长安十二时辰主题街区",
+          "url": "https://www.amap.com/search?query=%E9%95%BF%E5%AE%89%E5%8D%81%E4%BA%8C%E6%97%B6%E8%BE%B0%E4%B8%BB%E9%A2%98%E8%A1%97%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xian-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：长安十二时辰主题街区, 南门, 大唐不夜城, 长延堡街道, 雁塔区, 西安市, 陕西省, 710062, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=34.2134935&mlon=108.9612517#map=17/34.2134935/108.9612517",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:38:12.593Z",
+          "createdAt": "2026-08-09T14:38:12.593Z"
+        }
+      ]
+    }
+  ]
+}

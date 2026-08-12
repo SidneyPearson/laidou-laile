@@ -1,0 +1,678 @@
+{
+  "city": {
+    "name": "厦门",
+    "adcode": "350200"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "xiamen-spot-01",
+      "cityAdcode": "350200",
+      "name": "鼓浪屿风景名胜区",
+      "searchName": "鼓浪屿风景名胜区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "featured_district",
+      "tier": "S",
+      "priority": 100,
+      "reason": "万国建筑、音乐文化与无机动车街巷构成厦门最核心的世界遗产体验。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "世界遗产",
+        "海岛",
+        "建筑"
+      ],
+      "suggestedDuration": "5-8小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-01-source-amap",
+          "title": "高德地图待核验：鼓浪屿风景名胜区",
+          "url": "https://www.amap.com/search?query=%E9%BC%93%E6%B5%AA%E5%B1%BF%E9%A3%8E%E6%99%AF%E5%90%8D%E8%83%9C%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-02",
+      "cityAdcode": "350200",
+      "name": "厦门大学",
+      "searchName": "厦门大学",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "思明南路，厦港街道",
+      "lng": 118.0930178,
+      "lat": 24.4399419,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 95,
+      "reason": "山海校园与嘉庚建筑风格突出，开放参观需遵循校方预约安排。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "高校",
+        "建筑",
+        "山海"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "上午或下午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:32.437Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-02-source-amap",
+          "title": "高德地图待核验：厦门大学",
+          "url": "https://www.amap.com/search?query=%E5%8E%A6%E9%97%A8%E5%A4%A7%E5%AD%A6",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-02-source-osm",
+          "title": "OpenStreetMap 地理编码：厦门大学, 422, 思明南路, 巡司顶社区, 厦港街道, 思明区, 厦门市, 福建省, 361005, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.4399419&mlon=118.0930178#map=17/24.4399419/118.0930178",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:32.437Z",
+          "createdAt": "2026-08-09T15:12:32.437Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-03",
+      "cityAdcode": "350200",
+      "name": "南普陀寺",
+      "searchName": "南普陀寺",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "滨海街道",
+      "lng": 118.0915032,
+      "lat": 24.4432578,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 90,
+      "reason": "闽南佛寺、素斋与五老峰山景相连，可和厦门大学连续游览。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "寺庙",
+        "闽南建筑",
+        "山景"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:34.319Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-03-source-amap",
+          "title": "高德地图待核验：南普陀寺",
+          "url": "https://www.amap.com/search?query=%E5%8D%97%E6%99%AE%E9%99%80%E5%AF%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：南普陀寺, 滨海街道, 思明区, 厦门市, 福建省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.4432578&mlon=118.0915032#map=17/24.4432578/118.0915032",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:34.319Z",
+          "createdAt": "2026-08-09T15:12:34.319Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-04",
+      "cityAdcode": "350200",
+      "name": "环岛路",
+      "searchName": "环岛路",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "环岛路，大嶝街道",
+      "lng": 118.3899725,
+      "lat": 24.557812,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 85,
+      "reason": "连续海岸景观适合骑行、散步和串联多个沙滩。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "滨海",
+        "骑行",
+        "日落"
+      ],
+      "suggestedDuration": "2-5小时",
+      "bestTime": "清晨或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:36.268Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-04-source-amap",
+          "title": "高德地图待核验：环岛路",
+          "url": "https://www.amap.com/search?query=%E7%8E%AF%E5%B2%9B%E8%B7%AF",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：环岛路, 后堡, 大嶝街道, 翔安区, 厦门市, 福建省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.5578120&mlon=118.3899725#map=17/24.5578120/118.3899725",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:36.268Z",
+          "createdAt": "2026-08-09T15:12:36.268Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-05",
+      "cityAdcode": "350200",
+      "name": "曾厝垵",
+      "searchName": "曾厝垵",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "滨海街道",
+      "lng": 118.1204701,
+      "lat": 24.4291533,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 80,
+      "reason": "由渔村转型的旅游街区，小吃、民宿和海边步行体验集中。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "渔村",
+        "小吃",
+        "街区"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:39.025Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-05-source-amap",
+          "title": "高德地图待核验：曾厝垵",
+          "url": "https://www.amap.com/search?query=%E6%9B%BE%E5%8E%9D%E5%9E%B5",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：曾厝垵社区, 滨海街道, 思明区, 厦门市, 福建省, 361005, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.4291533&mlon=118.1204701#map=17/24.4291533/118.1204701",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:39.025Z",
+          "createdAt": "2026-08-09T15:12:39.025Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-06",
+      "cityAdcode": "350200",
+      "name": "厦门园林植物园",
+      "searchName": "厦门园林植物园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "nature",
+      "tier": "A",
+      "priority": 75,
+      "reason": "雨林世界和多肉植物区辨识度高，适合半日自然与摄影路线。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "植物园",
+        "雨林",
+        "摄影"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:41.762Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-06-source-amap",
+          "title": "高德地图待核验：厦门园林植物园",
+          "url": "https://www.amap.com/search?query=%E5%8E%A6%E9%97%A8%E5%9B%AD%E6%9E%97%E6%A4%8D%E7%89%A9%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-07",
+      "cityAdcode": "350200",
+      "name": "沙坡尾",
+      "searchName": "沙坡尾",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "沙坡尾，厦港街道",
+      "lng": 118.0829431,
+      "lat": 24.4398901,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 70,
+      "reason": "老避风坞、艺术西区与独立小店共存，适合看日落和城市漫步。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "避风坞",
+        "文创",
+        "日落"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:43.446Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-07-source-amap",
+          "title": "高德地图待核验：沙坡尾",
+          "url": "https://www.amap.com/search?query=%E6%B2%99%E5%9D%A1%E5%B0%BE",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-07-source-osm",
+          "title": "OpenStreetMap 地理编码：沙坡尾, 沙坡尾社区, 厦港街道, 思明区, 厦门市, 福建省, 361005, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.4398901&mlon=118.0829431#map=17/24.4398901/118.0829431",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:43.446Z",
+          "createdAt": "2026-08-09T15:12:43.446Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-08",
+      "cityAdcode": "350200",
+      "name": "集美学村",
+      "searchName": "集美学村",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "海堤路，集美街道",
+      "lng": 118.0873516,
+      "lat": 24.5665815,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 65,
+      "reason": "嘉庚建筑、龙舟池与校园文化集中，可感受厦门侨乡教育传统。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "嘉庚建筑",
+        "侨乡",
+        "街区"
+      ],
+      "suggestedDuration": "3-4小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:45.737Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-08-source-amap",
+          "title": "高德地图待核验：集美学村",
+          "url": "https://www.amap.com/search?query=%E9%9B%86%E7%BE%8E%E5%AD%A6%E6%9D%91",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：集美学村, 海堤路, 大社, 集美街道, 集美区, 厦门市, 福建省, 361021, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.5665815&mlon=118.0873516#map=17/24.5665815/118.0873516",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:45.737Z",
+          "createdAt": "2026-08-09T15:12:45.737Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-09",
+      "cityAdcode": "350200",
+      "name": "厦门科技馆",
+      "searchName": "厦门科技馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 60,
+      "reason": "互动展项和科学体验丰富，是亲子及雨天行程的稳定选择。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "科普",
+        "互动",
+        "亲子"
+      ],
+      "suggestedDuration": "3-4小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:48.002Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-09-source-amap",
+          "title": "高德地图待核验：厦门科技馆",
+          "url": "https://www.amap.com/search?query=%E5%8E%A6%E9%97%A8%E7%A7%91%E6%8A%80%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-10",
+      "cityAdcode": "350200",
+      "name": "胡里山炮台",
+      "searchName": "胡里山炮台",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "环岛南路，滨海街道",
+      "lng": 118.1015818,
+      "lat": 24.4315407,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 55,
+      "reason": "近代海防遗址与滨海视野结合，可与白城沙滩、环岛路串联。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "海防",
+        "历史",
+        "海景"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:49.573Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-10-source-amap",
+          "title": "高德地图待核验：胡里山炮台",
+          "url": "https://www.amap.com/search?query=%E8%83%A1%E9%87%8C%E5%B1%B1%E7%82%AE%E5%8F%B0",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：胡里山炮台, 环岛南路, 曾厝垵社区, 滨海街道, 思明区, 厦门市, 福建省, 361005, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.4315407&mlon=118.1015818#map=17/24.4315407/118.1015818",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:49.573Z",
+          "createdAt": "2026-08-09T15:12:49.573Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-11",
+      "cityAdcode": "350200",
+      "name": "钟鼓索道",
+      "searchName": "钟鼓索道",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "钟鼓山隧道，开元街道",
+      "lng": 118.0896061,
+      "lat": 24.4510271,
+      "category": "classic_landmark",
+      "tier": "B",
+      "priority": 50,
+      "reason": "从山体上空俯瞰植物园、城市与海岸线，适合天气晴朗时体验。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "索道",
+        "观景",
+        "城市地标"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:51.820Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-11-source-amap",
+          "title": "高德地图待核验：钟鼓索道",
+          "url": "https://www.amap.com/search?query=%E9%92%9F%E9%BC%93%E7%B4%A2%E9%81%93",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "xiamen-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：钟鼓索道, 钟鼓山隧道, 阳台山社区, 开元街道, 思明区, 厦门市, 福建省, 361005, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=24.4510271&mlon=118.0896061#map=17/24.4510271/118.0896061",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:51.820Z",
+          "createdAt": "2026-08-09T15:12:51.820Z"
+        }
+      ]
+    },
+    {
+      "id": "xiamen-spot-12",
+      "cityAdcode": "350200",
+      "name": "中山路步行街",
+      "searchName": "中山路步行街",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "walk_street",
+      "tier": "B",
+      "priority": 45,
+      "reason": "骑楼建筑、闽南小吃和老字号密集，是厦门夜间老城体验核心。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "骑楼",
+        "小吃",
+        "步行街"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:54.787Z",
+      "sources": [
+        {
+          "id": "xiamen-spot-12-source-amap",
+          "title": "高德地图待核验：中山路步行街",
+          "url": "https://www.amap.com/search?query=%E4%B8%AD%E5%B1%B1%E8%B7%AF%E6%AD%A5%E8%A1%8C%E8%A1%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    }
+  ]
+}

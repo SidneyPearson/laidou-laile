@@ -6,6 +6,7 @@ export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/', name: 'home', component: HomePage },
+    { path: '/explore', name: 'explore', component: () => import('../pages/ExplorePage.vue') },
     { path: '/city', name: 'city', component: () => import('../pages/CityExplorePage.vue') },
     { path: '/today', name: 'today-plan', component: () => import('../pages/TodayPlanPage.vue') },
     { path: '/admin/login', name: 'admin-login', component: () => import('../pages/admin/AdminLoginPage.vue') },

@@ -1,0 +1,440 @@
+{
+  "title": "全国热门城市地点库（上海模板扩展）",
+  "generatedAt": "2026-08-09T14:33:49.563Z",
+  "rankingMethod": "旅游热度优先：以前述携程/公开假期目的地榜单的重复出现和顺位为主；榜单外补充城市按2025年GDP总量排序。上海作为模板不重复收录。",
+  "publicationPolicy": "地点经高德准确匹配后标记verified，但全部保持draft；图片字段统一为null；仅允许导入本地D1。",
+  "tourismSources": [
+    {
+      "title": "2026年“五一”国内酒店热门目的地（携程数据）",
+      "url": "https://www.lvjie.co/research/2026/0508/35046.html",
+      "sourceName": "携程旅行／新旅界"
+    },
+    {
+      "title": "2025年“五一”国内热门旅游目的地",
+      "url": "https://www.news.cn/travel/20250421/8f5aaeda13df446588efb2a707a63419/c.html",
+      "sourceName": "新华网"
+    },
+    {
+      "title": "2024中国旅游目的地热力地图",
+      "url": "https://news.cctv.cn/2025/01/08/ARTIxjXKAqB6Wt2oSqdivlR6250108.shtml",
+      "sourceName": "央视网／携程旅行"
+    }
+  ],
+  "totalCities": 12,
+  "totalSpots": 144,
+  "cities": [
+    {
+      "rank": 1,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "北京",
+        "provinceName": "北京市",
+        "adcode": "110000",
+        "slug": "beijing"
+      },
+      "intro": "以皇家建筑、国家级博物馆、胡同街区和长城遗产为核心的首都文化目的地。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 52073.4,
+        "source": {
+          "title": "北京市2025年国民经济和社会发展统计公报",
+          "url": "https://www.beijing.gov.cn/renwen/bjgk/202607/t20260710_4756991.html",
+          "sourceName": "北京市统计局"
+        }
+      },
+      "total": 12,
+      "jsonFile": "beijing-spots.json"
+    },
+    {
+      "rank": 2,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "成都",
+        "provinceName": "四川省",
+        "adcode": "510100",
+        "slug": "chengdu"
+      },
+      "intro": "兼具古蜀文明、大熊猫、茶馆生活与山水遗产的休闲型旅游城市。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 24763.6,
+        "source": {
+          "title": "2025年成都经济总量",
+          "url": "https://www.cq.gov.cn/ywdt/jrcq/202606/t20260602_15720055.html",
+          "sourceName": "重庆市人民政府／统计监测数据"
+        }
+      },
+      "total": 12,
+      "jsonFile": "chengdu-spots.json"
+    },
+    {
+      "rank": 3,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "重庆",
+        "provinceName": "重庆市",
+        "adcode": "500000",
+        "slug": "chongqing"
+      },
+      "intro": "以立体山城、两江夜景、码头文化和巴渝街巷形成强烈城市体验。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 33757.93,
+        "source": {
+          "title": "2025年重庆地区生产总值",
+          "url": "https://www.cq.gov.cn/ywdt/jrcq/202601/t20260127_15355033.html",
+          "sourceName": "重庆市人民政府"
+        }
+      },
+      "total": 12,
+      "jsonFile": "chongqing-spots.json"
+    },
+    {
+      "rank": 4,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "杭州",
+        "provinceName": "浙江省",
+        "adcode": "330100",
+        "slug": "hangzhou"
+      },
+      "intro": "以西湖山水、宋韵文化、运河街区和江南生活美学著称。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 23011,
+        "source": {
+          "title": "杭州市2026年政府工作报告",
+          "url": "https://zfgb.hangzhou.gov.cn/148/102220263/t103220263024/530188.shtml",
+          "sourceName": "杭州市人民政府"
+        }
+      },
+      "total": 12,
+      "jsonFile": "hangzhou-spots.json"
+    },
+    {
+      "rank": 5,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "广州",
+        "provinceName": "广东省",
+        "adcode": "440100",
+        "slug": "guangzhou"
+      },
+      "intro": "岭南建筑、广府饮食、珠江夜景与现代会展商业共同塑造的南方门户。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 32039.46,
+        "source": {
+          "title": "2025年广州市国民经济和社会发展统计公报",
+          "url": "https://tjj.gz.gov.cn/zzfwzq/tjkx/content/post_10804061.html",
+          "sourceName": "广州市统计局"
+        }
+      },
+      "total": 12,
+      "jsonFile": "guangzhou-spots.json"
+    },
+    {
+      "rank": 6,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "深圳",
+        "provinceName": "广东省",
+        "adcode": "440300",
+        "slug": "shenzhen"
+      },
+      "intro": "以滨海公园、当代建筑、主题乐园和创新街区见长的年轻城市。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 38731.8,
+        "source": {
+          "title": "2025年深圳GDP逾3.87万亿元",
+          "url": "https://www.sz.gov.cn/cn/xxgk/zfxxgj/zwdt/content/post_12626710.html",
+          "sourceName": "深圳市人民政府"
+        }
+      },
+      "total": 12,
+      "jsonFile": "shenzhen-spots.json"
+    },
+    {
+      "rank": 7,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "西安",
+        "provinceName": "陕西省",
+        "adcode": "610100",
+        "slug": "xian"
+      },
+      "intro": "以周秦汉唐遗产、城墙街巷和高密度博物馆构成的古都目的地。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 13902.67,
+        "source": {
+          "title": "2025年西安市经济运行情况",
+          "url": "https://tjj.xa.gov.cn/tjsj/tjxx/2018511615350665218.html",
+          "sourceName": "西安市统计局"
+        }
+      },
+      "total": 12,
+      "jsonFile": "xian-spots.json"
+    },
+    {
+      "rank": 8,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "长沙",
+        "provinceName": "湖南省",
+        "adcode": "430100",
+        "slug": "changsha"
+      },
+      "intro": "山水洲城格局、湖湘文化、夜间消费和年轻街区共同形成高热度体验。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 15737.8,
+        "source": {
+          "title": "长沙市2025年国民经济和社会发展统计公报",
+          "url": "https://tjj.hunan.gov.cn/hntj/tjfx/tjgb/szgb/zss_1/202605/t20260512_33975356.html",
+          "sourceName": "湖南省统计局／长沙市统计局"
+        }
+      },
+      "total": 12,
+      "jsonFile": "changsha-spots.json"
+    },
+    {
+      "rank": 9,
+      "tourismRankBasis": "2026年五一国内酒店热门目的地顺位（剔除上海）",
+      "city": {
+        "name": "南京",
+        "provinceName": "江苏省",
+        "adcode": "320100",
+        "slug": "nanjing"
+      },
+      "intro": "六朝古都遗产、民国建筑、博物馆和秦淮街巷密集的历史文化城市。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 19428.78,
+        "source": {
+          "title": "2025年南京经济运行情况",
+          "url": "https://www.nanjing.gov.cn/sjfb/sjjd/202602/t20260203_5786366.html",
+          "sourceName": "南京市统计局"
+        }
+      },
+      "total": 12,
+      "jsonFile": "nanjing-spots.json"
+    },
+    {
+      "rank": 10,
+      "tourismRankBasis": "近两年热门目的地补充，并按2025年GDP排序",
+      "city": {
+        "name": "武汉",
+        "provinceName": "湖北省",
+        "adcode": "420100",
+        "slug": "wuhan"
+      },
+      "intro": "长江与汉江交汇，近代建筑、湖泊公园和高校文化共同构成江城体验。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 22147.35,
+        "source": {
+          "title": "2025年武汉市国民经济和社会发展统计公报",
+          "url": "https://tjj.wuhan.gov.cn/tjfw/tjgb/202604/t20260408_2750693.shtml",
+          "sourceName": "武汉市统计局"
+        }
+      },
+      "total": 12,
+      "jsonFile": "wuhan-spots.json"
+    },
+    {
+      "rank": 11,
+      "tourismRankBasis": "近两年热门目的地补充，并按2025年GDP排序",
+      "city": {
+        "name": "青岛",
+        "provinceName": "山东省",
+        "adcode": "370200",
+        "slug": "qingdao"
+      },
+      "intro": "海岸线、近代建筑、啤酒文化和山海景观相结合的北方滨海目的地。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 17560.67,
+        "source": {
+          "title": "2025年青岛市经济运行情况",
+          "url": "https://www.qingdao.gov.cn/ywdt/zwyw/202601/t20260128_10492421.shtml",
+          "sourceName": "青岛市统计局／青岛政务网"
+        }
+      },
+      "total": 12,
+      "jsonFile": "qingdao-spots.json"
+    },
+    {
+      "rank": 12,
+      "tourismRankBasis": "近两年热门目的地补充，并按2025年GDP排序",
+      "city": {
+        "name": "厦门",
+        "provinceName": "福建省",
+        "adcode": "350200",
+        "slug": "xiamen"
+      },
+      "intro": "以鼓浪屿世界遗产、滨海骑行、闽南街区和侨乡文化形成轻松海岛体验。",
+      "gdp": {
+        "year": 2025,
+        "value100MillionCny": 8980.37,
+        "source": {
+          "title": "厦门、漳州、莆田2025年GDP公布",
+          "url": "https://gxt.fujian.gov.cn/zwgk/xw/hydt/snhydt/202602/t20260206_7090317.htm",
+          "sourceName": "福建省工业和信息化厅／厦门市统计局"
+        }
+      },
+      "total": 12,
+      "jsonFile": "xiamen-spots.json"
+    }
+  ],
+  "validationSummary": {
+    "amapEnrichmentSkipped": true,
+    "verifiedSpots": 0,
+    "unresolvedSpots": 28,
+    "unresolved": [],
+    "fallbackGeocodedSpots": 116,
+    "geocodingFailures": [
+      {
+        "city": "成都",
+        "spot": "成都远洋太古里",
+        "error": "结果距城市中心1258.4公里，已拒绝"
+      },
+      {
+        "city": "重庆",
+        "spot": "洪崖洞民俗风貌区",
+        "error": "无结果"
+      },
+      {
+        "city": "重庆",
+        "spot": "解放碑步行街",
+        "error": "结果距城市中心1061.7公里，已拒绝"
+      },
+      {
+        "city": "重庆",
+        "spot": "李子坝轻轨穿楼观景平台",
+        "error": "无结果"
+      },
+      {
+        "city": "重庆",
+        "spot": "重庆中国三峡博物馆",
+        "error": "无结果"
+      },
+      {
+        "city": "重庆",
+        "spot": "鹅岭二厂文创公园",
+        "error": "无结果"
+      },
+      {
+        "city": "重庆",
+        "spot": "南山一棵树景区",
+        "error": "无结果"
+      },
+      {
+        "city": "重庆",
+        "spot": "重庆湖广会馆",
+        "error": "结果距城市中心1054.0公里，已拒绝"
+      },
+      {
+        "city": "重庆",
+        "spot": "四川美术学院美术馆",
+        "error": "无结果"
+      },
+      {
+        "city": "杭州",
+        "spot": "西湖风景名胜区",
+        "error": "无结果"
+      },
+      {
+        "city": "杭州",
+        "spot": "小河直街历史文化街区",
+        "error": "无结果"
+      },
+      {
+        "city": "广州",
+        "spot": "广州长隆旅游度假区",
+        "error": "无结果"
+      },
+      {
+        "city": "广州",
+        "spot": "北京路步行街",
+        "error": "无结果"
+      },
+      {
+        "city": "深圳",
+        "spot": "深圳欢乐谷",
+        "error": "无结果"
+      },
+      {
+        "city": "西安",
+        "spot": "秦始皇帝陵博物院",
+        "error": "无结果"
+      },
+      {
+        "city": "西安",
+        "spot": "大雁塔文化休闲景区",
+        "error": "无结果"
+      },
+      {
+        "city": "长沙",
+        "spot": "橘子洲景区",
+        "error": "结果距城市中心571.0公里，已拒绝"
+      },
+      {
+        "city": "长沙",
+        "spot": "湖南博物院",
+        "error": "无结果"
+      },
+      {
+        "city": "长沙",
+        "spot": "长沙国金中心",
+        "error": "结果距城市中心578.9公里，已拒绝"
+      },
+      {
+        "city": "长沙",
+        "spot": "洋湖国家湿地公园",
+        "error": "结果距城市中心578.1公里，已拒绝"
+      },
+      {
+        "city": "南京",
+        "spot": "夫子庙秦淮风光带",
+        "error": "无结果"
+      },
+      {
+        "city": "南京",
+        "spot": "牛首山文化旅游区",
+        "error": "无结果"
+      },
+      {
+        "city": "南京",
+        "spot": "中华门瓮城",
+        "error": "无结果"
+      },
+      {
+        "city": "青岛",
+        "spot": "八大关风景区",
+        "error": "无结果"
+      },
+      {
+        "city": "厦门",
+        "spot": "鼓浪屿风景名胜区",
+        "error": "无结果"
+      },
+      {
+        "city": "厦门",
+        "spot": "厦门园林植物园",
+        "error": "结果距城市中心815.7公里，已拒绝"
+      },
+      {
+        "city": "厦门",
+        "spot": "厦门科技馆",
+        "error": "结果距城市中心816.0公里，已拒绝"
+      },
+      {
+        "city": "厦门",
+        "spot": "中山路步行街",
+        "error": "结果距城市中心1039.9公里，已拒绝"
+      }
+    ]
+  }
+}

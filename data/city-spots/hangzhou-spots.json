@@ -1,0 +1,692 @@
+{
+  "city": {
+    "name": "杭州",
+    "adcode": "330100"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "hangzhou-west-lake",
+      "cityAdcode": "330100",
+      "name": "西湖风景名胜区",
+      "searchName": "西湖风景名胜区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "nature",
+      "tier": "S",
+      "priority": 100,
+      "reason": "湖山、堤桥、古塔与园林共同构成杭州最核心的世界遗产景观。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "世界遗产",
+        "湖景",
+        "园林"
+      ],
+      "suggestedDuration": "4-8小时",
+      "bestTime": "清晨或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "hangzhou-west-lake-source-amap",
+          "title": "高德地图待核验：西湖风景名胜区",
+          "url": "https://www.amap.com/search?query=%E8%A5%BF%E6%B9%96%E9%A3%8E%E6%99%AF%E5%90%8D%E8%83%9C%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-lingyin-temple",
+      "cityAdcode": "330100",
+      "name": "灵隐寺",
+      "searchName": "灵隐寺",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "北高峰登山道，西湖街道",
+      "lng": 120.0976311,
+      "lat": 30.2424012,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 95,
+      "reason": "飞来峰石刻与千年古刹相连，是杭州佛教文化与山林体验的代表。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "寺庙",
+        "石刻",
+        "山林"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:30.716Z",
+      "sources": [
+        {
+          "id": "hangzhou-lingyin-temple-source-amap",
+          "title": "高德地图待核验：灵隐寺",
+          "url": "https://www.amap.com/search?query=%E7%81%B5%E9%9A%90%E5%AF%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-lingyin-temple-source-osm",
+          "title": "OpenStreetMap 地理编码：灵隐寺, 北高峰登山道, 灵隐, 西湖街道, 西湖区, 杭州市, 浙江省, 310013, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.2424012&mlon=120.0976311#map=17/30.2424012/120.0976311",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:30.716Z",
+          "createdAt": "2026-08-09T14:36:30.716Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-03",
+      "cityAdcode": "330100",
+      "name": "西溪国家湿地公园",
+      "searchName": "西溪国家湿地公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "西溪国家湿地公园, 西湖区, 杭州市, 浙江省, 中国",
+      "lng": 120.0632592,
+      "lat": 30.2673045,
+      "category": "nature",
+      "tier": "S",
+      "priority": 90,
+      "reason": "河港、芦苇与村落肌理交织，适合乘船和半日慢游。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "湿地",
+        "乘船",
+        "自然"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:32.525Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-03-source-amap",
+          "title": "高德地图待核验：西溪国家湿地公园",
+          "url": "https://www.amap.com/search?query=%E8%A5%BF%E6%BA%AA%E5%9B%BD%E5%AE%B6%E6%B9%BF%E5%9C%B0%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：西溪国家湿地公园, 西湖区, 杭州市, 浙江省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.2673045&mlon=120.0632592#map=17/30.2673045/120.0632592",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:32.525Z",
+          "createdAt": "2026-08-09T14:36:32.525Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-04",
+      "cityAdcode": "330100",
+      "name": "良渚博物院",
+      "searchName": "良渚博物院",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "梧桐圩路",
+      "lng": 120.0231332,
+      "lat": 30.3796615,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 85,
+      "reason": "以玉器、古城和水利系统讲述良渚文明，展陈完整且适合亲子。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "世界遗产",
+        "考古",
+        "博物馆"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:34.918Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-04-source-amap",
+          "title": "高德地图待核验：良渚博物院",
+          "url": "https://www.amap.com/search?query=%E8%89%AF%E6%B8%9A%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：良渚博物院, 梧桐圩路, 良渚街道, 余杭区, 杭州市, 浙江省, 311115, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.3796615&mlon=120.0231332#map=17/30.3796615/120.0231332",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:34.918Z",
+          "createdAt": "2026-08-09T14:36:34.918Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-05",
+      "cityAdcode": "330100",
+      "name": "中国丝绸博物馆",
+      "searchName": "中国丝绸博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "玉皇山路，西湖街道",
+      "lng": 120.1465083,
+      "lat": 30.225126,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 80,
+      "reason": "从纺织考古到服饰艺术系统呈现中国丝绸文化，雨天友好。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "丝绸",
+        "服饰",
+        "博物馆"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:36.943Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-05-source-amap",
+          "title": "高德地图待核验：中国丝绸博物馆",
+          "url": "https://www.amap.com/search?query=%E4%B8%AD%E5%9B%BD%E4%B8%9D%E7%BB%B8%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：中国丝绸博物馆, 73-1, 玉皇山路, 南山村, 西湖街道, 西湖区, 杭州市, 浙江省, 310002, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.2251260&mlon=120.1465083#map=17/30.2251260/120.1465083",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:36.943Z",
+          "createdAt": "2026-08-09T14:36:36.943Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-06",
+      "cityAdcode": "330100",
+      "name": "拱宸桥",
+      "searchName": "拱宸桥",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "拱宸桥街道",
+      "lng": 120.1339172,
+      "lat": 30.3204639,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 75,
+      "reason": "京杭大运河南端的重要地标，可与桥西历史街区和专题博物馆连游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "世界遗产",
+        "运河",
+        "古桥"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:39.371Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-06-source-amap",
+          "title": "高德地图待核验：拱宸桥",
+          "url": "https://www.amap.com/search?query=%E6%8B%B1%E5%AE%B8%E6%A1%A5",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：拱宸桥, 拱宸桥街道, 拱墅区, 杭州市, 浙江省, 310015, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.3204639&mlon=120.1339172#map=17/30.3204639/120.1339172",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:39.371Z",
+          "createdAt": "2026-08-09T14:36:39.371Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-hefang-street",
+      "cityAdcode": "330100",
+      "name": "清河坊历史文化特色街区",
+      "searchName": "清河坊历史文化特色街区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "东太平巷，清波街道",
+      "lng": 120.165984,
+      "lat": 30.2415928,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 70,
+      "reason": "老字号、传统手艺与南宋街巷氛围集中，适合傍晚闲逛。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "老街",
+        "非遗",
+        "小吃"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:41.637Z",
+      "sources": [
+        {
+          "id": "hangzhou-hefang-street-source-amap",
+          "title": "高德地图待核验：清河坊历史文化特色街区",
+          "url": "https://www.amap.com/search?query=%E6%B8%85%E6%B2%B3%E5%9D%8A%E5%8E%86%E5%8F%B2%E6%96%87%E5%8C%96%E7%89%B9%E8%89%B2%E8%A1%97%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-hefang-street-source-osm",
+          "title": "OpenStreetMap 地理编码：清河坊历史文化特色街区, 东太平巷, 清河坊社区, 清波街道, 上城区, 杭州市, 浙江省, 310002, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.2415928&mlon=120.1659840#map=17/30.2415928/120.1659840",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:41.637Z",
+          "createdAt": "2026-08-09T14:36:41.637Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-08",
+      "cityAdcode": "330100",
+      "name": "南宋御街",
+      "searchName": "南宋御街",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "南宋御街",
+      "lng": 119.7694073,
+      "lat": 30.2568617,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 65,
+      "reason": "沿旧城中轴展开的步行街，可与河坊街、鼓楼组成老城路线。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "宋韵",
+        "步行街",
+        "老城"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:43.234Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-08-source-amap",
+          "title": "高德地图待核验：南宋御街",
+          "url": "https://www.amap.com/search?query=%E5%8D%97%E5%AE%8B%E5%BE%A1%E8%A1%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：南宋御街, 锦北街道, 临安区, 杭州市, 浙江省, 311300, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.2568617&mlon=119.7694073#map=17/30.2568617/119.7694073",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:43.234Z",
+          "createdAt": "2026-08-09T14:36:43.234Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-09",
+      "cityAdcode": "330100",
+      "name": "杭州宋城",
+      "searchName": "杭州宋城",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "环城东路，小营街道",
+      "lng": 120.1783532,
+      "lat": 30.2459675,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 60,
+      "reason": "以宋代文化演艺和主题街区为核心，适合家庭及演出爱好者。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "主题乐园",
+        "演艺",
+        "亲子"
+      ],
+      "suggestedDuration": "4-6小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:46.305Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-09-source-amap",
+          "title": "高德地图待核验：杭州宋城",
+          "url": "https://www.amap.com/search?query=%E6%9D%AD%E5%B7%9E%E5%AE%8B%E5%9F%8E",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：杭州, 环城东路, 长明寺巷社区, 小营街道, 上城区, 杭州市, 浙江省, 310009, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.2459675&mlon=120.1783532#map=17/30.2459675/120.1783532",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:46.305Z",
+          "createdAt": "2026-08-09T14:36:46.305Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-10",
+      "cityAdcode": "330100",
+      "name": "湘湖国家旅游度假区",
+      "searchName": "湘湖国家旅游度假区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "湘湖国家旅游度假区, 萧山区, 杭州市, 浙江省, 中国",
+      "lng": 120.2108891,
+      "lat": 30.1382556,
+      "category": "nature",
+      "tier": "B",
+      "priority": 55,
+      "reason": "湖面开阔、游人相对分散，适合骑行、散步和家庭休闲。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "湖景",
+        "骑行",
+        "公园"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:47.949Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-10-source-amap",
+          "title": "高德地图待核验：湘湖国家旅游度假区",
+          "url": "https://www.amap.com/search?query=%E6%B9%98%E6%B9%96%E5%9B%BD%E5%AE%B6%E6%97%85%E6%B8%B8%E5%BA%A6%E5%81%87%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：湘湖国家旅游度假区, 萧山区, 杭州市, 浙江省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.1382556&mlon=120.2108891#map=17/30.1382556/120.2108891",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:47.949Z",
+          "createdAt": "2026-08-09T14:36:47.949Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-11",
+      "cityAdcode": "330100",
+      "name": "小河直街历史文化街区",
+      "searchName": "小河直街历史文化街区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 50,
+      "reason": "运河边保存较好的近代民居街区，适合咖啡、小店与慢节奏散步。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "运河",
+        "街区",
+        "小店"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-11-source-amap",
+          "title": "高德地图待核验：小河直街历史文化街区",
+          "url": "https://www.amap.com/search?query=%E5%B0%8F%E6%B2%B3%E7%9B%B4%E8%A1%97%E5%8E%86%E5%8F%B2%E6%96%87%E5%8C%96%E8%A1%97%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-spot-12",
+      "cityAdcode": "330100",
+      "name": "中国茶叶博物馆",
+      "searchName": "中国茶叶博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "龙井路，西湖街道",
+      "lng": 120.1155532,
+      "lat": 30.2347538,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 45,
+      "reason": "茶园环境与茶文化展陈结合，可体验杭州山地与龙井文化。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "茶文化",
+        "博物馆",
+        "园林"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:53.205Z",
+      "sources": [
+        {
+          "id": "hangzhou-spot-12-source-amap",
+          "title": "高德地图待核验：中国茶叶博物馆",
+          "url": "https://www.amap.com/search?query=%E4%B8%AD%E5%9B%BD%E8%8C%B6%E5%8F%B6%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "hangzhou-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：中国茶叶博物馆（双峰馆区）, 88, 龙井路, 外鸡笼山, 西湖街道, 西湖区, 杭州市, 浙江省, 310008, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.2347538&mlon=120.1155532#map=17/30.2347538/120.1155532",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:53.205Z",
+          "createdAt": "2026-08-09T14:36:53.205Z"
+        }
+      ]
+    }
+  ]
+}

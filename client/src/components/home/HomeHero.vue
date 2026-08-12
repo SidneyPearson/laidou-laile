@@ -64,12 +64,12 @@ const weatherDesc = computed(() => {
           <em>City Inspiration</em>
         </div>
 
-        <button class="hot-city" aria-label="选择热门城市" @click="emit('open-picker')">
+        <button class="hot-city" aria-label="搜索城市" @click="emit('open-picker')">
           <svg class="hot-city-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2c1.5 3 4 4.5 4 8a4 4 0 1 1-8 0c0-1.2.4-2.2 1-3-.2 1.4.6 2.4 1.6 2.4C11.8 9.4 12 6 12 2Z" />
             <path d="M7.5 15.5C8.5 18 10 20 12 20s3.5-2 4.5-4.5" />
           </svg>
-          <span class="hot-city-text">热门城市</span>
+          <span class="hot-city-text">搜索城市</span>
         </button>
 
         <div class="topbar-pills">

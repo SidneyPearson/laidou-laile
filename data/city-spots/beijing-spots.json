@@ -1,0 +1,708 @@
+{
+  "city": {
+    "name": "北京",
+    "adcode": "110000"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "beijing-forbidden-city",
+      "cityAdcode": "110000",
+      "name": "故宫博物院",
+      "searchName": "故宫博物院",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "景山前街，东华门街道",
+      "lng": 116.3907817,
+      "lat": 39.9174311,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 100,
+      "reason": "沿中轴线阅读明清宫殿建筑与皇家收藏，是北京最具代表性的文化体验。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "世界遗产",
+        "宫殿",
+        "博物馆"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:09.855Z",
+      "sources": [
+        {
+          "id": "beijing-forbidden-city-source-amap",
+          "title": "高德地图待核验：故宫博物院",
+          "url": "https://www.amap.com/search?query=%E6%95%85%E5%AE%AB%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-forbidden-city-source-osm",
+          "title": "OpenStreetMap 地理编码：故宫博物院, 4号, 景山前街, 智德社区, 东华门街道, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9174311&mlon=116.3907817#map=17/39.9174311/116.3907817",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:09.855Z",
+          "createdAt": "2026-08-09T14:35:09.855Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-tiananmen-square",
+      "cityAdcode": "110000",
+      "name": "天安门广场",
+      "searchName": "天安门广场",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "东华门街道",
+      "lng": 116.3914409,
+      "lat": 39.9027218,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 95,
+      "reason": "城市中轴线上的国家地标，可与故宫、前门串联步行。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "城市地标",
+        "中轴线",
+        "建筑"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "清晨或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:12.712Z",
+      "sources": [
+        {
+          "id": "beijing-tiananmen-square-source-amap",
+          "title": "高德地图待核验：天安门广场",
+          "url": "https://www.amap.com/search?query=%E5%A4%A9%E5%AE%89%E9%97%A8%E5%B9%BF%E5%9C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-tiananmen-square-source-osm",
+          "title": "OpenStreetMap 地理编码：天安门广场, 正义路社区, 东华门街道, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9027218&mlon=116.3914409#map=17/39.9027218/116.3914409",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:12.712Z",
+          "createdAt": "2026-08-09T14:35:12.712Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-summer-palace",
+      "cityAdcode": "110000",
+      "name": "颐和园",
+      "searchName": "颐和园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "颐和园, 19, 海淀区, 北京市, 100091, 中国",
+      "lng": 116.2647403,
+      "lat": 39.9900983,
+      "category": "nature",
+      "tier": "S",
+      "priority": 90,
+      "reason": "湖山、长廊与皇家园林建筑相互成景，适合半日慢游。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "世界遗产",
+        "园林",
+        "湖景"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:15.179Z",
+      "sources": [
+        {
+          "id": "beijing-summer-palace-source-amap",
+          "title": "高德地图待核验：颐和园",
+          "url": "https://www.amap.com/search?query=%E9%A2%90%E5%92%8C%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-summer-palace-source-osm",
+          "title": "OpenStreetMap 地理编码：颐和园, 19, 海淀区, 北京市, 100091, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9900983&mlon=116.2647403#map=17/39.9900983/116.2647403",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:15.179Z",
+          "createdAt": "2026-08-09T14:35:15.179Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-04",
+      "cityAdcode": "110000",
+      "name": "天坛公园",
+      "searchName": "天坛公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "首都功能核心区",
+      "lng": 116.4028716,
+      "lat": 39.8799066,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 85,
+      "reason": "以祈年殿和圜丘为核心的礼制建筑群，清晨还能看到鲜活的市民生活。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "世界遗产",
+        "古建筑",
+        "公园"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "清晨",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:17.400Z",
+      "sources": [
+        {
+          "id": "beijing-spot-04-source-amap",
+          "title": "高德地图待核验：天坛公园",
+          "url": "https://www.amap.com/search?query=%E5%A4%A9%E5%9D%9B%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：天坛公园, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.8799066&mlon=116.4028716#map=17/39.8799066/116.4028716",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:17.400Z",
+          "createdAt": "2026-08-09T14:35:17.400Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-05",
+      "cityAdcode": "110000",
+      "name": "八达岭长城",
+      "searchName": "八达岭长城",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "进站通道",
+      "lng": 116.0050515,
+      "lat": 40.3603284,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 80,
+      "reason": "保存完整、交通成熟的长城代表段，适合第一次到北京的游客。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "世界遗产",
+        "长城",
+        "徒步"
+      ],
+      "suggestedDuration": "4-6小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:19.843Z",
+      "sources": [
+        {
+          "id": "beijing-spot-05-source-amap",
+          "title": "高德地图待核验：八达岭长城",
+          "url": "https://www.amap.com/search?query=%E5%85%AB%E8%BE%BE%E5%B2%AD%E9%95%BF%E5%9F%8E",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：八达岭长城, 进站通道, 八达岭镇, 延庆区, 北京市, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=40.3603284&mlon=116.0050515#map=17/40.3603284/116.0050515",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:19.843Z",
+          "createdAt": "2026-08-09T14:35:19.843Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-06",
+      "cityAdcode": "110000",
+      "name": "北京环球度假区",
+      "searchName": "北京环球度假区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "环球大道，文景街道",
+      "lng": 116.6777865,
+      "lat": 39.8548383,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 75,
+      "reason": "大型沉浸式主题乐园，适合亲子、情侣和电影主题爱好者安排整日。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "主题乐园",
+        "亲子",
+        "游乐设施"
+      ],
+      "suggestedDuration": "全天",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:22.004Z",
+      "sources": [
+        {
+          "id": "beijing-spot-06-source-amap",
+          "title": "高德地图待核验：北京环球度假区",
+          "url": "https://www.amap.com/search?query=%E5%8C%97%E4%BA%AC%E7%8E%AF%E7%90%83%E5%BA%A6%E5%81%87%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：北京环球度假区, 环球大道, 文景街道, 通州区, 北京市, 100010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.8548383&mlon=116.6777865#map=17/39.8548383/116.6777865",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:22.004Z",
+          "createdAt": "2026-08-09T14:35:22.004Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-07",
+      "cityAdcode": "110000",
+      "name": "中国国家博物馆",
+      "searchName": "中国国家博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "东长安街，东华门街道",
+      "lng": 116.3953896,
+      "lat": 39.9037459,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 70,
+      "reason": "以中国古代文明和近现代历史为主线的国家级综合博物馆。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "历史",
+        "室内"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:23.967Z",
+      "sources": [
+        {
+          "id": "beijing-spot-07-source-amap",
+          "title": "高德地图待核验：中国国家博物馆",
+          "url": "https://www.amap.com/search?query=%E4%B8%AD%E5%9B%BD%E5%9B%BD%E5%AE%B6%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-07-source-osm",
+          "title": "OpenStreetMap 地理编码：中国国家博物馆, 16, 东长安街, 南池子社区, 东华门街道, 首都功能核心区, 东城区, 北京市, 100006, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9037459&mlon=116.3953896#map=17/39.9037459/116.3953896",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:23.967Z",
+          "createdAt": "2026-08-09T14:35:23.967Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-08",
+      "cityAdcode": "110000",
+      "name": "什刹海",
+      "searchName": "什刹海",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "地安门外大街，什刹海，什刹海街道",
+      "lng": 116.3900647,
+      "lat": 39.9359528,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 65,
+      "reason": "湖面、胡同与王府遗迹相连，适合傍晚散步和观察老北京生活。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "胡同",
+        "湖景",
+        "夜游"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:26.433Z",
+      "sources": [
+        {
+          "id": "beijing-spot-08-source-amap",
+          "title": "高德地图待核验：什刹海",
+          "url": "https://www.amap.com/search?query=%E4%BB%80%E5%88%B9%E6%B5%B7",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：什刹海, 地安门外大街, 什刹海, 什刹海街道, 首都功能核心区, 东城区, 北京市, 100032, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9359528&mlon=116.3900647#map=17/39.9359528/116.3900647",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:26.433Z",
+          "createdAt": "2026-08-09T14:35:26.433Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-nanluoguxiang",
+      "cityAdcode": "110000",
+      "name": "南锣鼓巷",
+      "searchName": "南锣鼓巷",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "地安门东大街，交道口街道",
+      "lng": 116.3976888,
+      "lat": 39.9323094,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 60,
+      "reason": "传统胡同肌理与小店密集，适合和鼓楼、什刹海组成步行线。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "胡同",
+        "小店",
+        "步行街"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:28.606Z",
+      "sources": [
+        {
+          "id": "beijing-nanluoguxiang-source-amap",
+          "title": "高德地图待核验：南锣鼓巷",
+          "url": "https://www.amap.com/search?query=%E5%8D%97%E9%94%A3%E9%BC%93%E5%B7%B7",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-nanluoguxiang-source-osm",
+          "title": "OpenStreetMap 地理编码：南锣鼓巷, 地安门东大街, 福祥社区, 交道口街道, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9323094&mlon=116.3976888#map=17/39.9323094/116.3976888",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:28.606Z",
+          "createdAt": "2026-08-09T14:35:28.606Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-10",
+      "cityAdcode": "110000",
+      "name": "798艺术区",
+      "searchName": "798艺术区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "酒仙桥北路，王爷坟，酒仙桥街道",
+      "lng": 116.4904841,
+      "lat": 39.9828103,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 55,
+      "reason": "由工业遗存转化而来的当代艺术街区，展览、建筑和咖啡空间集中。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "当代艺术",
+        "工业遗产",
+        "街区"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:30.274Z",
+      "sources": [
+        {
+          "id": "beijing-spot-10-source-amap",
+          "title": "高德地图待核验：798艺术区",
+          "url": "https://www.amap.com/search?query=798%E8%89%BA%E6%9C%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：798艺术区, 酒仙桥北路, 王爷坟, 酒仙桥街道, 朝阳区, 北京市, 100015, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9828103&mlon=116.4904841#map=17/39.9828103/116.4904841",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:30.274Z",
+          "createdAt": "2026-08-09T14:35:30.274Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-11",
+      "cityAdcode": "110000",
+      "name": "圆明园遗址公园",
+      "searchName": "圆明园遗址公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "圆明园遗址公园, 28, 海淀区, 北京市, 100084, 中国",
+      "lng": 116.2947969,
+      "lat": 40.0050249,
+      "category": "nature",
+      "tier": "B",
+      "priority": 50,
+      "reason": "园林遗址、湖泊和近代历史叙事并存，适合与颐和园错峰组合。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "遗址",
+        "园林",
+        "历史"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:31.920Z",
+      "sources": [
+        {
+          "id": "beijing-spot-11-source-amap",
+          "title": "高德地图待核验：圆明园遗址公园",
+          "url": "https://www.amap.com/search?query=%E5%9C%86%E6%98%8E%E5%9B%AD%E9%81%97%E5%9D%80%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：圆明园遗址公园, 28, 海淀区, 北京市, 100084, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=40.0050249&mlon=116.2947969#map=17/40.0050249/116.2947969",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:31.920Z",
+          "createdAt": "2026-08-09T14:35:31.920Z"
+        }
+      ]
+    },
+    {
+      "id": "beijing-spot-12",
+      "cityAdcode": "110000",
+      "name": "北京奥林匹克公园",
+      "searchName": "北京奥林匹克公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "慧忠路，岔道口，奥运村街道",
+      "lng": 116.3875469,
+      "lat": 39.9930402,
+      "category": "classic_landmark",
+      "tier": "B",
+      "priority": 45,
+      "reason": "鸟巢、水立方与中轴景观集中，夜间灯光下更具现代北京辨识度。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "城市地标",
+        "建筑",
+        "夜景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:35:33.645Z",
+      "sources": [
+        {
+          "id": "beijing-spot-12-source-amap",
+          "title": "高德地图待核验：北京奥林匹克公园",
+          "url": "https://www.amap.com/search?query=%E5%8C%97%E4%BA%AC%E5%A5%A5%E6%9E%97%E5%8C%B9%E5%85%8B%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "beijing-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：北京奥林匹克公园, 慧忠路, 岔道口, 奥运村街道, 朝阳区, 北京市, 100120, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=39.9930402&mlon=116.3875469#map=17/39.9930402/116.3875469",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:35:33.645Z",
+          "createdAt": "2026-08-09T14:35:33.645Z"
+        }
+      ]
+    }
+  ]
+}

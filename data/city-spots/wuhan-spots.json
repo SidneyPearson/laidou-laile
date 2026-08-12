@@ -1,0 +1,708 @@
+{
+  "city": {
+    "name": "武汉",
+    "adcode": "420100"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "wuhan-spot-01",
+      "cityAdcode": "420100",
+      "name": "黄鹤楼公园",
+      "searchName": "黄鹤楼公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "黄鹤楼街道",
+      "lng": 114.3000721,
+      "lat": 30.5464735,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 100,
+      "reason": "登楼可俯瞰长江大桥与三镇格局，是武汉最具辨识度的历史地标。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "城市地标",
+        "古建筑",
+        "江景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:23.115Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-01-source-amap",
+          "title": "高德地图待核验：黄鹤楼公园",
+          "url": "https://www.amap.com/search?query=%E9%BB%84%E9%B9%A4%E6%A5%BC%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-01-source-osm",
+          "title": "OpenStreetMap 地理编码：黄鹤楼公园, 黄鹤楼街道, 武昌区, 武汉市, 湖北省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5464735&mlon=114.3000721#map=17/30.5464735/114.3000721",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:23.115Z",
+          "createdAt": "2026-08-09T15:11:23.115Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-02",
+      "cityAdcode": "420100",
+      "name": "湖北省博物馆",
+      "searchName": "湖北省博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "东湖路",
+      "lng": 114.3599758,
+      "lat": 30.5640058,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 95,
+      "reason": "曾侯乙编钟、越王勾践剑等重要文物集中，展陈质量全国领先。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "文物",
+        "楚文化"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:24.871Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-02-source-amap",
+          "title": "高德地图待核验：湖北省博物馆",
+          "url": "https://www.amap.com/search?query=%E6%B9%96%E5%8C%97%E7%9C%81%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-02-source-osm",
+          "title": "OpenStreetMap 地理编码：湖北省博物馆, 160, 东湖路, 东湖风景区街道（武昌）, 东湖生态旅游风景区, 武昌区, 武汉市, 湖北省, 430077, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5640058&mlon=114.3599758#map=17/30.5640058/114.3599758",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:24.871Z",
+          "createdAt": "2026-08-09T15:11:24.871Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-03",
+      "cityAdcode": "420100",
+      "name": "东湖生态旅游风景区",
+      "searchName": "东湖生态旅游风景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "东湖生态旅游风景区, 武昌区, 武汉市, 湖北省, 中国",
+      "lng": 114.3612972,
+      "lat": 30.5649325,
+      "category": "nature",
+      "tier": "S",
+      "priority": 90,
+      "reason": "超大城市湖泊绿道适合骑行、赏花和长时间户外休闲。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "湖景",
+        "骑行",
+        "自然"
+      ],
+      "suggestedDuration": "4-8小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:27.398Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-03-source-amap",
+          "title": "高德地图待核验：东湖生态旅游风景区",
+          "url": "https://www.amap.com/search?query=%E4%B8%9C%E6%B9%96%E7%94%9F%E6%80%81%E6%97%85%E6%B8%B8%E9%A3%8E%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：东湖生态旅游风景区, 武昌区, 武汉市, 湖北省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5649325&mlon=114.3612972#map=17/30.5649325/114.3612972",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:27.398Z",
+          "createdAt": "2026-08-09T15:11:27.398Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-04",
+      "cityAdcode": "420100",
+      "name": "武汉大学",
+      "searchName": "武汉大学",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "八一路，珞南街道",
+      "lng": 114.361535,
+      "lat": 30.5373773,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 85,
+      "reason": "山地校园、近代建筑与樱花景观闻名，开放安排需提前确认。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "高校",
+        "建筑",
+        "樱花"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:29.564Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-04-source-amap",
+          "title": "高德地图待核验：武汉大学",
+          "url": "https://www.amap.com/search?query=%E6%AD%A6%E6%B1%89%E5%A4%A7%E5%AD%A6",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：武汉大学, 299, 八一路, 珞南街道, 洪山区, 武汉市, 湖北省, 430072, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5373773&mlon=114.3615350#map=17/30.5373773/114.3615350",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:29.564Z",
+          "createdAt": "2026-08-09T15:11:29.564Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-05",
+      "cityAdcode": "420100",
+      "name": "江汉路步行街",
+      "searchName": "江汉路步行街",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "江汉路步行街，水塔街道",
+      "lng": 114.2836278,
+      "lat": 30.5852449,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 80,
+      "reason": "近代建筑、商业和地铁交通集中，可连接江滩与黎黄陂路。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "步行街",
+        "近代建筑",
+        "商圈"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:31.292Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-05-source-amap",
+          "title": "高德地图待核验：江汉路步行街",
+          "url": "https://www.amap.com/search?query=%E6%B1%9F%E6%B1%89%E8%B7%AF%E6%AD%A5%E8%A1%8C%E8%A1%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：江汉路步行街, 水塔街道, 江汉区, 武汉市, 湖北省, 430021, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5852449&mlon=114.2836278#map=17/30.5852449/114.2836278",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:31.292Z",
+          "createdAt": "2026-08-09T15:11:31.292Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-06",
+      "cityAdcode": "420100",
+      "name": "汉口江滩",
+      "searchName": "汉口江滩",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "一元街道",
+      "lng": 114.2987413,
+      "lat": 30.5903066,
+      "category": "nature",
+      "tier": "A",
+      "priority": 75,
+      "reason": "沿长江展开的大型公共空间，适合日落、夜景与城市散步。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "长江",
+        "滨水",
+        "夜景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:32.917Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-06-source-amap",
+          "title": "高德地图待核验：汉口江滩",
+          "url": "https://www.amap.com/search?query=%E6%B1%89%E5%8F%A3%E6%B1%9F%E6%BB%A9",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：汉口江滩水上乐园, 同兴社区, 一元街道, 江岸区, 武汉市, 湖北省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5903066&mlon=114.2987413#map=17/30.5903066/114.2987413",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:32.917Z",
+          "createdAt": "2026-08-09T15:11:32.917Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-07",
+      "cityAdcode": "420100",
+      "name": "昙华林",
+      "searchName": "昙华林",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "昙华林，粮道街道",
+      "lng": 114.3080143,
+      "lat": 30.553609,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 70,
+      "reason": "山坡街巷、历史建筑与文创小店交错，适合与粮道街组合。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "历史建筑",
+        "文创",
+        "街区"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:34.891Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-07-source-amap",
+          "title": "高德地图待核验：昙华林",
+          "url": "https://www.amap.com/search?query=%E6%98%99%E5%8D%8E%E6%9E%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-07-source-osm",
+          "title": "OpenStreetMap 地理编码：昙华林, 粮道街道, 武昌区, 武汉市, 湖北省, 430061, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5536090&mlon=114.3080143#map=17/30.5536090/114.3080143",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:34.891Z",
+          "createdAt": "2026-08-09T15:11:34.891Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-08",
+      "cityAdcode": "420100",
+      "name": "古德寺",
+      "searchName": "古德寺",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "工农兵路，二七街道",
+      "lng": 114.3019151,
+      "lat": 30.6211527,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 65,
+      "reason": "建筑融合多种风格，空间辨识度高，适合建筑与人文主题参观。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "寺庙",
+        "建筑",
+        "摄影"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:37.188Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-08-source-amap",
+          "title": "高德地图待核验：古德寺",
+          "url": "https://www.amap.com/search?query=%E5%8F%A4%E5%BE%B7%E5%AF%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：古德寺, 工农兵路, 操场社区, 二七街道, 江岸区, 武汉市, 湖北省, 430010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.6211527&mlon=114.3019151#map=17/30.6211527/114.3019151",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:37.188Z",
+          "createdAt": "2026-08-09T15:11:37.188Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-09",
+      "cityAdcode": "420100",
+      "name": "武汉长江大桥",
+      "searchName": "武汉长江大桥",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "龟山南路，晴川街道",
+      "lng": 114.283457,
+      "lat": 30.551792,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 60,
+      "reason": "连接武昌与汉阳的城市地标，可从桥头堡或江滩观察江城交通。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "长江",
+        "桥梁",
+        "城市地标"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:38.946Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-09-source-amap",
+          "title": "高德地图待核验：武汉长江大桥",
+          "url": "https://www.amap.com/search?query=%E6%AD%A6%E6%B1%89%E9%95%BF%E6%B1%9F%E5%A4%A7%E6%A1%A5",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：武汉长江大桥, 龟山南路, 晴川街道, 汉阳区, 武汉市, 湖北省, 430050, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5517920&mlon=114.2834570#map=17/30.5517920/114.2834570",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:38.946Z",
+          "createdAt": "2026-08-09T15:11:38.946Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-10",
+      "cityAdcode": "420100",
+      "name": "黎黄陂路",
+      "searchName": "黎黄陂路",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "黎黄陂路，一元街道",
+      "lng": 114.2952376,
+      "lat": 30.5893019,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 55,
+      "reason": "近代租界建筑与咖啡小店密集，是汉口城市漫步核心路段。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "近代建筑",
+        "咖啡",
+        "街区"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:40.419Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-10-source-amap",
+          "title": "高德地图待核验：黎黄陂路",
+          "url": "https://www.amap.com/search?query=%E9%BB%8E%E9%BB%84%E9%99%82%E8%B7%AF",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：黎黄陂路, 洞庭社区, 一元街道, 江岸区, 武汉市, 湖北省, 430021, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5893019&mlon=114.2952376#map=17/30.5893019/114.2952376",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:40.419Z",
+          "createdAt": "2026-08-09T15:11:40.419Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-11",
+      "cityAdcode": "420100",
+      "name": "武汉美术馆琴台馆",
+      "searchName": "武汉美术馆琴台馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "知音大道，晴川街道",
+      "lng": 114.2485351,
+      "lat": 30.5638832,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 50,
+      "reason": "当代建筑与大型展厅兼具，适合艺术展览和雨天行程。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "美术馆",
+        "当代艺术",
+        "建筑"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:41.867Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-11-source-amap",
+          "title": "高德地图待核验：武汉美术馆琴台馆",
+          "url": "https://www.amap.com/search?query=%E6%AD%A6%E6%B1%89%E7%BE%8E%E6%9C%AF%E9%A6%86%E7%90%B4%E5%8F%B0%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：武汉美术馆（琴台馆）, 知音大道, 晴川街道, 汉阳区, 武汉市, 湖北省, 430050, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.5638832&mlon=114.2485351#map=17/30.5638832/114.2485351",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:41.867Z",
+          "createdAt": "2026-08-09T15:11:41.867Z"
+        }
+      ]
+    },
+    {
+      "id": "wuhan-spot-12",
+      "cityAdcode": "420100",
+      "name": "武汉园博园",
+      "searchName": "武汉园博园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "长丰街道",
+      "lng": 114.2163484,
+      "lat": 30.6245468,
+      "category": "nature",
+      "tier": "B",
+      "priority": 45,
+      "reason": "园林展园、自然教育和博物馆空间结合，适合家庭半日游。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "园林",
+        "亲子",
+        "公园"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:43.587Z",
+      "sources": [
+        {
+          "id": "wuhan-spot-12-source-amap",
+          "title": "高德地图待核验：武汉园博园",
+          "url": "https://www.amap.com/search?query=%E6%AD%A6%E6%B1%89%E5%9B%AD%E5%8D%9A%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "wuhan-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：武汉园博园, 长丰街道, 硚口区, 武汉市, 湖北省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=30.6245468&mlon=114.2163484#map=17/30.6245468/114.2163484",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:43.587Z",
+          "createdAt": "2026-08-09T15:11:43.587Z"
+        }
+      ]
+    }
+  ]
+}

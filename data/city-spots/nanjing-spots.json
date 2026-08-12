@@ -1,0 +1,685 @@
+{
+  "city": {
+    "name": "南京",
+    "adcode": "320100"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "nanjing-spot-01",
+      "cityAdcode": "320100",
+      "name": "中山陵景区",
+      "searchName": "中山陵景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "中山纪念馆，孝陵卫街道",
+      "lng": 118.8485432,
+      "lat": 32.0601798,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 100,
+      "reason": "沿中轴石阶进入陵寝建筑群，可结合音乐台和明孝陵安排半日。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "建筑",
+        "历史",
+        "山林"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:58.808Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-01-source-amap",
+          "title": "高德地图待核验：中山陵景区",
+          "url": "https://www.amap.com/search?query=%E4%B8%AD%E5%B1%B1%E9%99%B5%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-01-source-osm",
+          "title": "OpenStreetMap 地理编码：中山陵, 中山纪念馆, 孝陵卫街道, 玄武区, 南京市, 江苏省, 210095, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0601798&mlon=118.8485432#map=17/32.0601798/118.8485432",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:58.808Z",
+          "createdAt": "2026-08-09T14:54:58.808Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-02",
+      "cityAdcode": "320100",
+      "name": "南京博物院",
+      "searchName": "南京博物院",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "中山东路，梅园新村街道",
+      "lng": 118.819887,
+      "lat": 32.0422995,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 95,
+      "reason": "从历史馆到民国馆的综合展陈体量大，是认识江苏文明的核心场馆。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "历史",
+        "民国"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:55:01.096Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-02-source-amap",
+          "title": "高德地图待核验：南京博物院",
+          "url": "https://www.amap.com/search?query=%E5%8D%97%E4%BA%AC%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-02-source-osm",
+          "title": "OpenStreetMap 地理编码：南京博物院, 321, 中山东路, 梅园新村街道, 玄武区, 南京市, 江苏省, 210018, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0422995&mlon=118.8198870#map=17/32.0422995/118.8198870",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:55:01.096Z",
+          "createdAt": "2026-08-09T14:55:01.096Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-03",
+      "cityAdcode": "320100",
+      "name": "夫子庙秦淮风光带",
+      "searchName": "夫子庙秦淮风光带",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "featured_district",
+      "tier": "S",
+      "priority": 90,
+      "reason": "古建筑、贡院、河岸与夜游船相结合，是南京老城代表区域。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "秦淮河",
+        "老街",
+        "夜景"
+      ],
+      "suggestedDuration": "3-4小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-03-source-amap",
+          "title": "高德地图待核验：夫子庙秦淮风光带",
+          "url": "https://www.amap.com/search?query=%E5%A4%AB%E5%AD%90%E5%BA%99%E7%A7%A6%E6%B7%AE%E9%A3%8E%E5%85%89%E5%B8%A6",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-04",
+      "cityAdcode": "320100",
+      "name": "明孝陵景区",
+      "searchName": "明孝陵景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "梅花山东路，孝陵卫街道",
+      "lng": 118.8347042,
+      "lat": 32.0623145,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 85,
+      "reason": "神道石刻与山林陵寝构成明代皇家建筑遗产，秋季景色尤佳。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "世界遗产",
+        "石刻",
+        "山林"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:55:06.415Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-04-source-amap",
+          "title": "高德地图待核验：明孝陵景区",
+          "url": "https://www.amap.com/search?query=%E6%98%8E%E5%AD%9D%E9%99%B5%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：明孝陵, 梅花山东路, 孝陵卫街道, 玄武区, 南京市, 江苏省, 210095, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0623145&mlon=118.8347042#map=17/32.0623145/118.8347042",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:55:06.415Z",
+          "createdAt": "2026-08-09T14:55:06.415Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-05",
+      "cityAdcode": "320100",
+      "name": "南京总统府",
+      "searchName": "南京总统府",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "长江路，梅园新村街道",
+      "lng": 118.7922062,
+      "lat": 32.0460896,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 80,
+      "reason": "近代建筑群和历史展陈集中，适合系统了解南京近现代史。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "近代史",
+        "建筑",
+        "博物馆"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:55:08.739Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-05-source-amap",
+          "title": "高德地图待核验：南京总统府",
+          "url": "https://www.amap.com/search?query=%E5%8D%97%E4%BA%AC%E6%80%BB%E7%BB%9F%E5%BA%9C",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：总统府, 长江路, 梅园新村街道, 玄武区, 南京市, 江苏省, 210018, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0460896&mlon=118.7922062#map=17/32.0460896/118.7922062",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:55:08.739Z",
+          "createdAt": "2026-08-09T14:55:08.739Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-06",
+      "cityAdcode": "320100",
+      "name": "侵华日军南京大屠杀遇难同胞纪念馆",
+      "searchName": "侵华日军南京大屠杀遇难同胞纪念馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "水西门大街，莫愁湖街道",
+      "lng": 118.7369076,
+      "lat": 32.0377328,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 75,
+      "reason": "以史料、遗址和纪念空间呈现沉重历史，建议预留安静参观时间。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "纪念馆",
+        "历史",
+        "室内"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:55:10.537Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-06-source-amap",
+          "title": "高德地图待核验：侵华日军南京大屠杀遇难同胞纪念馆",
+          "url": "https://www.amap.com/search?query=%E4%BE%B5%E5%8D%8E%E6%97%A5%E5%86%9B%E5%8D%97%E4%BA%AC%E5%A4%A7%E5%B1%A0%E6%9D%80%E9%81%87%E9%9A%BE%E5%90%8C%E8%83%9E%E7%BA%AA%E5%BF%B5%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：侵华日军南京大屠杀遇难同胞纪念馆, 488, 水西门大街, 莫愁湖街道, 建邺区, 南京市, 江苏省, 210017, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0377328&mlon=118.7369076#map=17/32.0377328/118.7369076",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:55:10.537Z",
+          "createdAt": "2026-08-09T14:55:10.537Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-07",
+      "cityAdcode": "320100",
+      "name": "老门东历史文化街区",
+      "searchName": "老门东历史文化街区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "夫子庙街道",
+      "lng": 118.7822575,
+      "lat": 32.013464,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 70,
+      "reason": "城墙脚下的传统街巷与餐饮小店密集，适合傍晚慢游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "老街",
+        "小吃",
+        "城墙"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:55:12.271Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-07-source-amap",
+          "title": "高德地图待核验：老门东历史文化街区",
+          "url": "https://www.amap.com/search?query=%E8%80%81%E9%97%A8%E4%B8%9C%E5%8E%86%E5%8F%B2%E6%96%87%E5%8C%96%E8%A1%97%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-07-source-osm",
+          "title": "OpenStreetMap 地理编码：老门东历史文化街区, 三条营社区, 夫子庙街道, 秦淮区, 南京市, 江苏省, 210006, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0134640&mlon=118.7822575#map=17/32.0134640/118.7822575",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:55:12.271Z",
+          "createdAt": "2026-08-09T14:55:12.271Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-08",
+      "cityAdcode": "320100",
+      "name": "玄武湖公园",
+      "searchName": "玄武湖公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "玄武湖公园, 玄武区, 南京市, 江苏省, 中国",
+      "lng": 118.7927484,
+      "lat": 32.0745097,
+      "category": "nature",
+      "tier": "A",
+      "priority": 65,
+      "reason": "城墙、湖泊与紫金山同框，适合散步、骑行和低强度休闲。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "湖景",
+        "公园",
+        "骑行"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "清晨或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:55:13.918Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-08-source-amap",
+          "title": "高德地图待核验：玄武湖公园",
+          "url": "https://www.amap.com/search?query=%E7%8E%84%E6%AD%A6%E6%B9%96%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：玄武湖公园, 玄武区, 南京市, 江苏省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0745097&mlon=118.7927484#map=17/32.0745097/118.7927484",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:55:13.918Z",
+          "createdAt": "2026-08-09T14:55:13.918Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-09",
+      "cityAdcode": "320100",
+      "name": "牛首山文化旅游区",
+      "searchName": "牛首山文化旅游区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 60,
+      "reason": "佛顶宫建筑和山地景观尺度宏大，室内外体验兼具。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "建筑",
+        "佛教文化",
+        "山景"
+      ],
+      "suggestedDuration": "4-6小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-09-source-amap",
+          "title": "高德地图待核验：牛首山文化旅游区",
+          "url": "https://www.amap.com/search?query=%E7%89%9B%E9%A6%96%E5%B1%B1%E6%96%87%E5%8C%96%E6%97%85%E6%B8%B8%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-10",
+      "cityAdcode": "320100",
+      "name": "鸡鸣寺",
+      "searchName": "鸡鸣寺",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "北京东路，玄武门街道",
+      "lng": 118.7921868,
+      "lat": 32.0597171,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 55,
+      "reason": "古寺、樱花路与明城墙相邻，春季和清晨氛围突出。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "寺庙",
+        "樱花",
+        "古建筑"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "上午",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:15:09.562Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-10-source-amap",
+          "title": "高德地图待核验：鸡鸣寺",
+          "url": "https://www.amap.com/search?query=%E9%B8%A1%E9%B8%A3%E5%AF%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：鸡鸣寺, 北京东路, 玄武门街道, 玄武区, 南京市, 江苏省, 210008, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0597171&mlon=118.7921868#map=17/32.0597171/118.7921868",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:15:09.562Z",
+          "createdAt": "2026-08-09T15:15:09.562Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-11",
+      "cityAdcode": "320100",
+      "name": "中华门瓮城",
+      "searchName": "中华门瓮城",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "classic_landmark",
+      "tier": "B",
+      "priority": 50,
+      "reason": "结构复杂、保存完整的明代城门，可近距离理解城防体系。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "城墙",
+        "古建筑",
+        "历史"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-11-source-amap",
+          "title": "高德地图待核验：中华门瓮城",
+          "url": "https://www.amap.com/search?query=%E4%B8%AD%E5%8D%8E%E9%97%A8%E7%93%AE%E5%9F%8E",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-spot-12",
+      "cityAdcode": "320100",
+      "name": "颐和路历史文化街区",
+      "searchName": "颐和路历史文化街区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "宁海路街道",
+      "lng": 118.7618529,
+      "lat": 32.0656671,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 45,
+      "reason": "民国公馆与梧桐街道集中，适合建筑观察和安静步行。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "民国建筑",
+        "梧桐",
+        "街区"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "上午或下午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:20.940Z",
+      "sources": [
+        {
+          "id": "nanjing-spot-12-source-amap",
+          "title": "高德地图待核验：颐和路历史文化街区",
+          "url": "https://www.amap.com/search?query=%E9%A2%90%E5%92%8C%E8%B7%AF%E5%8E%86%E5%8F%B2%E6%96%87%E5%8C%96%E8%A1%97%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "nanjing-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：颐和路历史文化街区, 宁海路街道, 鼓楼区, 南京市, 江苏省, 210024, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=32.0656671&mlon=118.7618529#map=17/32.0656671/118.7618529",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:20.940Z",
+          "createdAt": "2026-08-09T15:11:20.940Z"
+        }
+      ]
+    }
+  ]
+}

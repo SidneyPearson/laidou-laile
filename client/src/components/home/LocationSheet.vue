@@ -41,12 +41,12 @@ function onMaskClick() {
               </svg>
               使用当前位置
             </button>
-            <button class="btn-ghost-loc" @click="emit('manual')">
+            <button class="btn-ghost-loc" aria-label="选择热门城市" @click="emit('manual')">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 4h16v16H4z" />
                 <path d="M9 9h6M9 13h6M9 17h3" />
               </svg>
-              手动选择城市
+              选择热门城市
             </button>
           </div>
 

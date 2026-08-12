@@ -26,7 +26,7 @@ export const cityContextQuerySchema = z.object({
 export const exploreRecommendRequestSchema = z.object({
   city: z.string().trim().min(1).max(30),
   adcode: z.string().trim().regex(/^\d{6}$/).optional(),
-  persona: personaSchema,
+  persona: personaSchema.optional(),
   category: exploreCategorySchema,
   cursor: z.number().int().min(0).max(1000).default(0),
   limit: z.number().int().min(1).max(6).default(6),

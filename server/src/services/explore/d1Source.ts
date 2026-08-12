@@ -90,7 +90,7 @@ export function spotToInspiration(spot: SpotRecord, cityName: string): Inspirati
 }
 
 export interface InspirationSelection {
-  persona: Persona
+  persona?: Persona
   category: ExploreCategory
   isRainy: boolean
   cursor: number
@@ -140,7 +140,7 @@ export function selectInspirationSpots(
           haversineDist(selection.userLat as number, selection.userLng as number, spot.lat, spot.lng),
         )
       }
-      let score = spot.suitablePersonas.includes(selection.persona) ? 10 : 0
+      let score = selection.persona && spot.suitablePersonas.includes(selection.persona) ? 10 : 0
       if (selection.isRainy) {
         if (spot.theme === 'garden' || spot.category === 'nature') score -= 8
         // D1 没有显式 indoor 标记；博物馆/商场类默认适合雨天。

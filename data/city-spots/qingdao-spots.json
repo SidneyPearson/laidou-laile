@@ -1,0 +1,700 @@
+{
+  "city": {
+    "name": "青岛",
+    "adcode": "370200"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "qingdao-spot-01",
+      "cityAdcode": "370200",
+      "name": "栈桥",
+      "searchName": "栈桥",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "中山路街道",
+      "lng": 120.3143809,
+      "lat": 36.0619734,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 100,
+      "reason": "伸入青岛湾的百年地标，可串联老城建筑和海滨步行线。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "海景",
+        "城市地标",
+        "老城"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "清晨或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:46.016Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-01-source-amap",
+          "title": "高德地图待核验：栈桥",
+          "url": "https://www.amap.com/search?query=%E6%A0%88%E6%A1%A5",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-01-source-osm",
+          "title": "OpenStreetMap 地理编码：栈桥, 泰安路社区, 中山路街道, 市南区, 青岛市, 山东省, 266001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0619734&mlon=120.3143809#map=17/36.0619734/120.3143809",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:46.016Z",
+          "createdAt": "2026-08-09T15:11:46.016Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-02",
+      "cityAdcode": "370200",
+      "name": "八大关风景区",
+      "searchName": "八大关风景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "featured_district",
+      "tier": "S",
+      "priority": 95,
+      "reason": "林荫道路、近代别墅和海岸景观集中，适合建筑主题漫步。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "近代建筑",
+        "街区",
+        "海景"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "上午或下午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-02-source-amap",
+          "title": "高德地图待核验：八大关风景区",
+          "url": "https://www.amap.com/search?query=%E5%85%AB%E5%A4%A7%E5%85%B3%E9%A3%8E%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-03",
+      "cityAdcode": "370200",
+      "name": "青岛啤酒博物馆",
+      "searchName": "青岛啤酒博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "登州路，登州路街道",
+      "lng": 120.342564,
+      "lat": 36.0789716,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 90,
+      "reason": "在老厂房中了解啤酒工业史并体验品鉴，是青岛特色鲜明的室内项目。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "啤酒",
+        "工业遗产",
+        "博物馆"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:51.028Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-03-source-amap",
+          "title": "高德地图待核验：青岛啤酒博物馆",
+          "url": "https://www.amap.com/search?query=%E9%9D%92%E5%B2%9B%E5%95%A4%E9%85%92%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：青岛啤酒博物馆, 56, 登州路, 青啤社区, 登州路街道, 市北区, 青岛市, 山东省, 266011, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0789716&mlon=120.3425640#map=17/36.0789716/120.3425640",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:51.028Z",
+          "createdAt": "2026-08-09T15:11:51.028Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-04",
+      "cityAdcode": "370200",
+      "name": "崂山风景区",
+      "searchName": "崂山风景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "崂山风景名胜区, 青岛市, 山东省, 266000, 中国",
+      "lng": 120.6296806,
+      "lat": 36.1968066,
+      "category": "nature",
+      "tier": "S",
+      "priority": 85,
+      "reason": "花岗岩山体、道教文化与黄海景观并存，适合安排整日徒步。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "山海",
+        "徒步",
+        "道教"
+      ],
+      "suggestedDuration": "6-9小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:53.222Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-04-source-amap",
+          "title": "高德地图待核验：崂山风景区",
+          "url": "https://www.amap.com/search?query=%E5%B4%82%E5%B1%B1%E9%A3%8E%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：崂山风景名胜区, 青岛市, 山东省, 266000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.1968066&mlon=120.6296806#map=17/36.1968066/120.6296806",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:53.222Z",
+          "createdAt": "2026-08-09T15:11:53.222Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-05",
+      "cityAdcode": "370200",
+      "name": "小麦岛公园",
+      "searchName": "小麦岛公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "金家岭街道",
+      "lng": 120.4259284,
+      "lat": 36.0542053,
+      "category": "nature",
+      "tier": "A",
+      "priority": 80,
+      "reason": "环岛草地和海岸视野开阔，是看日落、野餐和轻松散步的热门地点。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "海景",
+        "日落",
+        "公园"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:54.966Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-05-source-amap",
+          "title": "高德地图待核验：小麦岛公园",
+          "url": "https://www.amap.com/search?query=%E5%B0%8F%E9%BA%A6%E5%B2%9B%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：小麦岛公园, 大麦岛社区, 金家岭街道, 崂山区, 青岛市, 山东省, 266100, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0542053&mlon=120.4259284#map=17/36.0542053/120.4259284",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:54.966Z",
+          "createdAt": "2026-08-09T15:11:54.966Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-06",
+      "cityAdcode": "370200",
+      "name": "青岛奥林匹克帆船中心",
+      "searchName": "青岛奥林匹克帆船中心",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "澳门路，珠海路街道",
+      "lng": 120.3911399,
+      "lat": 36.0557034,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 75,
+      "reason": "码头、帆船和现代城市天际线相连，夜间灯光体验突出。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "帆船",
+        "滨海",
+        "夜景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:57.145Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-06-source-amap",
+          "title": "高德地图待核验：青岛奥林匹克帆船中心",
+          "url": "https://www.amap.com/search?query=%E9%9D%92%E5%B2%9B%E5%A5%A5%E6%9E%97%E5%8C%B9%E5%85%8B%E5%B8%86%E8%88%B9%E4%B8%AD%E5%BF%83",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：青岛奥林匹克帆船中心, 121, 澳门路, 澳门路社区, 珠海路街道, 市南区, 青岛市, 山东省, 266001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0557034&mlon=120.3911399#map=17/36.0557034/120.3911399",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:57.145Z",
+          "createdAt": "2026-08-09T15:11:57.145Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-07",
+      "cityAdcode": "370200",
+      "name": "五四广场",
+      "searchName": "五四广场",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "山东路，湛山街道",
+      "lng": 120.3753754,
+      "lat": 36.064571,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 70,
+      "reason": "五月的风雕塑与城市海滨轴线的核心节点，适合夜间散步。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "城市地标",
+        "广场",
+        "夜景"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:11:59.450Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-07-source-amap",
+          "title": "高德地图待核验：五四广场",
+          "url": "https://www.amap.com/search?query=%E4%BA%94%E5%9B%9B%E5%B9%BF%E5%9C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-07-source-osm",
+          "title": "OpenStreetMap 地理编码：五四广场, 山东路, 盐城路社区, 湛山街道, 市南区, 青岛市, 山东省, 266001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0645710&mlon=120.3753754#map=17/36.0645710/120.3753754",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:11:59.450Z",
+          "createdAt": "2026-08-09T15:11:59.450Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-08",
+      "cityAdcode": "370200",
+      "name": "信号山公园",
+      "searchName": "信号山公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "江苏路街道",
+      "lng": 120.3264397,
+      "lat": 36.0663313,
+      "category": "nature",
+      "tier": "A",
+      "priority": 65,
+      "reason": "登顶可俯瞰红瓦绿树与青岛湾，是老城全景的经典机位。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "观景",
+        "老城",
+        "摄影"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:18.972Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-08-source-amap",
+          "title": "高德地图待核验：信号山公园",
+          "url": "https://www.amap.com/search?query=%E4%BF%A1%E5%8F%B7%E5%B1%B1%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：信号山公园, 江苏路社区, 江苏路街道, 市南区, 青岛市, 山东省, 266001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0663313&mlon=120.3264397#map=17/36.0663313/120.3264397",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:18.972Z",
+          "createdAt": "2026-08-09T15:12:18.972Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-09",
+      "cityAdcode": "370200",
+      "name": "大学路",
+      "searchName": "大学路",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "大学路，江苏路街道",
+      "lng": 120.32999,
+      "lat": 36.0639711,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 60,
+      "reason": "红墙、老建筑、咖啡馆和艺术空间集中，适合与鱼山路慢游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "咖啡",
+        "街区",
+        "摄影"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:21.321Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-09-source-amap",
+          "title": "高德地图待核验：大学路",
+          "url": "https://www.amap.com/search?query=%E5%A4%A7%E5%AD%A6%E8%B7%AF",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：大学路, 龙江路社区, 江苏路街道, 市南区, 青岛市, 山东省, 266001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0639711&mlon=120.3299900#map=17/36.0639711/120.3299900",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:21.321Z",
+          "createdAt": "2026-08-09T15:12:21.321Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-10",
+      "cityAdcode": "370200",
+      "name": "青岛海底世界",
+      "searchName": "青岛海底世界",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "莱阳路，八大关街道",
+      "lng": 120.3308264,
+      "lat": 36.0569155,
+      "category": "theme_park",
+      "tier": "B",
+      "priority": 55,
+      "reason": "海洋生物展示与海底隧道适合亲子和雨天行程。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "海洋",
+        "亲子",
+        "室内"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:23.209Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-10-source-amap",
+          "title": "高德地图待核验：青岛海底世界",
+          "url": "https://www.amap.com/search?query=%E9%9D%92%E5%B2%9B%E6%B5%B7%E5%BA%95%E4%B8%96%E7%95%8C",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：青岛海底世界, 莱阳路, 福山路社区, 八大关街道, 市南区, 青岛市, 山东省, 266001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0569155&mlon=120.3308264#map=17/36.0569155/120.3308264",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:23.209Z",
+          "createdAt": "2026-08-09T15:12:23.209Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-11",
+      "cityAdcode": "370200",
+      "name": "青岛德国总督楼旧址博物馆",
+      "searchName": "青岛德国总督楼旧址博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "龙江路，江苏路街道",
+      "lng": 120.3279334,
+      "lat": 36.0647508,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 50,
+      "reason": "保存精美的近代建筑与室内陈设，是理解青岛城市史的重要场所。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "近代建筑",
+        "博物馆",
+        "历史"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:25.492Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-11-source-amap",
+          "title": "高德地图待核验：青岛德国总督楼旧址博物馆",
+          "url": "https://www.amap.com/search?query=%E9%9D%92%E5%B2%9B%E5%BE%B7%E5%9B%BD%E6%80%BB%E7%9D%A3%E6%A5%BC%E6%97%A7%E5%9D%80%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：青岛德国总督楼旧址, 龙江路, 龙江路社区, 江苏路街道, 市南区, 青岛市, 山东省, 266001, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=36.0647508&mlon=120.3279334#map=17/36.0647508/120.3279334",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:25.492Z",
+          "createdAt": "2026-08-09T15:12:25.492Z"
+        }
+      ]
+    },
+    {
+      "id": "qingdao-spot-12",
+      "cityAdcode": "370200",
+      "name": "金沙滩",
+      "searchName": "金沙滩",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "薛家岛街道",
+      "lng": 120.2402245,
+      "lat": 35.9585074,
+      "category": "nature",
+      "tier": "B",
+      "priority": 45,
+      "reason": "沙质细、岸线长的城市海滩，适合亲水、散步和夏季休闲。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "海滩",
+        "亲水",
+        "日落"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T15:12:27.662Z",
+      "sources": [
+        {
+          "id": "qingdao-spot-12-source-amap",
+          "title": "高德地图待核验：金沙滩",
+          "url": "https://www.amap.com/search?query=%E9%87%91%E6%B2%99%E6%BB%A9",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "qingdao-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：金沙滩, 薛家岛街道, 青岛西海岸新区, 黄岛区, 青岛市, 山东省, 266500, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=35.9585074&mlon=120.2402245#map=17/35.9585074/120.2402245",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T15:12:27.662Z",
+          "createdAt": "2026-08-09T15:12:27.662Z"
+        }
+      ]
+    }
+  ]
+}

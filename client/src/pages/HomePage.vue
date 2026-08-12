@@ -26,6 +26,7 @@ import { PERSONAS, EXPLORE_CATEGORIES, getExploreSpots, filterAndRankSpots } fro
 import { usePersona } from '../composables/usePersona'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { useTodayJourney } from '../composables/useTodayJourney'
+import { useExploreCity } from '../composables/useExploreCity'
 import { useGeolocation } from '../composables/useGeolocation'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import {
@@ -36,9 +37,10 @@ import {
 import type { InspirationSpot, Persona } from '../types/explore'
 
 const router = useRouter()
-const { persona, setPersona } = usePersona()
+const { persona, hasChosenPersona, setPersona } = usePersona()
 const todayPlan = useTodayPlan()
 const todayJourney = useTodayJourney()
+const { setExploreCity } = useExploreCity()
 const { coords, isMock, error: locError, requestLocation, setManualLocation } = useGeolocation()
 
 const cities = ref<RecommendationCity[]>([])
@@ -66,6 +68,10 @@ const coordsKey = (c: { lat: number; lng: number }) => `${c.lat.toFixed(4)},${c.
 
 const currentPersonaOption = () =>
   PERSONAS.find(p => p.id === persona.value) ?? PERSONAS[0]
+
+function handlePersonaChange(next: Persona) {
+  setPersona(next)
+}
 
 /* -------------------- inspiration cards -------------------- */
 
@@ -220,7 +226,7 @@ async function loadSpots() {
     const result = await fetchExploreRecommendations({
       city: city.name.replace(/市$/, ''),
       adcode: city.adcode,
-      persona: persona.value,
+      ...(hasChosenPersona.value ? { persona: persona.value } : {}),
       category: 'all',
       // Server caps the page size at 6 (see exploreRoutes.schemas).
       limit: 6,
@@ -291,6 +297,7 @@ async function handleUseLocation() {
       coverImageUrl: null,
       center,
     }
+    setExploreCity(selectedCity.value)
     weather.value = ctx.weather
     // Mark these coords as already weather-resolved so loadWeatherAndSpots
     // doesn't call /api/city/context a second time for the same location.
@@ -315,12 +322,16 @@ function dismissLocationSheet() {
   }
 }
 
-function handleCitySelect(city: RecommendationCity) {
+async function handleCitySelect(city: RecommendationCity) {
   if (!city.center) return
   setManualLocation(city.center.lat, city.center.lng, city.name)
   selectedCity.value = city
+  setExploreCity(city)
   showPicker.value = false
   showLocationSheet.value = false
+  weather.value = null
+  weatherCoordsKey = null
+  await loadWeatherAndSpots()
 }
 
 function handleStart() {
@@ -393,7 +404,7 @@ function handleBottomNav(tab: BottomTab) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       break
     case 'explore':
-      handleStart()
+      router.push({ name: 'explore' })
       break
     case 'plan':
       router.push({ name: 'today-plan' })
@@ -487,7 +498,7 @@ watch(persona, () => {
         <PersonaSelector
           :model-value="persona"
           :cards="personaCards"
-          @update:model-value="setPersona"
+          @update:model-value="handlePersonaChange"
         />
         <SlideToStart
           class="start-slider"
@@ -520,7 +531,7 @@ watch(persona, () => {
 
     <Transition name="sheet">
       <div v-if="showPicker" class="sheet-mask" @click.self="showPicker = false">
-        <div class="sheet-panel sheet-panel--light">
+        <div class="sheet-panel sheet-panel--dark">
           <CityPicker
             @select="handleCitySelect"
             @cancel="showPicker = false"
@@ -533,7 +544,7 @@ watch(persona, () => {
       <SpotDetailSheet
         v-if="selectedSpot"
         :spot="selectedSpot"
-        :persona="currentPersonaOption()"
+        :persona="hasChosenPersona ? currentPersonaOption() : null"
         :action-ready="selectedActionReady(selectedSpot)"
         :in-today="todayPlan.hasSpot(selectedSpot.id)"
         @close="selectedSpot = null"
@@ -674,10 +685,12 @@ watch(persona, () => {
   box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.5);
 }
 
-/* CityPicker is a light-themed component, so its sheet must be light. */
-.sheet-panel--light {
-  background: #f7f6f2;
-  color: #1c1917;
+/* CityPicker uses the same dark glass language as the hero. */
+.sheet-panel--dark {
+  background: linear-gradient(180deg, rgba(24, 29, 39, 0.98), rgba(10, 14, 22, 0.99));
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 0;
 }
 
 .sheet-enter-active,

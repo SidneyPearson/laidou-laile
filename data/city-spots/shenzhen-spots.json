@@ -1,0 +1,703 @@
+{
+  "city": {
+    "name": "深圳",
+    "adcode": "440300"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "shenzhen-spot-01",
+      "cityAdcode": "440300",
+      "name": "深圳湾公园",
+      "searchName": "深圳湾公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "滨海大道，沙头街道",
+      "lng": 113.9879908,
+      "lat": 22.524511,
+      "category": "nature",
+      "tier": "S",
+      "priority": 100,
+      "reason": "连续滨海步道、红树林和城市天际线相结合，适合骑行与日落散步。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "滨海",
+        "骑行",
+        "日落"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:20.167Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-01-source-amap",
+          "title": "高德地图待核验：深圳湾公园",
+          "url": "https://www.amap.com/search?query=%E6%B7%B1%E5%9C%B3%E6%B9%BE%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-01-source-osm",
+          "title": "OpenStreetMap 地理编码：深圳湾公园, 滨海大道, 金城社区, 沙头街道, 福田区, 深圳市, 广东省, 518000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5245110&mlon=113.9879908#map=17/22.5245110/113.9879908",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:20.167Z",
+          "createdAt": "2026-08-09T14:37:20.167Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-02",
+      "cityAdcode": "440300",
+      "name": "莲花山公园",
+      "searchName": "莲花山公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "莲花街道",
+      "lng": 114.0532386,
+      "lat": 22.5566275,
+      "category": "nature",
+      "tier": "S",
+      "priority": 95,
+      "reason": "可从山顶俯瞰市民中心轴线，是理解深圳城市格局的经典视角。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "公园",
+        "观景",
+        "城市地标"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:22.640Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-02-source-amap",
+          "title": "高德地图待核验：莲花山公园",
+          "url": "https://www.amap.com/search?query=%E8%8E%B2%E8%8A%B1%E5%B1%B1%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-02-source-osm",
+          "title": "OpenStreetMap 地理编码：莲花山公园, 6030, 莲花街道, 福田区, 深圳市, 广东省, 518000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5566275&mlon=114.0532386#map=17/22.5566275/114.0532386",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:22.640Z",
+          "createdAt": "2026-08-09T14:37:22.640Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-03",
+      "cityAdcode": "440300",
+      "name": "深圳博物馆历史民俗馆",
+      "searchName": "深圳博物馆历史民俗馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "福中三路，莲花街道",
+      "lng": 114.0566279,
+      "lat": 22.5462992,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 90,
+      "reason": "从改革开放史到岭南民俗系统认识深圳，免费且雨天友好。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "改革开放",
+        "室内"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:25.508Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-03-source-amap",
+          "title": "高德地图待核验：深圳博物馆历史民俗馆",
+          "url": "https://www.amap.com/search?query=%E6%B7%B1%E5%9C%B3%E5%8D%9A%E7%89%A9%E9%A6%86%E5%8E%86%E5%8F%B2%E6%B0%91%E4%BF%97%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：深圳博物馆历史民俗馆, 福中三路, 福中社区, 莲花街道, 福田区, 深圳市, 广东省, 518026, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5462992&mlon=114.0566279#map=17/22.5462992/114.0566279",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:25.508Z",
+          "createdAt": "2026-08-09T14:37:25.508Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-04",
+      "cityAdcode": "440300",
+      "name": "华侨城创意文化园",
+      "searchName": "华侨城创意文化园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "沙河街道",
+      "lng": 113.9886215,
+      "lat": 22.5412214,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 85,
+      "reason": "旧工业园区转型的设计与艺术社区，展览、书店和咖啡空间密集。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "文创",
+        "当代艺术",
+        "街区"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午",
+      "indoorFriendly": true,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:27.488Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-04-source-amap",
+          "title": "高德地图待核验：华侨城创意文化园",
+          "url": "https://www.amap.com/search?query=%E5%8D%8E%E4%BE%A8%E5%9F%8E%E5%88%9B%E6%84%8F%E6%96%87%E5%8C%96%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：华侨城创意文化园, 香山街社区, 沙河街道, 南山区, 深圳市, 广东省, 518053, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5412214&mlon=113.9886215#map=17/22.5412214/113.9886215",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:27.488Z",
+          "createdAt": "2026-08-09T14:37:27.488Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-05",
+      "cityAdcode": "440300",
+      "name": "世界之窗",
+      "searchName": "世界之窗",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "深南大道，沙河街道",
+      "lng": 113.9686115,
+      "lat": 22.5375058,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 80,
+      "reason": "以世界建筑微缩景观和演艺为特色的老牌主题乐园。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "主题乐园",
+        "建筑",
+        "亲子"
+      ],
+      "suggestedDuration": "5-8小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:30.150Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-05-source-amap",
+          "title": "高德地图待核验：世界之窗",
+          "url": "https://www.amap.com/search?query=%E4%B8%96%E7%95%8C%E4%B9%8B%E7%AA%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：世界之窗, 深南大道, 中新街社区, 沙河街道, 南山区, 深圳市, 广东省, 518000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5375058&mlon=113.9686115#map=17/22.5375058/113.9686115",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:30.150Z",
+          "createdAt": "2026-08-09T14:37:30.150Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-06",
+      "cityAdcode": "440300",
+      "name": "深圳欢乐谷",
+      "searchName": "深圳欢乐谷",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 75,
+      "reason": "大型游乐设施和主题演艺集中，适合朋友、情侣和亲子整日游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "主题乐园",
+        "游乐设施",
+        "演艺"
+      ],
+      "suggestedDuration": "全天",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-06-source-amap",
+          "title": "高德地图待核验：深圳欢乐谷",
+          "url": "https://www.amap.com/search?query=%E6%B7%B1%E5%9C%B3%E6%AC%A2%E4%B9%90%E8%B0%B7",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-07",
+      "cityAdcode": "440300",
+      "name": "大梅沙海滨公园",
+      "searchName": "大梅沙海滨公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "盐梅路，梅沙街道",
+      "lng": 114.3020948,
+      "lat": 22.5943462,
+      "category": "nature",
+      "tier": "A",
+      "priority": 70,
+      "reason": "交通成熟的城市海滩，可安排亲水、散步和海边日落。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "海滩",
+        "亲水",
+        "日落"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:34.403Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-07-source-amap",
+          "title": "高德地图待核验：大梅沙海滨公园",
+          "url": "https://www.amap.com/search?query=%E5%A4%A7%E6%A2%85%E6%B2%99%E6%B5%B7%E6%BB%A8%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-07-source-osm",
+          "title": "OpenStreetMap 地理编码：大梅沙海滨公园, 33号, 盐梅路, 大梅沙社区, 梅沙街道, 盐田区, 深圳市, 广东省, 518000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5943462&mlon=114.3020948#map=17/22.5943462/114.3020948",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:34.403Z",
+          "createdAt": "2026-08-09T14:37:34.403Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-08",
+      "cityAdcode": "440300",
+      "name": "大鹏所城",
+      "searchName": "大鹏所城",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "南门西路，大鹏街道",
+      "lng": 114.507692,
+      "lat": 22.5978742,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 65,
+      "reason": "保存较完整的明清海防古城，适合与较场尾组合一日游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "古城",
+        "海防",
+        "历史"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:36.512Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-08-source-amap",
+          "title": "高德地图待核验：大鹏所城",
+          "url": "https://www.amap.com/search?query=%E5%A4%A7%E9%B9%8F%E6%89%80%E5%9F%8E",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：大鹏所城, 南门西路, 鹏城社区, 大鹏街道, 大鹏新区, 龙岗区, 深圳市, 广东省, 518100, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5978742&mlon=114.5076920#map=17/22.5978742/114.5076920",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:36.512Z",
+          "createdAt": "2026-08-09T14:37:36.512Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-09",
+      "cityAdcode": "440300",
+      "name": "南头古城",
+      "searchName": "南头古城",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "南山大道，南头街道",
+      "lng": 113.9194304,
+      "lat": 22.5403527,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 60,
+      "reason": "古城遗址与当代社区更新叠加，展览、餐饮和公共空间丰富。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "古城",
+        "城市更新",
+        "街区"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:38.377Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-09-source-amap",
+          "title": "高德地图待核验：南头古城",
+          "url": "https://www.amap.com/search?query=%E5%8D%97%E5%A4%B4%E5%8F%A4%E5%9F%8E",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：南头古城, 南山大道, 红花园社区, 南头街道, 南山区, 深圳市, 广东省, 518000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5403527&mlon=113.9194304#map=17/22.5403527/113.9194304",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:38.377Z",
+          "createdAt": "2026-08-09T14:37:38.377Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-10",
+      "cityAdcode": "440300",
+      "name": "深圳人才公园",
+      "searchName": "深圳人才公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "粤海街道",
+      "lng": 113.9441738,
+      "lat": 22.5136618,
+      "category": "nature",
+      "tier": "B",
+      "priority": 55,
+      "reason": "后海天际线与滨水步道相映，夜间灯光和散步体验突出。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "滨水",
+        "夜景",
+        "公园"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:40.802Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-10-source-amap",
+          "title": "高德地图待核验：深圳人才公园",
+          "url": "https://www.amap.com/search?query=%E6%B7%B1%E5%9C%B3%E4%BA%BA%E6%89%8D%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：深圳人才公园, 粤海街道, 南山区, 深圳市, 广东省, 518052, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.5136618&mlon=113.9441738#map=17/22.5136618/113.9441738",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:40.802Z",
+          "createdAt": "2026-08-09T14:37:40.802Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-11",
+      "cityAdcode": "440300",
+      "name": "甘坑古镇",
+      "searchName": "甘坑古镇",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "甘坑路，吉华街道",
+      "lng": 114.0995854,
+      "lat": 22.6589693,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 50,
+      "reason": "客家建筑、民俗体验和亲子项目集中，适合半日慢游。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "客家文化",
+        "古镇",
+        "亲子"
+      ],
+      "suggestedDuration": "3-4小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:43.470Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-11-source-amap",
+          "title": "高德地图待核验：甘坑古镇",
+          "url": "https://www.amap.com/search?query=%E7%94%98%E5%9D%91%E5%8F%A4%E9%95%87",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：甘坑客家小镇, 甘坑路, 甘坑, 吉华街道, 龙岗区, 深圳市, 广东省, 518100, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.6589693&mlon=114.0995854#map=17/22.6589693/114.0995854",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:43.470Z",
+          "createdAt": "2026-08-09T14:37:43.470Z"
+        }
+      ]
+    },
+    {
+      "id": "shenzhen-spot-12",
+      "cityAdcode": "440300",
+      "name": "海上世界",
+      "searchName": "海上世界",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "南海大道，招商街道",
+      "lng": 113.9088351,
+      "lat": 22.4880191,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 45,
+      "reason": "围绕明华轮形成的滨海商业街区，夜间喷泉与餐饮氛围较好。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "滨海",
+        "商圈",
+        "夜景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:45.657Z",
+      "sources": [
+        {
+          "id": "shenzhen-spot-12-source-amap",
+          "title": "高德地图待核验：海上世界",
+          "url": "https://www.amap.com/search?query=%E6%B5%B7%E4%B8%8A%E4%B8%96%E7%95%8C",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "shenzhen-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：海上世界, 南海大道, 招商街道, 南山区, 深圳市, 广东省, 518000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=22.4880191&mlon=113.9088351#map=17/22.4880191/113.9088351",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:45.657Z",
+          "createdAt": "2026-08-09T14:37:45.657Z"
+        }
+      ]
+    }
+  ]
+}

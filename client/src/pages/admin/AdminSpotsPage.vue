@@ -33,7 +33,9 @@ const total = ref(0)
 const totalPages = ref(0)
 const selected = ref<string[]>([])
 const error = ref('')
+const deleteNotice = ref('')
 const loading = ref(false)
+const deleting = ref(false)
 const batchLoading = ref(false)
 const pendingIds = ref(new Set<string>())
 const filters = reactive({
@@ -88,29 +90,30 @@ async function load() {
 
 async function action(kind: 'verify' | 'publish' | 'unpublish' | 'delete', spot: AdminSpot) {
   error.value = ''
+  deleteNotice.value = ''
   if (kind === 'delete') {
     if (!confirm(`确定删除「${spot.name}」？此操作不可撤销。`)) return
   }
   pendingIds.value = new Set([...pendingIds.value, spot.id])
+  if (kind === 'delete') deleting.value = true
   try {
     if (kind === 'verify') await verifySpot(spot.id, spot.version)
     if (kind === 'publish') await publishSpot(spot.id, spot.version)
     if (kind === 'unpublish') await unpublishSpot(spot.id, spot.version)
     if (kind === 'delete') await deleteSpot(spot.id, spot.version)
     if (kind === 'delete') {
-      // Remove it immediately. Do not reload the same page here: a briefly
-      // stale list response can otherwise put the just-deleted row back into
-      // the UI until the user manually refreshes the browser.
-      spots.value = spots.value.filter(item => item.id !== spot.id)
+      const wasLastOnPage = spots.value.length === 1
       selected.value = selected.value.filter(id => id !== spot.id)
-      total.value = Math.max(0, total.value - 1)
 
-      // If the last row on a later page was deleted, show the previous page.
-      if (spots.value.length === 0 && filters.page > 1) {
+      // Re-read D1 immediately so the deleted row disappears from the list
+      // and pagination/counts stay in sync without a browser refresh.
+      if (wasLastOnPage && filters.page > 1) {
         filters.page -= 1
         await syncQuery()
-        await load()
       }
+      await load()
+      deleteNotice.value = '地点已删除'
+      window.setTimeout(() => { deleteNotice.value = '' }, 900)
       return
     }
     // Refresh the list after non-destructive actions. For unpublish→delete
@@ -120,6 +123,7 @@ async function action(kind: 'verify' | 'publish' | 'unpublish' | 'delete', spot:
   } catch (caught: any) {
     error.value = caught.message + (caught.details ? `：${JSON.stringify(caught.details)}` : '')
   } finally {
+    if (kind === 'delete') deleting.value = false
     const next = new Set(pendingIds.value)
     next.delete(spot.id)
     pendingIds.value = next
@@ -224,6 +228,10 @@ onMounted(async () => {
 
 <template>
   <section>
+    <div v-if="deleting" class="admin-delete-progress" role="status" aria-label="正在删除地点"><span /></div>
+    <div v-if="deleteNotice" class="admin-delete-success-overlay" role="status" aria-live="polite">
+      <div class="admin-delete-success-card">✓ <span>{{ deleteNotice }}</span></div>
+    </div>
     <AdminPageHeader eyebrow="Place Ledger" title="地点编目台账" :description="`当前检索到 ${total} 条地点。验证、人工分级和发布状态共同决定地点是否进入 H5。`">
       <template #actions><RouterLink to="/admin/spots/new" class="admin-button-primary">新增地点</RouterLink></template>
     </AdminPageHeader>
@@ -285,4 +293,11 @@ onMounted(async () => {
 .ledger-action-publish { color: var(--admin-success); }
 .ledger-action-warning { color: var(--admin-warning); }
 .ledger-action-danger { color: var(--admin-danger); }
+.admin-delete-progress { position: fixed; top: 0; right: 0; left: 0; z-index: 60; height: 3px; overflow: hidden; background: rgba(239, 187, 167, 0.35); }
+.admin-delete-progress span { display: block; width: 38%; height: 100%; border-radius: 999px; background: var(--admin-accent); animation: admin-delete-progress 1.1s ease-in-out infinite; }
+.admin-delete-success-overlay { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; pointer-events: none; background: rgba(55, 42, 31, 0.06); }
+.admin-delete-success-card { display: flex; min-width: 220px; align-items: center; justify-content: center; gap: 10px; border: 1px solid #b9ddc5; border-radius: 16px; background: rgba(247, 255, 249, 0.97); box-shadow: 0 20px 50px rgba(55, 42, 31, 0.2); color: #287649; font-size: 18px; font-weight: 700; padding: 18px 24px; animation: admin-delete-success-in 0.2s ease-out; }
+@keyframes admin-delete-progress { 0% { transform: translateX(-120%); } 50% { transform: translateX(180%); } 100% { transform: translateX(300%); } }
+@keyframes admin-delete-success-in { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (max-width: 640px) { .admin-delete-success-card { min-width: 0; margin: 16px; padding: 16px 20px; font-size: 16px; } }
 </style>

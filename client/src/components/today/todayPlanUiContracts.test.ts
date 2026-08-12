@@ -35,4 +35,9 @@ describe('user-curated today plan UI contracts', () => {
     expect(todayPlanPage).toContain('validSuggestedOrder')
     expect(todayPlanPage).toContain('只包含你主动加入的地点')
   })
+
+  it('returns to the current explore page when the plan is empty', () => {
+    expect(todayPlanPage).toContain("router.push({ name: 'explore' })")
+    expect(todayPlanPage).not.toContain("router.push({ name: 'city' })")
+  })
 })

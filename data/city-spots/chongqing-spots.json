@@ -1,0 +1,646 @@
+{
+  "city": {
+    "name": "重庆",
+    "adcode": "500000"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "chongqing-spot-01",
+      "cityAdcode": "500000",
+      "name": "洪崖洞民俗风貌区",
+      "searchName": "洪崖洞民俗风貌区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "featured_district",
+      "tier": "S",
+      "priority": 100,
+      "reason": "吊脚楼建筑依山临江，夜间灯光与千厮门大桥构成重庆代表画面。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "山城",
+        "夜景",
+        "吊脚楼"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-01-source-amap",
+          "title": "高德地图待核验：洪崖洞民俗风貌区",
+          "url": "https://www.amap.com/search?query=%E6%B4%AA%E5%B4%96%E6%B4%9E%E6%B0%91%E4%BF%97%E9%A3%8E%E8%B2%8C%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-02",
+      "cityAdcode": "500000",
+      "name": "解放碑步行街",
+      "searchName": "解放碑步行街",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "walk_street",
+      "tier": "S",
+      "priority": 95,
+      "reason": "重庆中心城区的地标商圈，适合作为串联八一路和洪崖洞的起点。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "城市地标",
+        "商圈",
+        "步行街"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:05.116Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-02-source-amap",
+          "title": "高德地图待核验：解放碑步行街",
+          "url": "https://www.amap.com/search?query=%E8%A7%A3%E6%94%BE%E7%A2%91%E6%AD%A5%E8%A1%8C%E8%A1%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-03",
+      "cityAdcode": "500000",
+      "name": "长江索道",
+      "searchName": "长江索道",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "朝天门街道",
+      "address": "长江滨江路，朝天门街道",
+      "lng": 106.5844384,
+      "lat": 29.5580403,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 90,
+      "reason": "跨越长江的城市公共交通遗产，可从空中体验山城高差。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "索道",
+        "江景",
+        "城市地标"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:07.286Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-03-source-amap",
+          "title": "高德地图待核验：长江索道",
+          "url": "https://www.amap.com/search?query=%E9%95%BF%E6%B1%9F%E7%B4%A2%E9%81%93",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "chongqing-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：长江索道, 长江滨江路, 响水桥社区, 朝天门街道, 渝中区, 重庆市, 400010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=29.5580403&mlon=106.5844384#map=17/29.5580403/106.5844384",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:07.286Z",
+          "createdAt": "2026-08-09T14:36:07.286Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-04",
+      "cityAdcode": "500000",
+      "name": "李子坝轻轨穿楼观景平台",
+      "searchName": "李子坝轻轨穿楼观景平台",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 85,
+      "reason": "轻轨穿楼的独特城市景观，适合短停拍摄并感受重庆立体交通。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "轻轨",
+        "建筑",
+        "摄影"
+      ],
+      "suggestedDuration": "30-60分钟",
+      "bestTime": "白天",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-04-source-amap",
+          "title": "高德地图待核验：李子坝轻轨穿楼观景平台",
+          "url": "https://www.amap.com/search?query=%E6%9D%8E%E5%AD%90%E5%9D%9D%E8%BD%BB%E8%BD%A8%E7%A9%BF%E6%A5%BC%E8%A7%82%E6%99%AF%E5%B9%B3%E5%8F%B0",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-05",
+      "cityAdcode": "500000",
+      "name": "磁器口古镇",
+      "searchName": "磁器口古镇",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "黄桷坪一巷，磁器口街道",
+      "lng": 106.4466489,
+      "lat": 29.5833399,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 80,
+      "reason": "石板路、传统店铺和码头文化集中，适合品尝小吃与观察老街肌理。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "古镇",
+        "小吃",
+        "老街"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:11.839Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-05-source-amap",
+          "title": "高德地图待核验：磁器口古镇",
+          "url": "https://www.amap.com/search?query=%E7%A3%81%E5%99%A8%E5%8F%A3%E5%8F%A4%E9%95%87",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "chongqing-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：磁器口古镇, 黄桷坪一巷, 磁器口街道, 沙坪坝区, 重庆市, 400000, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=29.5833399&mlon=106.4466489#map=17/29.5833399/106.4466489",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:11.839Z",
+          "createdAt": "2026-08-09T14:36:11.839Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-06",
+      "cityAdcode": "500000",
+      "name": "重庆中国三峡博物馆",
+      "searchName": "重庆中国三峡博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 75,
+      "reason": "系统呈现三峡工程、巴渝历史与城市变迁，适合雨天深度参观。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "巴渝文化",
+        "三峡"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-06-source-amap",
+          "title": "高德地图待核验：重庆中国三峡博物馆",
+          "url": "https://www.amap.com/search?query=%E9%87%8D%E5%BA%86%E4%B8%AD%E5%9B%BD%E4%B8%89%E5%B3%A1%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-07",
+      "cityAdcode": "500000",
+      "name": "鹅岭二厂文创公园",
+      "searchName": "鹅岭二厂文创公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 70,
+      "reason": "印刷厂旧址更新的文创空间，可俯瞰山城屋顶与两江景观。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "工业遗产",
+        "文创",
+        "观景"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-07-source-amap",
+          "title": "高德地图待核验：鹅岭二厂文创公园",
+          "url": "https://www.amap.com/search?query=%E9%B9%85%E5%B2%AD%E4%BA%8C%E5%8E%82%E6%96%87%E5%88%9B%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-08",
+      "cityAdcode": "500000",
+      "name": "南山一棵树景区",
+      "searchName": "南山一棵树景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "nature",
+      "tier": "A",
+      "priority": 65,
+      "reason": "隔江俯瞰渝中半岛灯火，是重庆经典夜景观景点。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "夜景",
+        "观景",
+        "山景"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "日落后",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-08-source-amap",
+          "title": "高德地图待核验：南山一棵树景区",
+          "url": "https://www.amap.com/search?query=%E5%8D%97%E5%B1%B1%E4%B8%80%E6%A3%B5%E6%A0%91%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-09",
+      "cityAdcode": "500000",
+      "name": "重庆动物园",
+      "searchName": "重庆动物园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "九龙坡区",
+      "address": "西郊路，杨家坪街道",
+      "lng": 106.5022128,
+      "lat": 29.5066423,
+      "category": "nature",
+      "tier": "A",
+      "priority": 60,
+      "reason": "拥有大熊猫等丰富动物展区，交通方便，适合亲子半日游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "动物",
+        "大熊猫",
+        "亲子"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:19.505Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-09-source-amap",
+          "title": "高德地图待核验：重庆动物园",
+          "url": "https://www.amap.com/search?query=%E9%87%8D%E5%BA%86%E5%8A%A8%E7%89%A9%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "chongqing-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：重庆动物园, 西郊路, 杨家坪街道, 九龙坡区, 重庆市, 400050, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=29.5066423&mlon=106.5022128#map=17/29.5066423/106.5022128",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:19.505Z",
+          "createdAt": "2026-08-09T14:36:19.505Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-10",
+      "cityAdcode": "500000",
+      "name": "重庆湖广会馆",
+      "searchName": "重庆湖广会馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 55,
+      "reason": "规模完整的清代会馆建筑群，适合理解移民与码头城市历史。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "古建筑",
+        "移民文化",
+        "历史"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:22.372Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-10-source-amap",
+          "title": "高德地图待核验：重庆湖广会馆",
+          "url": "https://www.amap.com/search?query=%E9%87%8D%E5%BA%86%E6%B9%96%E5%B9%BF%E4%BC%9A%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-11",
+      "cityAdcode": "500000",
+      "name": "十八梯传统风貌区",
+      "searchName": "十八梯传统风貌区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "南纪门街道",
+      "address": "十八梯，南纪门街道",
+      "lng": 106.568959,
+      "lat": 29.5541255,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 50,
+      "reason": "顺山势展开的梯坎街巷，可连接较场口体验老重庆空间尺度。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "山城步道",
+        "老街",
+        "夜景"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:24.618Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-11-source-amap",
+          "title": "高德地图待核验：十八梯传统风貌区",
+          "url": "https://www.amap.com/search?query=%E5%8D%81%E5%85%AB%E6%A2%AF%E4%BC%A0%E7%BB%9F%E9%A3%8E%E8%B2%8C%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "chongqing-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：十八梯, 重庆十八梯传统风貌区, 响水桥社区, 南纪门街道, 渝中区, 重庆市, 400010, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=29.5541255&mlon=106.5689590#map=17/29.5541255/106.5689590",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:24.618Z",
+          "createdAt": "2026-08-09T14:36:24.618Z"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-spot-12",
+      "cityAdcode": "500000",
+      "name": "四川美术学院美术馆",
+      "searchName": "四川美术学院美术馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "museum_culture",
+      "tier": "B",
+      "priority": 45,
+      "reason": "当代艺术展览与校园创作氛围突出，适合艺术爱好者安排。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "美术馆",
+        "当代艺术",
+        "展览"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "chongqing-spot-12-source-amap",
+          "title": "高德地图待核验：四川美术学院美术馆",
+          "url": "https://www.amap.com/search?query=%E5%9B%9B%E5%B7%9D%E7%BE%8E%E6%9C%AF%E5%AD%A6%E9%99%A2%E7%BE%8E%E6%9C%AF%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    }
+  ]
+}

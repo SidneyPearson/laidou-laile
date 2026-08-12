@@ -9,6 +9,7 @@ const DEFAULT_PERSONA: Persona = 'couple'
  *  Persists to localStorage under the existing v03 key so all consumers stay
  *  in sync without introducing Pinia. */
 const persona = ref<Persona>(loadPersona())
+const hasChosenPersona = ref(typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) !== null)
 
 function loadPersona(): Persona {
   if (typeof localStorage === 'undefined') return DEFAULT_PERSONA
@@ -26,13 +27,18 @@ function persist() {
 
 export function usePersona() {
   function setPersona(next: Persona) {
-    if (next === persona.value) return
+    hasChosenPersona.value = true
+    if (next === persona.value) {
+      persist()
+      return
+    }
     persona.value = next
     persist()
   }
 
   return {
     persona,
+    hasChosenPersona,
     setPersona,
   }
 }

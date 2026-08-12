@@ -1,0 +1,675 @@
+{
+  "city": {
+    "name": "长沙",
+    "adcode": "430100"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "changsha-spot-01",
+      "cityAdcode": "430100",
+      "name": "橘子洲景区",
+      "searchName": "橘子洲景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "nature",
+      "tier": "S",
+      "priority": 100,
+      "reason": "湘江中心的长洲景观，可远眺城市天际线并感受山水洲城格局。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "湘江",
+        "城市地标",
+        "公园"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "changsha-spot-01-source-amap",
+          "title": "高德地图待核验：橘子洲景区",
+          "url": "https://www.amap.com/search?query=%E6%A9%98%E5%AD%90%E6%B4%B2%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-02",
+      "cityAdcode": "430100",
+      "name": "岳麓山风景名胜区",
+      "searchName": "岳麓山风景名胜区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "岳麓区",
+      "address": "岳麓山风景名胜区, 岳麓区, 湘江新区, 岳麓区, 长沙市, 湖南省, 410006, 中国",
+      "lng": 112.9283216,
+      "lat": 28.1869583,
+      "category": "nature",
+      "tier": "S",
+      "priority": 95,
+      "reason": "山林、书院和近代历史遗迹集中，是长沙最经典的半日路线。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "山景",
+        "徒步",
+        "历史"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:35.774Z",
+      "sources": [
+        {
+          "id": "changsha-spot-02-source-amap",
+          "title": "高德地图待核验：岳麓山风景名胜区",
+          "url": "https://www.amap.com/search?query=%E5%B2%B3%E9%BA%93%E5%B1%B1%E9%A3%8E%E6%99%AF%E5%90%8D%E8%83%9C%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-02-source-osm",
+          "title": "OpenStreetMap 地理编码：岳麓山风景名胜区, 岳麓区, 湘江新区, 岳麓区, 长沙市, 湖南省, 410006, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.1869583&mlon=112.9283216#map=17/28.1869583/112.9283216",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:35.774Z",
+          "createdAt": "2026-08-09T14:54:35.774Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-03",
+      "cityAdcode": "430100",
+      "name": "湖南博物院",
+      "searchName": "湖南博物院",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 90,
+      "reason": "马王堆汉墓文物与湖南历史展陈构成全国影响力突出的博物馆体验。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "马王堆",
+        "博物馆",
+        "文物"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "changsha-spot-03-source-amap",
+          "title": "高德地图待核验：湖南博物院",
+          "url": "https://www.amap.com/search?query=%E6%B9%96%E5%8D%97%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-04",
+      "cityAdcode": "430100",
+      "name": "岳麓书院",
+      "searchName": "岳麓书院",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "岳麓区",
+      "address": "桔子洲街道",
+      "lng": 112.935125,
+      "lat": 28.1839094,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 85,
+      "reason": "千年书院建筑与湖湘学术传统相连，可和岳麓山组合游览。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "书院",
+        "古建筑",
+        "湖湘文化"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:39.709Z",
+      "sources": [
+        {
+          "id": "changsha-spot-04-source-amap",
+          "title": "高德地图待核验：岳麓书院",
+          "url": "https://www.amap.com/search?query=%E5%B2%B3%E9%BA%93%E4%B9%A6%E9%99%A2",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：岳麓书院, 湖南大学社区, 桔子洲街道, 岳麓区, 湘江新区, 岳麓区, 长沙市, 湖南省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.1839094&mlon=112.9351250#map=17/28.1839094/112.9351250",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:39.709Z",
+          "createdAt": "2026-08-09T14:54:39.709Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-05",
+      "cityAdcode": "430100",
+      "name": "太平老街",
+      "searchName": "太平老街",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "太平街，坡子街街道",
+      "lng": 112.9662972,
+      "lat": 28.1986072,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 80,
+      "reason": "传统街巷、小吃和城市记忆馆集中，适合与五一广场串联夜游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "老街",
+        "小吃",
+        "夜游"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:41.922Z",
+      "sources": [
+        {
+          "id": "changsha-spot-05-source-amap",
+          "title": "高德地图待核验：太平老街",
+          "url": "https://www.amap.com/search?query=%E5%A4%AA%E5%B9%B3%E8%80%81%E8%A1%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：太平老街牌坊, 太平街, 太平街历史文化街区, 坡子街街道, 天心区, 长沙市, 湖南省, 410005, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.1986072&mlon=112.9662972#map=17/28.1986072/112.9662972",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:41.922Z",
+          "createdAt": "2026-08-09T14:54:41.922Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-06",
+      "cityAdcode": "430100",
+      "name": "杜甫江阁",
+      "searchName": "杜甫江阁",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "开福区",
+      "address": "湘江中路辅路，坡子街街道",
+      "lng": 112.9631953,
+      "lat": 28.1884738,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 75,
+      "reason": "临湘江的仿古建筑，日落和夜间灯光下适合观江与拍摄。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "湘江",
+        "古建筑",
+        "夜景"
+      ],
+      "suggestedDuration": "1小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:43.690Z",
+      "sources": [
+        {
+          "id": "changsha-spot-06-source-amap",
+          "title": "高德地图待核验：杜甫江阁",
+          "url": "https://www.amap.com/search?query=%E6%9D%9C%E7%94%AB%E6%B1%9F%E9%98%81",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：杜甫江阁, 湘江中路辅路, 坡子街街道, 天心区, 开福区, 长沙市, 湖南省, 410005, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.1884738&mlon=112.9631953#map=17/28.1884738/112.9631953",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:43.690Z",
+          "createdAt": "2026-08-09T14:54:43.690Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-07",
+      "cityAdcode": "430100",
+      "name": "长沙国金中心",
+      "searchName": "长沙国金中心",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "mall",
+      "tier": "A",
+      "priority": 70,
+      "reason": "五一商圈核心地标，艺术装置、商业和城市夜景集中。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "shopping",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "商圈",
+        "城市地标",
+        "夜景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": true,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:45.796Z",
+      "sources": [
+        {
+          "id": "changsha-spot-07-source-amap",
+          "title": "高德地图待核验：长沙国金中心",
+          "url": "https://www.amap.com/search?query=%E9%95%BF%E6%B2%99%E5%9B%BD%E9%87%91%E4%B8%AD%E5%BF%83",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-08",
+      "cityAdcode": "430100",
+      "name": "谢子龙影像艺术馆",
+      "searchName": "谢子龙影像艺术馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "岳麓区",
+      "address": "洋湖大道，洋湖街道",
+      "lng": 112.9415864,
+      "lat": 28.1213233,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 65,
+      "reason": "以摄影和影像艺术展览为核心，建筑空间本身也适合拍摄。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "摄影",
+        "美术馆",
+        "建筑"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:48.048Z",
+      "sources": [
+        {
+          "id": "changsha-spot-08-source-amap",
+          "title": "高德地图待核验：谢子龙影像艺术馆",
+          "url": "https://www.amap.com/search?query=%E8%B0%A2%E5%AD%90%E9%BE%99%E5%BD%B1%E5%83%8F%E8%89%BA%E6%9C%AF%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-08-source-osm",
+          "title": "OpenStreetMap 地理编码：谢子龙影像艺术馆, 洋湖大道, 金线巷社区, 洋湖街道, 岳麓区, 湘江新区, 岳麓区, 长沙市, 湖南省, 410009, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.1213233&mlon=112.9415864#map=17/28.1213233/112.9415864",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:48.048Z",
+          "createdAt": "2026-08-09T14:54:48.048Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-09",
+      "cityAdcode": "430100",
+      "name": "李自健美术馆",
+      "searchName": "李自健美术馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "岳麓区",
+      "address": "潇湘南大道东线，洋湖街道",
+      "lng": 112.9439163,
+      "lat": 28.1225145,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 60,
+      "reason": "临洋湖的大型公益美术馆，展览空间宽阔，适合安静看展。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "美术馆",
+        "展览",
+        "湖景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:50.224Z",
+      "sources": [
+        {
+          "id": "changsha-spot-09-source-amap",
+          "title": "高德地图待核验：李自健美术馆",
+          "url": "https://www.amap.com/search?query=%E6%9D%8E%E8%87%AA%E5%81%A5%E7%BE%8E%E6%9C%AF%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：李自健美术馆, 潇湘南大道东线, 金线巷社区, 洋湖街道, 岳麓区, 湘江新区, 岳麓区, 长沙市, 湖南省, 410009, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.1225145&mlon=112.9439163#map=17/28.1225145/112.9439163",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:50.224Z",
+          "createdAt": "2026-08-09T14:54:50.224Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-10",
+      "cityAdcode": "430100",
+      "name": "长沙世界之窗",
+      "searchName": "长沙世界之窗",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "开福区",
+      "address": "欢城路，洪山街道",
+      "lng": 113.0494073,
+      "lat": 28.2402199,
+      "category": "theme_park",
+      "tier": "B",
+      "priority": 55,
+      "reason": "游乐设施、主题景观和季节活动丰富，适合亲子与朋友整日游。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "主题乐园",
+        "游乐设施",
+        "亲子"
+      ],
+      "suggestedDuration": "全天",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:52.155Z",
+      "sources": [
+        {
+          "id": "changsha-spot-10-source-amap",
+          "title": "高德地图待核验：长沙世界之窗",
+          "url": "https://www.amap.com/search?query=%E9%95%BF%E6%B2%99%E4%B8%96%E7%95%8C%E4%B9%8B%E7%AA%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：长沙世界之窗, 欢城路, 金鹰社区, 洪山街道, 马栏山社区, 洪西社区, 开福区, 长沙市, 湖南省, 410003, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.2402199&mlon=113.0494073#map=17/28.2402199/113.0494073",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:52.155Z",
+          "createdAt": "2026-08-09T14:54:52.155Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-11",
+      "cityAdcode": "430100",
+      "name": "洋湖国家湿地公园",
+      "searchName": "洋湖国家湿地公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "nature",
+      "tier": "B",
+      "priority": 50,
+      "reason": "城市湿地、草地和水岸空间开阔，适合家庭休闲和骑行。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "湿地",
+        "骑行",
+        "亲子"
+      ],
+      "suggestedDuration": "2-4小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:54.396Z",
+      "sources": [
+        {
+          "id": "changsha-spot-11-source-amap",
+          "title": "高德地图待核验：洋湖国家湿地公园",
+          "url": "https://www.amap.com/search?query=%E6%B4%8B%E6%B9%96%E5%9B%BD%E5%AE%B6%E6%B9%BF%E5%9C%B0%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "changsha-spot-12",
+      "cityAdcode": "430100",
+      "name": "潮宗街历史文化街区",
+      "searchName": "潮宗街历史文化街区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": "开福区",
+      "address": "通泰街街道",
+      "lng": 112.9683141,
+      "lat": 28.2055476,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 45,
+      "reason": "麻石路、历史建筑与新兴小店共存，适合城市更新主题慢游。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "历史建筑",
+        "小店",
+        "街区"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:54:56.629Z",
+      "sources": [
+        {
+          "id": "changsha-spot-12-source-amap",
+          "title": "高德地图待核验：潮宗街历史文化街区",
+          "url": "https://www.amap.com/search?query=%E6%BD%AE%E5%AE%97%E8%A1%97%E5%8E%86%E5%8F%B2%E6%96%87%E5%8C%96%E8%A1%97%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "changsha-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：潮宗街历史文化街区, 通泰街街道, 开福区, 长沙市, 湖南省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=28.2055476&mlon=112.9683141#map=17/28.2055476/112.9683141",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:54:56.629Z",
+          "createdAt": "2026-08-09T14:54:56.629Z"
+        }
+      ]
+    }
+  ]
+}

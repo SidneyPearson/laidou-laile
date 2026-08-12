@@ -9,7 +9,7 @@ import type {
 interface RecommendInput {
   city: string
   adcode?: string
-  persona: Persona
+  persona?: Persona
   category: ExploreCategory
   cursor: number
   limit: number

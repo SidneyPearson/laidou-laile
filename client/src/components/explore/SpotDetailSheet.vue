@@ -6,7 +6,7 @@ import SpotCover from './SpotCover.vue'
 
 const props = defineProps<{
   spot: InspirationSpot
-  persona: PersonaOption
+  persona: PersonaOption | null
   actionReady: boolean
   inToday: boolean
 }>()
@@ -17,14 +17,16 @@ const emit = defineEmits<{
   'toggle-today': []
 }>()
 
-const whyForYou = computed(() => whySpotFitsPersona(props.spot, props.persona.id))
+const whyForYou = computed(() => props.persona
+  ? whySpotFitsPersona(props.spot, props.persona.id)
+  : '从已验证的城市地点中精选，适合加入今天的探索清单。')
 const reminder = computed(() => departureReminder(props.spot))
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/30" @click.self="emit('close')">
-    <section class="max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[30px] bg-[#f7f6f2] pb-[max(18px,env(safe-area-inset-bottom))] shadow-2xl">
-      <div class="relative h-56 overflow-hidden rounded-t-[30px]">
+  <div class="fixed inset-0 z-[80] flex items-end justify-center bg-black/70" @click.self="emit('close')">
+    <section class="flex h-[min(94dvh,760px)] max-h-[94dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[30px] bg-[#f7f6f2] shadow-2xl">
+      <div class="relative h-56 flex-none overflow-hidden rounded-t-[30px]">
         <SpotCover
           :spot="spot"
           eager
@@ -54,10 +56,10 @@ const reminder = computed(() => departureReminder(props.spot))
         </div>
       </div>
 
-      <div class="space-y-4 px-5 pt-5">
+      <div class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 pt-5">
         <section class="rounded-2xl bg-emerald-50 p-4">
           <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
-            为什么适合{{ persona.name }}
+            {{ persona ? `为什么适合${persona.name}` : '为什么推荐它' }}
           </p>
           <p class="mt-1.5 text-sm leading-6 text-emerald-950">{{ whyForYou }}</p>
         </section>
@@ -86,6 +88,12 @@ const reminder = computed(() => departureReminder(props.spot))
           <p class="mt-1 text-[9px] text-amber-600">预约、票务与营业信息以当天官方公告为准。</p>
         </section>
 
+        <p v-if="!actionReady" class="text-center text-[10px] leading-4 text-amber-700">
+          这是演示地点，缺少可重新校验的真实 POI 或坐标，暂不能导航或加入今天。
+        </p>
+      </div>
+
+      <div class="flex-none border-t border-stone-200 bg-[#f7f6f2]/95 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div class="grid grid-cols-2 gap-3">
           <button
             class="rounded-2xl border border-primary-200 bg-white py-3.5 text-sm font-bold text-primary-700 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
@@ -103,11 +111,8 @@ const reminder = computed(() => departureReminder(props.spot))
             {{ inToday ? '已加入今天' : '加入今天' }}
           </button>
         </div>
-        <p v-if="inToday && actionReady" class="text-center text-[10px] leading-4 text-stone-400">
+        <p v-if="inToday && actionReady" class="mt-2 text-center text-[10px] leading-4 text-stone-400">
           再次点击“已加入今天”可从清单移除。
-        </p>
-        <p v-if="!actionReady" class="text-center text-[10px] leading-4 text-amber-700">
-          这是演示地点，缺少可重新校验的真实 POI 或坐标，暂不能导航或加入今天。
         </p>
       </div>
     </section>

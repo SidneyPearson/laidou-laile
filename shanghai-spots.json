@@ -1,0 +1,1072 @@
+{
+  "city": {
+    "name": "上海",
+    "adcode": "310000"
+  },
+  "exportedAt": "2026-08-09T14:15:18.281Z",
+  "total": 21,
+  "spots": [
+    {
+      "id": "shanghai-the-bund",
+      "cityAdcode": "310000",
+      "name": "外滩",
+      "searchName": "外滩",
+      "amapName": "外滩",
+      "amapPoiId": "B00155FXB3",
+      "district": null,
+      "address": "中山东二路1号",
+      "lng": 121.492127,
+      "lat": 31.233516,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 100,
+      "reason": "上海城市天际线和近代建筑群的代表性观景区域。",
+      "tierReason": "全国知名，初次到上海通常值得优先安排。",
+      "personas": [
+        "first_visit",
+        "photography"
+      ],
+      "tags": [
+        "城市地标",
+        "江景"
+      ],
+      "suggestedDuration": null,
+      "bestTime": null,
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-the-bund.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-06T10:08:57.270Z",
+      "publicationStatus": "published",
+      "sourceKind": "legacy_static",
+      "version": 4,
+      "createdAt": "2026-07-26T00:00:00.000Z",
+      "updatedAt": "2026-08-06T15:25:41.978Z",
+      "sources": [
+        {
+          "id": "seed-source-shanghai-the-bund",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-07-26T00:00:00.000Z"
+        },
+        {
+          "id": "shanghai-the-bund-source-1",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-08-06T15:25:41.978Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-disneyland",
+      "cityAdcode": "310000",
+      "name": "上海迪士尼乐园",
+      "searchName": "上海迪士尼乐园",
+      "amapName": "上海迪士尼乐园",
+      "amapPoiId": "B0KDJ78DYD",
+      "district": null,
+      "address": "川沙镇申迪西路753号上海迪士尼度假区",
+      "lng": 121.660294,
+      "lat": 31.143212,
+      "category": "theme_park",
+      "tier": "S",
+      "priority": 95,
+      "reason": "面向亲子和主题乐园爱好者的全国性目的地。",
+      "tierReason": "全国知名且通常需要专门安排一天。",
+      "personas": [
+        "family",
+        "theme_park"
+      ],
+      "tags": [
+        "亲子",
+        "主题乐园"
+      ],
+      "suggestedDuration": null,
+      "bestTime": null,
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约与入园要求请以官方公告为准。",
+      "coverImageUrl": "https://store.is.autonavi.com/showpic/9a8442c90be01f510000002876744058?type=pic",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:02:14.023Z",
+      "publicationStatus": "published",
+      "sourceKind": "legacy_static",
+      "version": 5,
+      "createdAt": "2026-07-26T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:02:14.023Z",
+      "sources": [
+        {
+          "id": "seed-source-shanghai-disneyland",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-07-26T00:00:00.000Z"
+        },
+        {
+          "id": "shanghai-disneyland-source-1",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-08-06T15:32:08.268Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-museum-east",
+      "cityAdcode": "310000",
+      "name": "上海博物馆东馆",
+      "searchName": "上海博物馆东馆",
+      "amapName": "上海博物馆(东馆)",
+      "amapPoiId": "B0FFIFP90V",
+      "district": "浦东新区",
+      "address": "世纪大道1952号",
+      "lng": 121.538745,
+      "lat": 31.219913,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 90,
+      "reason": "建筑与馆藏兼具的新文化地标，适合人文、艺术与室内参观。",
+      "tierReason": "文化场馆代表性强，雨天/亲子/人文画像优先推荐。",
+      "personas": [
+        "first_visit",
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "建筑",
+        "人文",
+        "艺术"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约与开放安排请以官方公告为准。",
+      "coverImageUrl": "https://store.is.autonavi.com/showpic/fb4720a4ed79a46e0000003288770356?type=pic",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:11:32.280Z",
+      "publicationStatus": "published",
+      "sourceKind": "admin_curated",
+      "version": 5,
+      "createdAt": "2026-08-05T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:11:34.927Z",
+      "sources": [
+        {
+          "id": "shanghai-museum-east-source-1",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:11:26.786Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-oriental-pearl",
+      "cityAdcode": "310000",
+      "name": "东方明珠",
+      "searchName": "东方明珠广播电视塔",
+      "amapName": "东方明珠广播电视塔",
+      "amapPoiId": "B00150F6D6",
+      "district": null,
+      "address": "世纪大道1号(陆家嘴地铁站1号入口步行220米)",
+      "lng": 121.499718,
+      "lat": 31.239703,
+      "category": "classic_landmark",
+      "tier": "A",
+      "priority": 90,
+      "reason": "陆家嘴天际线中的代表性城市地标。",
+      "tierReason": "上海代表性强，适合希望登高或打卡城市地标的游客。",
+      "personas": [
+        "first_visit",
+        "family"
+      ],
+      "tags": [
+        "城市地标",
+        "观景"
+      ],
+      "suggestedDuration": null,
+      "bestTime": null,
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-oriental-pearl.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-06T15:32:47.432Z",
+      "publicationStatus": "published",
+      "sourceKind": "legacy_static",
+      "version": 8,
+      "createdAt": "2026-07-26T00:00:00.000Z",
+      "updatedAt": "2026-08-06T15:33:35.238Z",
+      "sources": [
+        {
+          "id": "seed-source-shanghai-oriental-pearl",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-07-26T00:00:00.000Z"
+        },
+        {
+          "id": "shanghai-oriental-pearl-source-1",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-08-06T15:33:35.238Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-wukang",
+      "cityAdcode": "310000",
+      "name": "武康路",
+      "searchName": "武康路",
+      "amapName": "武康路",
+      "amapPoiId": "B0IA3PHRXP",
+      "district": "徐汇区",
+      "address": "徐汇区",
+      "lng": 121.440627,
+      "lat": 31.209252,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 88,
+      "reason": "梧桐、老建筑和小店集中，适合不赶路地感受上海街区气质。",
+      "tierReason": "梧桐街区代表，适合慢游与建筑打卡。",
+      "personas": [
+        "couple",
+        "lazy",
+        "urban"
+      ],
+      "tags": [
+        "梧桐街区",
+        "建筑",
+        "散步"
+      ],
+      "suggestedDuration": "建议 2–3 小时",
+      "bestTime": "午后",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "https://english.shanghai.gov.cn/cmsres/ab/ab0dbea801aa49ba81e0fdf42c027c35/94cfa06a2f40af3debb4d78bb5d52625.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:11:52.387Z",
+      "publicationStatus": "published",
+      "sourceKind": "curated_v03",
+      "version": 5,
+      "createdAt": "2026-07-27T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:11:52.387Z",
+      "sources": [
+        {
+          "id": "shanghai-wukang-source-1",
+          "title": "上海市政府英文网",
+          "url": "https://english.shanghai.gov.cn/en-ScenicSpots/20231218/596192f5f59048bbbc3fa54d92304e93.html",
+          "sourceName": "上海市政府英文网",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T10:13:30.985Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-nanjing-road",
+      "cityAdcode": "310000",
+      "name": "南京路步行街",
+      "searchName": "南京路步行街",
+      "amapName": "南京路步行街",
+      "amapPoiId": "B0FFF5VNSV",
+      "district": null,
+      "address": "南京东路558号",
+      "lng": 121.479494,
+      "lat": 31.235983,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 85,
+      "reason": "连接人民广场与外滩的代表性商业步行街。",
+      "tierReason": "城市辨识度高，适合与外滩组合安排。",
+      "personas": [
+        "first_visit",
+        "shopping"
+      ],
+      "tags": [
+        "步行街",
+        "商业街"
+      ],
+      "suggestedDuration": null,
+      "bestTime": null,
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-nanjing-road.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T10:18:37.924Z",
+      "publicationStatus": "published",
+      "sourceKind": "legacy_static",
+      "version": 5,
+      "createdAt": "2026-07-26T00:00:00.000Z",
+      "updatedAt": "2026-08-09T10:18:40.045Z",
+      "sources": [
+        {
+          "id": "seed-source-shanghai-nanjing-road",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-07-26T00:00:00.000Z"
+        },
+        {
+          "id": "shanghai-nanjing-road-source-1",
+          "title": "来源待补",
+          "url": null,
+          "sourceName": "待补",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T10:18:33.433Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-yuyuan",
+      "cityAdcode": "310000",
+      "name": "豫园",
+      "searchName": "豫园",
+      "amapName": "豫园检票处",
+      "amapPoiId": "B0FFHMPOC1",
+      "district": "黄浦区",
+      "address": "福佑路168号上海豫园(豫园地铁站7号口步行450米)",
+      "lng": 121.491803,
+      "lat": 31.227089,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 84,
+      "reason": "古典园林和老城厢氛围集中，适合与外滩组合成第一次来上海的路线。",
+      "tierReason": "老城厢经典，适合与外滩组合。",
+      "personas": [
+        "fast",
+        "family"
+      ],
+      "tags": [
+        "老城厢",
+        "园林",
+        "传统"
+      ],
+      "suggestedDuration": "建议 2 小时",
+      "bestTime": "上午或亮灯后",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-yuyuan.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-06T10:09:10.983Z",
+      "publicationStatus": "published",
+      "sourceKind": "curated_v03",
+      "version": 4,
+      "createdAt": "2026-07-27T00:00:00.000Z",
+      "updatedAt": "2026-08-09T10:15:00.648Z",
+      "sources": [
+        {
+          "id": "shanghai-yuyuan-source-1",
+          "title": "上海黄浦文旅",
+          "url": "https://english.shanghai.gov.cn/en-ScenicSpots/20231205/dc76893b94c248d195eaf7f4d44c6597.html",
+          "sourceName": "上海黄浦文旅",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T10:15:00.648Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-legoland",
+      "cityAdcode": "310000",
+      "name": "上海乐高乐园",
+      "searchName": "上海乐高乐园",
+      "amapName": "上海乐高乐园度假区",
+      "amapPoiId": "B0JBLMU234",
+      "district": null,
+      "address": "乐缤路999号",
+      "lng": 121.096085,
+      "lat": 30.884809,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 82,
+      "reason": "低龄亲子乐园，适合 2–12 岁家庭安排一整天体验。",
+      "tierReason": "亲子主题乐园，具体开放、票价与入园要求以官方公告为准。",
+      "personas": [
+        "family"
+      ],
+      "tags": [
+        "主题乐园",
+        "亲子"
+      ],
+      "suggestedDuration": "建议一整天",
+      "bestTime": "全天",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约与入园要求请以官方公告为准。",
+      "coverImageUrl": "https://store.is.autonavi.com/showpic/3cef4a94f8d5bbd80000002905884029?type=pic",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:13:52.478Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 4,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:13:54.973Z",
+      "sources": [
+        {
+          "id": "shanghai-legoland-source-1",
+          "title": "用户提供的乐园清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:13:47.660Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-happy-valley",
+      "cityAdcode": "310000",
+      "name": "上海欢乐谷",
+      "searchName": "上海欢乐谷",
+      "amapName": "上海欢乐谷",
+      "amapPoiId": "B00155Q41F",
+      "district": null,
+      "address": "林湖路888号",
+      "lng": 121.214778,
+      "lat": 31.09607,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 80,
+      "reason": "大型综合主题乐园，适合喜欢刺激项目和过山车的游客。",
+      "tierReason": "成人游乐项目丰富，具体开放、票价与入园要求以官方公告为准。",
+      "personas": [
+        "fast",
+        "couple",
+        "family"
+      ],
+      "tags": [
+        "主题乐园",
+        "游乐设施"
+      ],
+      "suggestedDuration": "建议一整天",
+      "bestTime": "全天",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约与入园要求请以官方公告为准。",
+      "coverImageUrl": "/covers/shanghai-happy-valley.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:17:45.146Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 4,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:17:45.670Z",
+      "sources": [
+        {
+          "id": "shanghai-happy-valley-source-1",
+          "title": "用户提供的乐园清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:17:41.759Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-natural-history-museum",
+      "cityAdcode": "310000",
+      "name": "上海自然博物馆",
+      "searchName": "上海自然博物馆",
+      "amapName": "上海自然博物馆",
+      "amapPoiId": "B00156NVZG",
+      "district": "静安区",
+      "address": "北京西路510号",
+      "lng": 121.462672,
+      "lat": 31.235021,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 80,
+      "reason": "恐龙化石与互动展项丰富的科普场馆，适合亲子与室内参观。",
+      "tierReason": "亲子友好、室内、科普性强，雨天也适合安排。",
+      "personas": [
+        "first_visit",
+        "family",
+        "museum",
+        "culture"
+      ],
+      "tags": [
+        "科普",
+        "互动",
+        "亲子",
+        "室内"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约与开放安排请以官方公告为准。",
+      "coverImageUrl": "/covers/shanghai-natural-history-museum.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:19:44.214Z",
+      "publicationStatus": "published",
+      "sourceKind": "admin_curated",
+      "version": 5,
+      "createdAt": "2026-08-05T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:19:44.843Z",
+      "sources": []
+    },
+    {
+      "id": "shanghai-zhujiajiao",
+      "cityAdcode": "310000",
+      "name": "朱家角古镇",
+      "searchName": "朱家角古镇",
+      "amapName": "上海朱家角古镇旅游区-泰安桥",
+      "amapPoiId": "B0FFFV4A6Z",
+      "district": "青浦区",
+      "address": "朱家角镇西井街127-129号(课植园旁)上海朱家角古镇旅游区内(东南角)",
+      "lng": 121.055037,
+      "lat": 31.110211,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 80,
+      "reason": "适合把半天留给一个完整区域，不必在市中心反复赶场。",
+      "tierReason": "完整水乡半日，避免市中心赶场。",
+      "personas": [
+        "couple",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "古镇",
+        "水乡",
+        "慢游"
+      ],
+      "suggestedDuration": "建议半天",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-zhujiajiao.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T10:44:26.195Z",
+      "publicationStatus": "published",
+      "sourceKind": "curated_v03",
+      "version": 4,
+      "createdAt": "2026-07-27T00:00:00.000Z",
+      "updatedAt": "2026-08-09T10:44:27.714Z",
+      "sources": [
+        {
+          "id": "shanghai-zhujiajiao-source-1",
+          "title": "上海市青浦区政府",
+          "url": "https://www.shqp.gov.cn/shqp/tpxw/20240914/1210041.html",
+          "sourceName": "上海市青浦区政府",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T10:44:20.259Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-haichang-ocean-park",
+      "cityAdcode": "310000",
+      "name": "上海海昌海洋公园",
+      "searchName": "上海海昌海洋公园",
+      "amapName": "上海海昌海洋公园",
+      "amapPoiId": "B0FFG954E8",
+      "district": null,
+      "address": "银飞路166号",
+      "lng": 121.905695,
+      "lat": 30.912653,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 78,
+      "reason": "海洋生物展示、动物互动与亲子体验结合的主题公园。",
+      "tierReason": "适合亲子和海洋主题爱好者，具体演出、票价与入园要求以官方公告为准。",
+      "personas": [
+        "family",
+        "couple"
+      ],
+      "tags": [
+        "主题乐园",
+        "海洋",
+        "亲子"
+      ],
+      "suggestedDuration": "建议一整天",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约与入园要求请以官方公告为准。",
+      "coverImageUrl": "/covers/shanghai-haichang-ocean-park.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:21:25.470Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 4,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:21:26.670Z",
+      "sources": [
+        {
+          "id": "shanghai-haichang-ocean-park-source-1",
+          "title": "用户提供的乐园清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:21:18.267Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-wild-animal-park",
+      "cityAdcode": "310000",
+      "name": "上海野生动物园",
+      "searchName": "上海野生动物园",
+      "amapName": "上海野生动物园",
+      "amapPoiId": "B00152F15F",
+      "district": null,
+      "address": "南六公路178号",
+      "lng": 121.721793,
+      "lat": 31.055337,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 76,
+      "reason": "大型野生动物园，适合亲子近距离观察动物并安排半天到一天游览。",
+      "tierReason": "动物展示与户外游览为主，具体票价与开放安排以官方公告为准。",
+      "personas": [
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "主题乐园",
+        "动物",
+        "亲子"
+      ],
+      "suggestedDuration": "建议半天至一天",
+      "bestTime": "白天",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约与入园要求请以官方公告为准。",
+      "coverImageUrl": "/covers/shanghai-wild-animal-park.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:24:03.806Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 5,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:24:04.619Z",
+      "sources": [
+        {
+          "id": "shanghai-wild-animal-park-source-1",
+          "title": "用户提供的乐园清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:22:36.548Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-pudong-art-museum",
+      "cityAdcode": "310000",
+      "name": "浦东美术馆",
+      "searchName": "浦东美术馆",
+      "amapName": "浦东美术馆",
+      "amapPoiId": "B0FFLCKUTU",
+      "district": "浦东新区",
+      "address": "滨江大道2777号",
+      "lng": 121.49631,
+      "lat": 31.238115,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 74,
+      "reason": "面向黄浦江与外滩的当代美术馆，适合把展览、建筑和江景安排在同一站。",
+      "tierReason": "城市文化地标，具体展览、开放时间与预约要求以官方公告为准。",
+      "personas": [
+        "culture",
+        "museum",
+        "urban"
+      ],
+      "tags": [
+        "美术馆",
+        "展览",
+        "江景"
+      ],
+      "suggestedDuration": "建议 2–3 小时",
+      "bestTime": "下午或雨天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约与开放安排请以官方公告为准。",
+      "coverImageUrl": "/covers/shanghai-pudong-art-museum.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:24:24.062Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 4,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:24:24.741Z",
+      "sources": [
+        {
+          "id": "shanghai-pudong-art-museum-source-1",
+          "title": "用户提供的美术馆清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:24:15.269Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-west-bund-art-museum",
+      "cityAdcode": "310000",
+      "name": "西岸美术馆",
+      "searchName": "西岸美术馆",
+      "amapName": "西岸美术馆",
+      "amapPoiId": "B0FFJGOAFY",
+      "district": "徐汇区",
+      "address": "龙腾大道2600号",
+      "lng": 121.463841,
+      "lat": 31.167682,
+      "category": "museum_culture",
+      "tier": "A",
+      "priority": 72,
+      "reason": "西岸滨江的现代艺术场馆，适合展览、建筑和江边散步组合游览。",
+      "tierReason": "适合艺术与城市漫游兴趣，具体展览、开放时间与预约要求以官方公告为准。",
+      "personas": [
+        "culture",
+        "museum",
+        "urban",
+        "couple"
+      ],
+      "tags": [
+        "美术馆",
+        "当代艺术",
+        "滨江"
+      ],
+      "suggestedDuration": "建议 2–3 小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约与开放安排请以官方公告为准。",
+      "coverImageUrl": "https://store.is.autonavi.com/showpic/8e37911dedc8ca670000003218798419?type=pic",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:25:09.934Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 4,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:25:10.440Z",
+      "sources": [
+        {
+          "id": "shanghai-west-bund-art-museum-source-1",
+          "title": "用户提供的美术馆清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:25:06.420Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-anfu-road",
+      "cityAdcode": "310000",
+      "name": "安福路",
+      "searchName": "安福路",
+      "amapName": "安福路",
+      "amapPoiId": "B0FFI4AU9H",
+      "district": "徐汇区",
+      "address": "徐汇区",
+      "lng": 121.444117,
+      "lat": 31.214114,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 70,
+      "reason": "梧桐街道、剧场、小店与咖啡馆集中，适合慢慢逛一段上海街区。",
+      "tierReason": "城市漫游代表街区，具体店铺营业情况以现场和商家公告为准。",
+      "personas": [
+        "urban",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "街区",
+        "梧桐",
+        "咖啡馆"
+      ],
+      "suggestedDuration": "建议 2–3 小时",
+      "bestTime": "午后",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-anfu-road.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:15:00.196Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 5,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:15:01.298Z",
+      "sources": [
+        {
+          "id": "shanghai-anfu-road-source-1",
+          "title": "用户提供的街区清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:14:50.247Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-xintiandi",
+      "cityAdcode": "310000",
+      "name": "新天地",
+      "searchName": "新天地",
+      "amapName": "新天地广场",
+      "amapPoiId": "B00155HPFQ",
+      "district": "黄浦区",
+      "address": "淮海中路333号(一大会址·黄陂南路地铁站2号口步行70米)",
+      "lng": 121.474123,
+      "lat": 31.222482,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 68,
+      "reason": "石库门建筑、餐饮、商业与夜生活融合的城市街区，适合从下午逛到晚上。",
+      "tierReason": "上海代表性城市街区，具体店铺营业情况以现场和商家公告为准。",
+      "personas": [
+        "urban",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "街区",
+        "石库门",
+        "餐饮"
+      ],
+      "suggestedDuration": "建议 2–3 小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-xintiandi.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:27:12.588Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 4,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:27:14.848Z",
+      "sources": [
+        {
+          "id": "shanghai-xintiandi-source-1",
+          "title": "用户提供的街区清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:27:09.329Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-lujiazui-center",
+      "cityAdcode": "310000",
+      "name": "陆家嘴三件套",
+      "searchName": "陆家嘴",
+      "amapName": "陆家嘴",
+      "amapPoiId": "B00156EVQO",
+      "district": "浦东新区",
+      "address": "浦东新区",
+      "lng": 121.5025,
+      "lat": 31.237015,
+      "category": "classic_landmark",
+      "tier": "B",
+      "priority": 80,
+      "reason": "陆家嘴三件套，来沪打卡必备。",
+      "tierReason": "经典打卡地标。",
+      "personas": [
+        "fast",
+        "lazy",
+        "urban"
+      ],
+      "tags": [
+        "商圈",
+        "夜景"
+      ],
+      "suggestedDuration": "建议 2–3 小时",
+      "bestTime": "下午至晚间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "https://store.is.autonavi.com/showpic/e52ec9ef277761240000002353796390?type=pic",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:17:26.768Z",
+      "publicationStatus": "published",
+      "sourceKind": "curated_v03",
+      "version": 15,
+      "createdAt": "2026-07-27T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:17:27.559Z",
+      "sources": [
+        {
+          "id": "shanghai-lujiazui-center-source-1",
+          "title": "上海市政府官网",
+          "url": "https://www.shanghai.gov.cn/nw4411/20251202/4eab378222004d43acdfc9390078f90d.html",
+          "sourceName": "上海市政府官网",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:17:20.099Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-taikoo-li",
+      "cityAdcode": "310000",
+      "name": "前滩太古里",
+      "searchName": "前滩太古里",
+      "amapName": "前滩太古里",
+      "amapPoiId": "B0FFIRXH9Z",
+      "district": "浦东新区",
+      "address": "东育路500弄1-9号",
+      "lng": 121.481489,
+      "lat": 31.152823,
+      "category": "mall",
+      "tier": "B",
+      "priority": 78,
+      "reason": "商业、餐饮和户外空间集中，适合不想频繁换乘的轻松半天。",
+      "tierReason": "轻松半日，室内外结合。",
+      "personas": [
+        "couple",
+        "lazy",
+        "urban"
+      ],
+      "tags": [
+        "商场",
+        "餐饮",
+        "轻松"
+      ],
+      "suggestedDuration": "建议 2–4 小时",
+      "bestTime": "下午至晚间",
+      "indoorFriendly": true,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-taikoo-li.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:27:45.469Z",
+      "publicationStatus": "published",
+      "sourceKind": "curated_v03",
+      "version": 5,
+      "createdAt": "2026-07-27T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:34:58.447Z",
+      "sources": [
+        {
+          "id": "shanghai-taikoo-li-source-1",
+          "title": "太古地产",
+          "url": "https://www.swireproperties.com/en/portfolio/current-developments/taikoo-li-qiantan/",
+          "sourceName": "太古地产",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:34:58.447Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-chenshan",
+      "cityAdcode": "310000",
+      "name": "辰山植物园",
+      "searchName": "上海辰山植物园",
+      "amapName": "上海辰山植物园-展览温室",
+      "amapPoiId": "B0FFFA2QEN",
+      "district": "松江区",
+      "address": "辰花路3888号辰山植物园中心展示区内",
+      "lng": 121.188933,
+      "lat": 31.078737,
+      "category": "nature",
+      "tier": "B",
+      "priority": 76,
+      "reason": "面积大、停留时间长，更适合当作当天主目的地，而不是普通顺路 POI。",
+      "tierReason": "植物园主目的地，适合亲子半天。",
+      "personas": [
+        "couple",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "植物园",
+        "户外",
+        "亲子"
+      ],
+      "suggestedDuration": "建议半天",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "https://store.is.autonavi.com/showpic/97e59ca7a3cbab100000002715568857?type=pic",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:28:47.618Z",
+      "publicationStatus": "published",
+      "sourceKind": "curated_v03",
+      "version": 4,
+      "createdAt": "2026-07-27T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:28:48.089Z",
+      "sources": [
+        {
+          "id": "shanghai-chenshan-source-1",
+          "title": "上海辰山植物园",
+          "url": "https://english.shanghai.gov.cn/en-Parks/20240322/1964faa2a0e34379b090950cb6bb1857.html",
+          "sourceName": "上海辰山植物园",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:28:44.792Z"
+        }
+      ]
+    },
+    {
+      "id": "shanghai-tianzifang",
+      "cityAdcode": "310000",
+      "name": "田子坊",
+      "searchName": "田子坊",
+      "amapName": "上海田子坊",
+      "amapPoiId": "B00155HO6Y",
+      "district": "黄浦区",
+      "address": "泰康路210号(打浦桥地铁站1号口旁)",
+      "lng": 121.468662,
+      "lat": 31.208197,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 62,
+      "reason": "老弄堂里的小店、工作室和餐饮密集，适合在较小街区内自由探索。",
+      "tierReason": "特色弄堂街区，具体店铺营业情况以现场和商家公告为准。",
+      "personas": [
+        "urban",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "弄堂",
+        "街区",
+        "小店"
+      ],
+      "suggestedDuration": "建议 1.5–2 小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": "/covers/shanghai-tianzifang.jpg",
+      "verificationStatus": "verified",
+      "verifiedAt": "2026-08-09T11:31:20.606Z",
+      "publicationStatus": "published",
+      "sourceKind": "user_provided",
+      "version": 4,
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T11:31:21.061Z",
+      "sources": [
+        {
+          "id": "shanghai-tianzifang-source-1",
+          "title": "用户提供的街区清单",
+          "url": null,
+          "sourceName": "用户提供",
+          "checkedAt": null,
+          "createdAt": "2026-08-09T11:31:18.619Z"
+        }
+      ]
+    }
+  ]
+}

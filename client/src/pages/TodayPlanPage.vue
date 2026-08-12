@@ -29,7 +29,9 @@ const pendingOrder = ref<string[] | null>(null)
 const picking = ref(false)
 const pickedName = ref('')
 const showTicket = ref(false)
+const clearNotice = ref('')
 let pickTimer: ReturnType<typeof setInterval> | null = null
+let clearNoticeTimer: ReturnType<typeof setTimeout> | null = null
 
 function savedPersona(): Persona {
   if (typeof localStorage === 'undefined') return 'couple'
@@ -126,6 +128,22 @@ function resetJourney() {
   journey.reset()
   pickedName.value = ''
   showTicket.value = false
+}
+
+function clearTodayPlan() {
+  if (plan.count.value === 0) return
+  if (!window.confirm('确定清空今天的全部地点吗？路线进度和城市票根也会一起重置。')) return
+
+  plan.clear()
+  resetJourney()
+  selectedSpot.value = null
+  clearSuggestionForSetChange()
+  clearNotice.value = '今日计划已清空'
+  if (clearNoticeTimer) clearTimeout(clearNoticeTimer)
+  clearNoticeTimer = setTimeout(() => {
+    clearNotice.value = ''
+    clearNoticeTimer = null
+  }, 1800)
 }
 
 function completeCurrent() {
@@ -243,6 +261,7 @@ watch(planIds, ids => journey.syncWithSpots(ids), { immediate: true })
 
 onBeforeUnmount(() => {
   if (pickTimer) clearInterval(pickTimer)
+  if (clearNoticeTimer) clearTimeout(clearNoticeTimer)
 })
 </script>
 
@@ -265,9 +284,22 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
+    <p v-if="clearNotice" class="mx-5 mt-4 rounded-2xl bg-emerald-100 px-4 py-3 text-center text-xs font-bold text-emerald-800" role="status">
+      ✓ {{ clearNotice }}
+    </p>
+
     <div v-if="plan.count.value > 0" class="space-y-5 px-5 pt-5">
       <section class="rounded-[26px] bg-stone-900 p-5 text-white shadow-[0_14px_35px_rgba(44,44,44,0.12)]">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-200">{{ cityLabel }}</p>
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-200">{{ cityLabel }}</p>
+          <button
+            type="button"
+            class="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-bold text-white/60 transition hover:border-lime-300/50 hover:text-lime-300"
+            @click="clearTodayPlan"
+          >
+            清空计划
+          </button>
+        </div>
         <div class="mt-2 flex items-end justify-between">
           <div>
             <p class="text-2xl font-bold">{{ plan.count.value }} 个地点</p>
@@ -431,7 +463,7 @@ onBeforeUnmount(() => {
         <div class="text-4xl">🧺</div>
         <h1 class="mt-4 text-lg font-bold text-stone-900">今天还没有想去的地方</h1>
         <p class="mt-2 text-xs leading-5 text-stone-500">回到城市灵感页，自由挑选真正想去的地点。</p>
-        <button class="btn-primary mt-5 px-6 py-3 text-sm font-bold" @click="router.push({ name: 'city' })">
+        <button class="btn-primary mt-5 px-6 py-3 text-sm font-bold" @click="router.push({ name: 'explore' })">
           去看看城市灵感
         </button>
       </div>

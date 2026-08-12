@@ -1,0 +1,693 @@
+{
+  "city": {
+    "name": "广州",
+    "adcode": "440100"
+  },
+  "exportedAt": "2026-08-09T14:33:49.563Z",
+  "total": 12,
+  "spots": [
+    {
+      "id": "guangzhou-spot-01",
+      "cityAdcode": "440100",
+      "name": "广州塔",
+      "searchName": "广州塔",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "阅江西路，赤岗街道",
+      "lng": 113.3191477,
+      "lat": 23.1090145,
+      "category": "classic_landmark",
+      "tier": "S",
+      "priority": 100,
+      "reason": "珠江新城天际线的核心地标，可登塔观景或沿江拍摄夜景。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "城市地标",
+        "观景",
+        "夜景"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:54.678Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-01-source-amap",
+          "title": "高德地图待核验：广州塔",
+          "url": "https://www.amap.com/search?query=%E5%B9%BF%E5%B7%9E%E5%A1%94",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-01-source-osm",
+          "title": "OpenStreetMap 地理编码：广州塔, 阅江西路, 赤岗街道, 海珠区, 广州市, 广东省, 510310, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1090145&mlon=113.3191477#map=17/23.1090145/113.3191477",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:54.678Z",
+          "createdAt": "2026-08-09T14:36:54.678Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-02",
+      "cityAdcode": "440100",
+      "name": "广东省博物馆",
+      "searchName": "广东省博物馆",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "珠江东路，猎德街道",
+      "lng": 113.3214163,
+      "lat": 23.1174004,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 95,
+      "reason": "自然、历史和潮州木雕等馆藏丰富，是认识岭南文化的高效入口。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "博物馆",
+        "岭南文化",
+        "室内"
+      ],
+      "suggestedDuration": "3-4小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:56.388Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-02-source-amap",
+          "title": "高德地图待核验：广东省博物馆",
+          "url": "https://www.amap.com/search?query=%E5%B9%BF%E4%B8%9C%E7%9C%81%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-02-source-osm",
+          "title": "OpenStreetMap 地理编码：广东省博物馆, 2号, 珠江东路, 猎德, 猎德街道, 天河区, 广州市, 广东省, 510623, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1174004&mlon=113.3214163#map=17/23.1174004/113.3214163",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:56.388Z",
+          "createdAt": "2026-08-09T14:36:56.388Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-03",
+      "cityAdcode": "440100",
+      "name": "陈家祠",
+      "searchName": "陈家祠",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "陈家祠道，金花街道",
+      "lng": 113.2401325,
+      "lat": 23.1298279,
+      "category": "museum_culture",
+      "tier": "S",
+      "priority": 90,
+      "reason": "以木雕、砖雕、石雕和陶塑闻名的岭南建筑艺术代表。",
+      "tierReason": "全国知名且城市辨识度高，初次到访建议优先安排。",
+      "personas": [
+        "culture",
+        "museum",
+        "family"
+      ],
+      "tags": [
+        "岭南建筑",
+        "非遗",
+        "古建筑"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:36:58.323Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-03-source-amap",
+          "title": "高德地图待核验：陈家祠",
+          "url": "https://www.amap.com/search?query=%E9%99%88%E5%AE%B6%E7%A5%A0",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-03-source-osm",
+          "title": "OpenStreetMap 地理编码：陈家祠, 陈家祠道, 金花街道, 荔湾区, 广州市, 广东省, 510170, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1298279&mlon=113.2401325#map=17/23.1298279/113.2401325",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:36:58.323Z",
+          "createdAt": "2026-08-09T14:36:58.323Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-04",
+      "cityAdcode": "440100",
+      "name": "沙面岛",
+      "searchName": "沙面岛",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "沙面街道",
+      "lng": 113.2393216,
+      "lat": 23.10947,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 85,
+      "reason": "近代建筑、林荫道与珠江岸线集中，适合轻松散步和建筑摄影。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "历史建筑",
+        "街区",
+        "摄影"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "上午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:00.453Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-04-source-amap",
+          "title": "高德地图待核验：沙面岛",
+          "url": "https://www.amap.com/search?query=%E6%B2%99%E9%9D%A2%E5%B2%9B",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-04-source-osm",
+          "title": "OpenStreetMap 地理编码：沙面, 沙面街道, 荔湾区, 广州市, 广东省, 510130, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1094700&mlon=113.2393216#map=17/23.1094700/113.2393216",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:00.453Z",
+          "createdAt": "2026-08-09T14:37:00.453Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-05",
+      "cityAdcode": "440100",
+      "name": "永庆坊",
+      "searchName": "永庆坊",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "多宝街道",
+      "lng": 113.2329007,
+      "lat": 23.1175027,
+      "category": "featured_district",
+      "tier": "A",
+      "priority": 80,
+      "reason": "骑楼、西关大屋与非遗空间更新结合，可串联粤剧艺术博物馆。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "西关",
+        "非遗",
+        "街区"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:02.032Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-05-source-amap",
+          "title": "高德地图待核验：永庆坊",
+          "url": "https://www.amap.com/search?query=%E6%B0%B8%E5%BA%86%E5%9D%8A",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-05-source-osm",
+          "title": "OpenStreetMap 地理编码：永庆坊, 多宝街道, 荔湾区, 广州市, 广东省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1175027&mlon=113.2329007#map=17/23.1175027/113.2329007",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:02.032Z",
+          "createdAt": "2026-08-09T14:37:02.032Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-06",
+      "cityAdcode": "440100",
+      "name": "白云山风景名胜区",
+      "searchName": "白云山风景名胜区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "白云山风景名胜区, 白云区, 广州市, 广东省, 510045, 中国",
+      "lng": 113.2930153,
+      "lat": 23.189633,
+      "category": "nature",
+      "tier": "A",
+      "priority": 75,
+      "reason": "城市近郊的大型山地公园，适合登高、缆车和俯瞰城区。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "山景",
+        "徒步",
+        "公园"
+      ],
+      "suggestedDuration": "4-6小时",
+      "bestTime": "清晨或上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:03.741Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-06-source-amap",
+          "title": "高德地图待核验：白云山风景名胜区",
+          "url": "https://www.amap.com/search?query=%E7%99%BD%E4%BA%91%E5%B1%B1%E9%A3%8E%E6%99%AF%E5%90%8D%E8%83%9C%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-06-source-osm",
+          "title": "OpenStreetMap 地理编码：白云山风景名胜区, 白云区, 广州市, 广东省, 510045, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1896330&mlon=113.2930153#map=17/23.1896330/113.2930153",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:03.741Z",
+          "createdAt": "2026-08-09T14:37:03.741Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-07",
+      "cityAdcode": "440100",
+      "name": "广州长隆旅游度假区",
+      "searchName": "广州长隆旅游度假区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "theme_park",
+      "tier": "A",
+      "priority": 70,
+      "reason": "野生动物、欢乐世界和国际大马戏等多园区组合，适合家庭整日游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "family",
+        "couple",
+        "theme_park"
+      ],
+      "tags": [
+        "主题乐园",
+        "动物",
+        "亲子"
+      ],
+      "suggestedDuration": "全天",
+      "bestTime": "全天",
+      "indoorFriendly": true,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-07-source-amap",
+          "title": "高德地图待核验：广州长隆旅游度假区",
+          "url": "https://www.amap.com/search?query=%E5%B9%BF%E5%B7%9E%E9%95%BF%E9%9A%86%E6%97%85%E6%B8%B8%E5%BA%A6%E5%81%87%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-08",
+      "cityAdcode": "440100",
+      "name": "北京路步行街",
+      "searchName": "北京路步行街",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": null,
+      "lng": null,
+      "lat": null,
+      "category": "walk_street",
+      "tier": "A",
+      "priority": 65,
+      "reason": "千年古道遗址、骑楼与商业餐饮叠加，是广州老城高人气步行区。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "urban",
+        "couple",
+        "shopping"
+      ],
+      "tags": [
+        "步行街",
+        "古道",
+        "餐饮"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:33:49.563Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-08-source-amap",
+          "title": "高德地图待核验：北京路步行街",
+          "url": "https://www.amap.com/search?query=%E5%8C%97%E4%BA%AC%E8%B7%AF%E6%AD%A5%E8%A1%8C%E8%A1%97",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-09",
+      "cityAdcode": "440100",
+      "name": "越秀公园",
+      "searchName": "越秀公园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "洪桥街道",
+      "lng": 113.2604084,
+      "lat": 23.1425136,
+      "category": "nature",
+      "tier": "A",
+      "priority": 60,
+      "reason": "五羊石像、镇海楼与城市绿地集中，适合低强度半日游。",
+      "tierReason": "城市代表性与游览完成度较高，适合纳入常规行程。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "公园",
+        "城市地标",
+        "历史"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:10.495Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-09-source-amap",
+          "title": "高德地图待核验：越秀公园",
+          "url": "https://www.amap.com/search?query=%E8%B6%8A%E7%A7%80%E5%85%AC%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-09-source-osm",
+          "title": "OpenStreetMap 地理编码：越秀公园, 988, 洪桥街道, 越秀区, 广州市, 广东省, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1425136&mlon=113.2604084#map=17/23.1425136/113.2604084",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:10.495Z",
+          "createdAt": "2026-08-09T14:37:10.495Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-10",
+      "cityAdcode": "440100",
+      "name": "海心桥",
+      "searchName": "海心桥",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "海心桥，赤岗街道",
+      "lng": 113.3135398,
+      "lat": 23.1110996,
+      "category": "classic_landmark",
+      "tier": "B",
+      "priority": 55,
+      "reason": "连接珠江两岸的步行桥，可近距离观赏广州塔与城市灯光。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "first_visit",
+        "photography",
+        "culture"
+      ],
+      "tags": [
+        "步行桥",
+        "江景",
+        "夜景"
+      ],
+      "suggestedDuration": "1-2小时",
+      "bestTime": "傍晚至夜间",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:12.749Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-10-source-amap",
+          "title": "高德地图待核验：海心桥",
+          "url": "https://www.amap.com/search?query=%E6%B5%B7%E5%BF%83%E6%A1%A5",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-10-source-osm",
+          "title": "OpenStreetMap 地理编码：海心桥, 赤岗街道, 海珠区, 广州市, 广东省, 510623, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1110996&mlon=113.3135398#map=17/23.1110996/113.3135398",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:12.749Z",
+          "createdAt": "2026-08-09T14:37:12.749Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-11",
+      "cityAdcode": "440100",
+      "name": "广州动物园",
+      "searchName": "广州动物园",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "先烈中路，黄花岗街道",
+      "lng": 113.3000312,
+      "lat": 23.1429121,
+      "category": "nature",
+      "tier": "B",
+      "priority": 50,
+      "reason": "中心城区交通方便的老牌动物园，适合亲子轻松安排。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "photography",
+        "family",
+        "lazy"
+      ],
+      "tags": [
+        "动物",
+        "亲子",
+        "公园"
+      ],
+      "suggestedDuration": "3-5小时",
+      "bestTime": "上午",
+      "indoorFriendly": false,
+      "reservationRequired": true,
+      "reservationNote": "预约、票务与开放时间请以运营方最新公告为准。",
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:14.612Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-11-source-amap",
+          "title": "高德地图待核验：广州动物园",
+          "url": "https://www.amap.com/search?query=%E5%B9%BF%E5%B7%9E%E5%8A%A8%E7%89%A9%E5%9B%AD",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-11-source-osm",
+          "title": "OpenStreetMap 地理编码：广州动物园, 120, 先烈中路, 区庄, 黄花岗街道, 越秀区, 广州市, 广东省, 510070, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1429121&mlon=113.3000312#map=17/23.1429121/113.3000312",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:14.612Z",
+          "createdAt": "2026-08-09T14:37:14.612Z"
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-spot-12",
+      "cityAdcode": "440100",
+      "name": "荔枝湾景区",
+      "searchName": "荔枝湾景区",
+      "amapName": null,
+      "amapPoiId": null,
+      "district": null,
+      "address": "荔枝湾街，逢源街道",
+      "lng": 113.2312728,
+      "lat": 23.1237347,
+      "category": "featured_district",
+      "tier": "B",
+      "priority": 45,
+      "reason": "河涌、骑楼和西关生活相连，可乘船或步行体验老广州水城风貌。",
+      "tierReason": "具有鲜明在地特色，适合按兴趣、天气或路线位置补充安排。",
+      "personas": [
+        "urban",
+        "photography",
+        "couple",
+        "lazy"
+      ],
+      "tags": [
+        "西关",
+        "水岸",
+        "老城"
+      ],
+      "suggestedDuration": "2-3小时",
+      "bestTime": "下午或傍晚",
+      "indoorFriendly": false,
+      "reservationRequired": false,
+      "reservationNote": null,
+      "coverImageUrl": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "publicationStatus": "draft",
+      "sourceKind": "editorial_research_osm",
+      "version": 1,
+      "createdAt": "2026-08-09T14:33:49.563Z",
+      "updatedAt": "2026-08-09T14:37:16.762Z",
+      "sources": [
+        {
+          "id": "guangzhou-spot-12-source-amap",
+          "title": "高德地图待核验：荔枝湾景区",
+          "url": "https://www.amap.com/search?query=%E8%8D%94%E6%9E%9D%E6%B9%BE%E6%99%AF%E5%8C%BA",
+          "sourceName": "高德地图",
+          "checkedAt": "2026-08-09T14:33:49.563Z",
+          "createdAt": "2026-08-09T14:33:49.563Z"
+        },
+        {
+          "id": "guangzhou-spot-12-source-osm",
+          "title": "OpenStreetMap 地理编码：荔枝湾景区, 荔枝湾街, 逢源街道, 荔湾区, 广州市, 广东省, 510140, 中国",
+          "url": "https://www.openstreetmap.org/?mlat=23.1237347&mlon=113.2312728#map=17/23.1237347/113.2312728",
+          "sourceName": "OpenStreetMap contributors / Nominatim",
+          "checkedAt": "2026-08-09T14:37:16.762Z",
+          "createdAt": "2026-08-09T14:37:16.762Z"
+        }
+      ]
+    }
+  ]
+}

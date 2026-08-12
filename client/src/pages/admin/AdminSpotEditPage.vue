@@ -43,6 +43,7 @@ const backQuery = computed<Record<string, string>>(() => {
 const backToList = computed(() => ({ path: '/admin/spots', query: backQuery.value }))
 
 const error = ref('')
+const saveNotice = ref('')
 const saving = ref(false)
 const verifying = ref(false)
 const dirty = ref(false)
@@ -115,6 +116,7 @@ function payload() {
 async function save() {
   saving.value = true
   error.value = ''
+  saveNotice.value = ''
   try {
     if (isNew.value) {
       const row = await createSpot(payload())
@@ -124,6 +126,8 @@ async function save() {
       const { id, publicationStatus, ...changes } = payload()
       fill(await updateSpot(form.id, { ...changes, ...(publicationStatus === 'published' ? {} : { publicationStatus }), expectedVersion: form.version }))
     }
+    saveNotice.value = '编辑稿保存成功'
+    window.setTimeout(() => { void router.replace(backToList.value) }, 900)
   } catch (caught: unknown) {
     error.value = caught instanceof Error ? caught.message : '地点保存失败'
   } finally {
@@ -166,6 +170,10 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
 
 <template>
   <section>
+    <div v-if="saving" class="admin-save-progress" role="status" aria-label="正在保存编辑稿"><span /></div>
+    <div v-if="saveNotice" class="admin-save-success-overlay" role="status" aria-live="polite">
+      <div class="admin-save-success-card">✓ <span>{{ saveNotice }}</span></div>
+    </div>
     <AdminPageHeader
       eyebrow="Place Dossier"
       :title="isNew ? '新增地点档案' : `编辑 ${form.name}`"
@@ -275,4 +283,11 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
 <style scoped>
 label { @apply text-sm font-semibold text-[var(--admin-ink)]; }
 .check-field { @apply flex min-h-11 items-center gap-2 rounded-lg border border-[var(--admin-line)] bg-[var(--admin-surface-muted)] px-3; }
+.admin-save-progress { position: fixed; top: 0; right: 0; left: 0; z-index: 60; height: 3px; overflow: hidden; background: rgba(239, 187, 167, 0.35); }
+.admin-save-progress span { display: block; width: 38%; height: 100%; border-radius: 999px; background: var(--admin-accent); animation: admin-save-progress 1.1s ease-in-out infinite; }
+.admin-save-success-overlay { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; pointer-events: none; background: rgba(55, 42, 31, 0.06); }
+.admin-save-success-card { display: flex; min-width: 260px; align-items: center; justify-content: center; gap: 10px; border: 1px solid #b9ddc5; border-radius: 16px; background: rgba(247, 255, 249, 0.97); box-shadow: 0 20px 50px rgba(55, 42, 31, 0.2); color: #287649; font-size: 18px; font-weight: 700; padding: 18px 24px; animation: admin-save-success-in 0.2s ease-out; }
+@keyframes admin-save-progress { 0% { transform: translateX(-120%); } 50% { transform: translateX(180%); } 100% { transform: translateX(300%); } }
+@keyframes admin-save-success-in { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (max-width: 640px) { .admin-save-success-card { min-width: 0; margin: 16px; padding: 16px 20px; font-size: 16px; } }
 </style>
