@@ -348,7 +348,7 @@ function handleStart() {
     ? coords.value
     : city.center
   router.push({
-    name: 'city',
+    name: 'explore',
     query: {
       city: city.name,
       lat: String(center.lat),

@@ -35,7 +35,7 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homePage).toContain('spot.coverImageUrl')
     expect(homePage).toContain('distanceMeters')
     // CTA uses existing city route.
-    expect(homePage).toContain("name: 'city'")
+    expect(homePage).toContain("name: 'explore'")
     // Browser geolocation keeps the user's actual position; manual city
     // selection falls back to the curated city's representative center.
     expect(homePage).toContain('const center = coords.value && !isMock.value')

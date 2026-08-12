@@ -24,7 +24,7 @@ describe('V0.4 city swipe-confirmation UI contracts', () => {
     expect(homePage).toContain('const center = coords.value && !isMock.value')
     expect(homePage).toContain("lat: String(center.lat)")
     expect(homePage).toContain("lng: String(center.lng)")
-    expect(homePage).toContain("name: 'city'")
+    expect(homePage).toContain("name: 'explore'")
   })
 
   it('lets users accept or skip places via the swipe deck, adding accepted ones to today plan', () => {

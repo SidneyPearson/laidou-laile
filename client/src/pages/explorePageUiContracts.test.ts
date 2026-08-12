@@ -7,7 +7,7 @@ import homePage from './HomePage.vue?raw'
 describe('ExplorePage browse experience contracts', () => {
   it('uses a dedicated explore route without replacing the swipe flow', () => {
     expect(router).toContain("path: '/explore'")
-    expect(router).toContain("path: '/city'")
+    expect(router).toContain("path: '/city', redirect: { name: 'explore' }")
     expect(homePage).toContain("router.push({ name: 'explore' })")
   })
 
