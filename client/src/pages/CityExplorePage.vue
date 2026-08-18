@@ -696,10 +696,10 @@ const routeList = computed(() =>
 
 /* ---------- mode card ---------- */
 .mode {
-  margin-top: 26px;
-  padding: 18px 18px 20px;
+  margin-top: 14px;
+  padding: 13px 16px 15px;
   border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 28px;
+  border-radius: 22px;
   background: linear-gradient(135deg, rgba(5, 10, 17, 0.78), rgba(12, 18, 28, 0.70));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -710,7 +710,7 @@ const routeList = computed(() =>
 .mode-top {
   position: relative;
   z-index: 2;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -720,12 +720,12 @@ const routeList = computed(() =>
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px;
+  padding: 6px 10px;
   border: 1px solid rgba(201, 255, 31, 0.38);
   border-radius: 999px;
   background: rgba(201, 255, 31, 0.06);
   color: var(--lime);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 .mode-switch {
@@ -734,7 +734,7 @@ const routeList = computed(() =>
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
-  padding: 7px 12px;
+  padding: 6px 11px;
   border-radius: 999px;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
@@ -745,8 +745,8 @@ const routeList = computed(() =>
 .mode h1 {
   position: relative;
   z-index: 2;
-  margin: 14px 0 8px;
-  font-size: 31px;
+  margin: 12px 0 7px;
+  font-size: 28px;
   letter-spacing: -1px;
   line-height: 1.1;
   color: var(--text);
@@ -756,9 +756,9 @@ const routeList = computed(() =>
   z-index: 2;
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.6;
-  max-width: 300px;
+  font-size: 11px;
+  line-height: 1.55;
+  max-width: 100%;
 }
 .mode-count {
   color: var(--lime);
@@ -766,9 +766,9 @@ const routeList = computed(() =>
 .mode-note {
   position: relative;
   z-index: 2;
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-radius: 12px;
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 196, 31, 0.25);
   background: rgba(255, 196, 31, 0.07);
   color: rgba(255, 220, 130, 0.85);
@@ -778,7 +778,7 @@ const routeList = computed(() =>
 
 /* ---------- confirm head ---------- */
 .confirm-head {
-  margin-top: 28px;
+  margin-top: 12px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -786,13 +786,13 @@ const routeList = computed(() =>
 }
 .confirm-head h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   color: var(--text);
 }
 .confirm-head p {
-  margin: 5px 0 0;
+  margin: 4px 0 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
 }
 .progress {
   font-size: 12px;
@@ -801,14 +801,14 @@ const routeList = computed(() =>
 }
 .progress b {
   color: var(--lime);
-  font-size: 18px;
+  font-size: 17px;
 }
 
 /* ---------- swipe deck ---------- */
 .stack-wrap {
   position: relative;
-  height: 442px;
-  margin-top: 14px;
+  height: 408px;
+  margin-top: 8px;
   perspective: 1200px;
 }
 .card {
@@ -817,8 +817,8 @@ const routeList = computed(() =>
   right: 0;
   margin: auto;
   width: 100%;
-  height: 422px;
-  border-radius: 28px;
+  height: 388px;
+  border-radius: 26px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: #0a1018;
@@ -902,9 +902,9 @@ const routeList = computed(() =>
 }
 .card-body {
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 18px;
+  left: 16px;
+  right: 16px;
+  bottom: 13px;
   z-index: 4;
 }
 .card-body h3 {
@@ -980,7 +980,7 @@ const routeList = computed(() =>
   grid-template-columns: 72px 1fr 72px;
   align-items: center;
   gap: 14px;
-  margin-top: 10px;
+  margin-top: 4px;
 }
 .action-round {
   width: 62px;
@@ -1271,13 +1271,13 @@ const routeList = computed(() =>
     padding-right: 14px;
   }
   .mode h1 {
-    font-size: 28px;
+    font-size: 25px;
   }
   .stack-wrap {
-    height: 430px;
+    height: 396px;
   }
   .card {
-    height: 410px;
+    height: 376px;
   }
 }
 </style>

@@ -292,15 +292,43 @@ function downloadBlob(url: string, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
 }
 
+/** 尝试走系统分享（Web Share API，带图片文件）。返回 true 表示已走分享面板。 */
+async function trySystemShare(blob: Blob, url: string, filename: string): Promise<boolean> {
+  if (typeof File === 'undefined') return false
+  const file = new File([blob], filename, { type: 'image/png' })
+  const nav = navigator as Navigator & {
+    canShare?: (data: { files: File[] }) => boolean
+    share?: (data: { files: File[]; title?: string; text?: string }) => Promise<void>
+  }
+  if (!nav.share || typeof nav.canShare !== 'function' || !nav.canShare({ files: [file] })) return false
+  await nav.share({
+    files: [file],
+    title: '今日城市票根',
+    text: `来都来了 · ${props.city || ''} 今天没有白来`,
+  })
+  URL.revokeObjectURL(url)
+  return true
+}
+
 async function saveTicket() {
   saving.value = true
   saveMessage.value = ''
   saveFailed.value = false
   try {
-    const { url, filename } = await generateTicket()
+    const { blob, url, filename } = await generateTicket()
+    // 移动端优先走系统分享面板：用户选「存储图像」即可直接存入系统相册。
+    if (await trySystemShare(blob, url, filename)) {
+      saveMessage.value = '已打开系统面板：选择「存储图像」即可存入相册。'
+      return
+    }
     downloadBlob(url, filename)
     saveMessage.value = '票根图片已开始下载，请在浏览器下载记录中查看。'
-  } catch {
+  } catch (error) {
+    // 用户取消系统面板不算失败
+    if ((error as Error)?.name === 'AbortError') {
+      saveMessage.value = ''
+      return
+    }
     saveFailed.value = true
     saveMessage.value = '保存失败，请稍后重试；也可以长按预览截图保存。'
   } finally {
@@ -308,7 +336,7 @@ async function saveTicket() {
   }
 }
 
-/** 走系统分享（Web Share API），不支持时降级为下载。 */
+/** 分享票根：优先系统分享，不支持时降级为下载。 */
 async function shareTicket() {
   if (saving.value) return
   saving.value = true
@@ -316,33 +344,17 @@ async function shareTicket() {
   saveFailed.value = false
   try {
     const { blob, url, filename } = await generateTicket()
-    if (typeof File === 'undefined') {
-      downloadBlob(url, filename)
-      saveMessage.value = '当前环境不支持系统分享，已改为下载图片。'
-      return
-    }
-    const file = new File([blob], filename, { type: 'image/png' })
-    const nav = navigator as Navigator & {
-      canShare?: (data: { files: File[] }) => boolean
-      share?: (data: { files: File[]; title?: string; text?: string }) => Promise<void>
-    }
-    if (nav.share && typeof nav.canShare === 'function' && nav.canShare({ files: [file] })) {
-      await nav.share({
-        files: [file],
-        title: '今日城市票根',
-        text: `来都来了 · ${props.city || ''} 今天没有白来`,
-      })
-      URL.revokeObjectURL(url)
+    if (await trySystemShare(blob, url, filename)) {
       burstConfetti(document.querySelector<HTMLElement>('.ticket-preview'), {
         count: 32,
         size: [6, 13],
         duration: 1300,
       })
       saveMessage.value = '分享成功，今天没有白来。'
-    } else {
-      downloadBlob(url, filename)
-      saveMessage.value = '当前环境不支持系统分享，已改为下载图片。'
+      return
     }
+    downloadBlob(url, filename)
+    saveMessage.value = '当前环境不支持系统分享，已改为下载图片。'
   } catch (error) {
     // 用户取消系统分享不算失败
     if ((error as Error)?.name === 'AbortError') {
