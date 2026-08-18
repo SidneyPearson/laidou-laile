@@ -166,6 +166,17 @@ function confirmClearTodayPlan() {
   }, 1800)
 }
 
+/** 票根保存成功后：关掉弹层回到页面主体，并用顶部横幅确认「已存入相册」。 */
+function onTicketSaved() {
+  showTicket.value = false
+  clearNotice.value = '票根已存入系统相册，今天没有白来'
+  if (clearNoticeTimer) clearTimeout(clearNoticeTimer)
+  clearNoticeTimer = setTimeout(() => {
+    clearNotice.value = ''
+    clearNoticeTimer = null
+  }, 2600)
+}
+
 function completeCurrent() {
   const spot = currentSpot.value
   if (!spot || !journey.completeSpot(spot.id, planIds.value)) return
@@ -603,6 +614,7 @@ onBeforeUnmount(() => {
         :spots="completedSpots"
         :duration="durationLabel"
         @close="showTicket = false"
+        @saved="onTicketSaved"
       />
     </Transition>
 

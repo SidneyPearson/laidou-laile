@@ -10,7 +10,7 @@ const props = defineProps<{
   duration: string
 }>()
 
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: []; saved: [] }>()
 const saving = ref(false)
 const saveMessage = ref('')
 const saveFailed = ref(false)
@@ -317,8 +317,11 @@ async function saveTicket() {
   try {
     const { blob, url, filename } = await generateTicket()
     // 移动端优先走系统分享面板：用户选「存储图像」即可直接存入系统相册。
+    // 系统面板 resolve 即代表用户选了某个 action（AbortedError 才算取消），
+    // 视作保存成功，1.2s 后让父组件关闭 sheet 并展示「已存入相册」提示。
     if (await trySystemShare(blob, url, filename)) {
-      saveMessage.value = '已打开系统面板：选择「存储图像」即可存入相册。'
+      saveMessage.value = '✓ 已存入相册，今天没有白来'
+      window.setTimeout(() => emit('saved'), 1200)
       return
     }
     downloadBlob(url, filename)
@@ -326,7 +329,7 @@ async function saveTicket() {
   } catch (error) {
     // 用户取消系统面板不算失败
     if ((error as Error)?.name === 'AbortError') {
-      saveMessage.value = ''
+      saveMessage.value = '已取消保存'
       return
     }
     saveFailed.value = true
