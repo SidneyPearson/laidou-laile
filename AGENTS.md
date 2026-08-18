@@ -1,13 +1,13 @@
 # AGENTS.md
 
 > 给 AI 编程助手的交接文档。新对话开始时先读这份，再动代码。
-> 最后更新：2026-08-01（已移除实时 LLM 规划栈；分支 `codex/route-quality-completion`）。
+> 最后更新：2026-08-13（公开端已切换到 D1 策展数据；分支 `codex/today-journey-release`）。
 
 ---
 
 ## 1. 项目一句话
 
-**「来都来了」** — 城市灵感 H5：用户选城市/定位 → 浏览**后台策展**的城市灵感地点（静态 seed + 高德校验，逐步迁到 D1）→
+**「来都来了」** — 城市灵感 H5：用户选城市/定位 → 浏览 D1 中**后台策展且已通过高德验证**的城市灵感地点 →
 加入「今日计划」并按距离给出参考顺序。
 后台是「城市内容编辑部」，编辑城市档案、地点台账，并按 7/14/30 天周期做城市内容复核。
 
@@ -67,7 +67,7 @@ Wrangler 按全文件名追踪，已在本地与历史环境应用过，不要�
 main.ts / App.vue / router/index.ts   # hash history
 pages/
   HomePage.vue            # 首页：定位/选城市 → 进入城市灵感
-  CityExplorePage.vue     # 城市灵感（浏览策展地点）
+  ExplorePage.vue         # 城市灵感（浏览 D1 策展地点）
   TodayPlanPage.vue       # 今日计划（已选地点 + 参考顺序）
   admin/
     AdminLoginPage.vue
@@ -87,13 +87,13 @@ assets/styles/main.css        # 含 .admin-shell 作用域的后台设计系统�
 
 ### `server/src/`
 ```
-worker.ts                       # 入口：路由装配 + initLlmClient
+worker.ts                       # 入口：路由装配
 config/env.ts                   # Zod 校验的 Bindings
 routes/
   planRoutes.ts                 # POST /api/plan/suggest-order — 仅距离排序，无 LLM
   exploreRoutes.ts              # POST /api/explore/recommend — 城市灵感
   cityRoutes.ts                 # GET /api/city/context — 反查城市+天气
-  recommendationRoutes.ts       # GET /api/recommendations/cities — D1 已发布城市（当前前台未接）
+  recommendationRoutes.ts       # GET /api/recommendations/cities — 首页已发布城市/地点
   adminAuthRoutes.ts            # 登录/登出/会话（限流在 admin_login_attempts 表）
   adminRoutes.ts                # 城市/地点 CRUD、dashboard、发布
   adminRefreshRoutes.ts         # 城市复核五步工作流
@@ -101,10 +101,8 @@ routes/
 services/
   poiQuality.ts                 # POI 质量硬筛（拒绝内部/不对外开放等），explore 与 admin 共用
   explore/
-    exploreService.ts           # 城市灵感编排：静态 seed → persona 排序 → 高德校验
-    hotspotRepository.ts        # 读 cities/{shanghai,beijing,hangzhou} 静态 seed
-    hotspotVerifier.ts          # 调 amap/placeVerifier 校验坐标/图片
-    personaRanker.ts            # 按 persona 排序（纯函数）
+    exploreService.ts           # D1 已发布地点 → persona/天气/距离排序
+    d1Source.ts                 # D1 地点转 H5 模型、去重与分页
     suggestOrder.ts             # 「帮我顺一下」最近邻距离排序（纯确定性，不调 LLM）
   amap/
     client.ts                   # 高德 Web Service fetch 封装 + 超时
@@ -123,6 +121,9 @@ auth/adminCrypto.ts             # PBKDF2 hash、HMAC session token
 - `0002_admin_login_attempts.sql` — 登录限流
 - `0002_weekly_city_refresh.sql` — cities 加 review_interval_days、refresh_runs/candidates 表
 - `0003_shanghai_official_covers.sql` — 上海封面数据
+- `0004`–`0007` — 首页策展地点与画像卡数据
+- `0008_public_spot_completeness.sql` — 补齐公开地点区县/停留时长
+- `0009_bump_enriched_spot_versions.sql` — 数据补齐后推进乐观锁版本
 
 `server/seeds/three-cities.sql` 全是 `draft + unverified`，线上跑也不会直接曝光。
 
@@ -135,20 +136,20 @@ auth/adminCrypto.ts             # PBKDF2 hash、HMAC session token
 ```
 HomePage（定位/选城市）
   └─ GET /api/city/context         reverseGeocode + 高德天气，确认城市/adcode
-  └─ CityExplorePage
+  └─ ExplorePage
        └─ POST /api/explore/recommend
-             exploreService：读 services/explore/cities/*.ts 静态 seed
-               → personaRanker 排序 → hotspotVerifier（amap/placeVerifier.verifyPlace 补坐标/图片）
+             exploreService：读取 D1 已发布且已验证地点
+               → persona / 天气 / 距离排序 → 去重与分页
        └─ 选中地点 → useTodayPlan（localStorage，key laidou-v03-today-plan）
   └─ TodayPlanPage
        └─ POST /api/plan/suggest-order   suggestOrder.ts 最近邻距离排序，纯确定性，不调 LLM/不搜索
 ```
 
 - 后端**唯一**需要的第三方 key 是 `AMAP_WEB_API_KEY`（`LLM_API_KEY` / `TAVILY_API_KEY` 已移除）。
-- `verifyPlace` 在 `services/amap/placeVerifier.ts`：高德 text search + 名称相似度 + Haversine，
-  内部用 `services/poiQuality.ts` 的 `filterUsablePois` 剔除内部/不对外开放地点。admin 与 explore 共用。
-- D1 已发布城市数据走 `routes/recommendationRoutes.ts` → `repositories/d1CurationRepository`，
-  目前前台尚未接入（预留），explore 仍读静态 seed。
+- `verifyPlace` 在 `services/amap/placeVerifier.ts`：后台发布前以高德 text search + 名称相似度 + Haversine 验证地点，
+  并用 `services/poiQuality.ts` 的 `filterUsablePois` 剔除内部/不对外开放地点。公开请求不实时搜索 POI。
+- 首页城市数据走 `routes/recommendationRoutes.ts`，探索数据走 `routes/exploreRoutes.ts`；二者都读取 D1。
+- 发布门禁要求 verified、POI ID、坐标、区县、建议停留时长、推荐理由和分级理由完整。
 
 ---
 
@@ -199,7 +200,7 @@ HomePage（定位/选城市）
 ## 7. 工作流约定（用户明确偏好）
 
 - **改代码不提交**。只有用户明确说"提交"时才 `git add/commit/push` 并部署。
-- 当前在分支 `codex/route-quality-completion`，工作树有大量跨路线质量与后台的未提交改动，
+- 当前在分支 `codex/today-journey-release`，工作树可能有未提交改动，
   切分支/reset/checkout 前先和用户确认，避免覆盖无关工作。
 - 不要用 `git stash -u` 之类的破坏性操作清理工作树。
 - 代码风格：
@@ -216,7 +217,7 @@ HomePage（定位/选城市）
 
 - 2026-08-01：移除实时 LLM 规划栈（见第 1 节警示），保留后台策展 + 城市灵感/今日计划；改动尚未提交/部署。
 - 后台视觉与交互已完成「城市内容编辑部」重构（5 个 admin 组件 + 6 个页面重写 + 后端 409 状态保护 + 测试扩展）。
-- 城市灵感目前读 `services/explore/cities/*.ts` 静态 seed；后续方向是迁到 D1 已发布 spots（`recommendationRoutes` 已预留）。
+- 城市灵感和首页推荐均已读取 D1 已发布 spots；本地静态地点仅用于请求失败时的不可操作演示降级。
 - 生产 D1 远程是空的（0 表），未执行 migrate/seed；Pages `DB` binding 是否已在控制台配置也需要用户确认。
 - 远程 secrets 尚未配置。
 
@@ -241,6 +242,6 @@ HomePage（定位/选城市）
 1. 先 `git status` 看工作树，别误动未提交改动。
 2. 读本文件第 4 节（公开 H5 流程）。实时 LLM 规划栈已删除，不要再找 `routeGenerator`/`planner/`。
 3. 涉及后台：看 `client/src/assets/styles/main.css` 里 `.admin-shell` 段 + `client/src/admin/types.ts` 的 label map。
-4. 涉及城市灵感：从 `server/src/routes/exploreRoutes.ts` → `services/explore/exploreService.ts` 进。
+4. 涉及城市灵感：从 `server/src/routes/exploreRoutes.ts` → `services/explore/exploreService.ts` → `d1Source.ts` 进。
 5. 涉及 DB：先看 `server/migrations/` 最新的 SQL，再看 `server/src/repositories/` 对应仓库方法。
 6. 不要自行 commit / push / deploy，等用户明确说"提交"。

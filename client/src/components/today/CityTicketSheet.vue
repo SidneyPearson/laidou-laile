@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import type { TodaySpot } from '../../types/todayPlan'
+import { burstConfetti, prefersReducedMotion } from '../../utils/delight'
 
 const props = defineProps<{
   city: string
@@ -11,6 +12,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [] }>()
 const saving = ref(false)
+const saveMessage = ref('')
+const saveFailed = ref(false)
 const fanSpots = computed(() => props.spots.slice(0, 6))
 const staticMapUrl = computed(() => {
   const points = props.spots
@@ -40,13 +43,34 @@ function fanStyle(index: number, total: number) {
   const offset = index - (total - 1) / 2
   const spread = total <= 3 ? 46 : 28
   const angle = total <= 3 ? 10 : 7.5
+  // wrap 已经做了 -50% 居中，inner 不再重复；这里只做扇形的相对偏移和倾斜。
   return {
-    transform: `translateX(calc(-50% + ${offset * spread}px)) translateY(${Math.abs(offset) * 7}px) rotate(${offset * angle}deg)`,
+    transform: `translateX(${offset * spread}px) translateY(${Math.abs(offset) * 7}px) rotate(${offset * angle}deg)`,
     // Later stops stack above earlier ones: card 3 covers card 2, instead of
     // the middle card always floating above both sides.
     zIndex: String(index + 1),
   }
 }
+
+/** 入场动画在 .fan-card-wrap 上做位置/scale/rotate 动效。
+ *  wrap 已经居中（translateX(-50%)），inner 的 fanStyle 只需做扇形相对偏移；
+ *  每张卡用 index 做进场 delay 和起始水平偏移，依次从地图区域附近「冒」下来到扇形位置。 */
+const entering = ref(false)
+function wrapStyle(index: number, total: number) {
+  const offset = index - (total - 1) / 2
+  return {
+    '--enter-delay': `${(index * 0.16).toFixed(2)}s`,
+    '--enter-x': `${(offset * 26).toFixed(0)}px`,
+  } as Record<string, string>
+}
+onMounted(() => {
+  // 关闭动效的用户直接落定，无进场；其它用户下一帧触发入场。
+  if (prefersReducedMotion()) {
+    entering.value = true
+    return
+  }
+  requestAnimationFrame(() => { entering.value = true })
+})
 
 function hideBrokenImage(event: Event) {
   ;(event.currentTarget as HTMLImageElement).style.display = 'none'
@@ -151,14 +175,12 @@ function drawCoverCard(
   ctx.restore()
 }
 
-async function saveTicket() {
-  saving.value = true
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1080
-    canvas.height = 1600
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+async function generateTicket(): Promise<{ blob: Blob; url: string; filename: string }> {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1080
+  canvas.height = 1600
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas is unavailable')
     const [coverImages, mapImage] = await Promise.all([
       Promise.all(fanSpots.value.map(loadCover)),
       loadImageUrl(staticMapUrl.value),
@@ -255,13 +277,80 @@ async function saveTicket() {
     ctx.fillText('本票仅纪念快乐，不作为报销凭证', 1004, 1533)
 
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
-    if (!blob) return
+    if (!blob) throw new Error('Image could not be encoded')
     const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `${props.city || '城市'}-今日票根.png`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    return { blob, url, filename: `${props.city || '城市'}-今日票根.png` }
+}
+
+function downloadBlob(url: string, filename: string) {
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
+}
+
+async function saveTicket() {
+  saving.value = true
+  saveMessage.value = ''
+  saveFailed.value = false
+  try {
+    const { url, filename } = await generateTicket()
+    downloadBlob(url, filename)
+    saveMessage.value = '票根图片已开始下载，请在浏览器下载记录中查看。'
+  } catch {
+    saveFailed.value = true
+    saveMessage.value = '保存失败，请稍后重试；也可以长按预览截图保存。'
+  } finally {
+    saving.value = false
+  }
+}
+
+/** 走系统分享（Web Share API），不支持时降级为下载。 */
+async function shareTicket() {
+  if (saving.value) return
+  saving.value = true
+  saveMessage.value = ''
+  saveFailed.value = false
+  try {
+    const { blob, url, filename } = await generateTicket()
+    if (typeof File === 'undefined') {
+      downloadBlob(url, filename)
+      saveMessage.value = '当前环境不支持系统分享，已改为下载图片。'
+      return
+    }
+    const file = new File([blob], filename, { type: 'image/png' })
+    const nav = navigator as Navigator & {
+      canShare?: (data: { files: File[] }) => boolean
+      share?: (data: { files: File[]; title?: string; text?: string }) => Promise<void>
+    }
+    if (nav.share && typeof nav.canShare === 'function' && nav.canShare({ files: [file] })) {
+      await nav.share({
+        files: [file],
+        title: '今日城市票根',
+        text: `来都来了 · ${props.city || ''} 今天没有白来`,
+      })
+      URL.revokeObjectURL(url)
+      burstConfetti(document.querySelector<HTMLElement>('.ticket-preview'), {
+        count: 32,
+        size: [6, 13],
+        duration: 1300,
+      })
+      saveMessage.value = '分享成功，今天没有白来。'
+    } else {
+      downloadBlob(url, filename)
+      saveMessage.value = '当前环境不支持系统分享，已改为下载图片。'
+    }
+  } catch (error) {
+    // 用户取消系统分享不算失败
+    if ((error as Error)?.name === 'AbortError') {
+      saveMessage.value = ''
+      return
+    }
+    saveFailed.value = true
+    saveMessage.value = '分享失败，请稍后重试；也可以长按预览截图保存。'
   } finally {
     saving.value = false
   }
@@ -304,19 +393,25 @@ async function saveTicket() {
           <div
             v-for="(spot, index) in fanSpots"
             :key="spot.id"
-            class="fan-card absolute bottom-2 left-1/2 h-[154px] w-[108px] origin-bottom overflow-hidden rounded-[15px] border border-white/70 bg-gradient-to-br from-emerald-800 to-stone-950 shadow-[0_12px_30px_rgba(0,0,0,.48)]"
-            :style="fanStyle(index, fanSpots.length)"
+            class="fan-card-wrap"
+            :class="{ 'is-entering': entering }"
+            :style="wrapStyle(index, fanSpots.length)"
           >
-            <img
-              v-if="spot.coverImageUrl || spot.coverImageFallbackUrl"
-              :src="spot.coverImageUrl || spot.coverImageFallbackUrl"
-              :alt="spot.name"
-              class="absolute inset-0 h-full w-full object-cover"
-              @error="hideBrokenImage"
+            <div
+              class="fan-card relative h-[154px] w-[108px] origin-bottom overflow-hidden rounded-[15px] border border-white/70 bg-gradient-to-br from-emerald-800 to-stone-950 shadow-[0_12px_30px_rgba(0,0,0,.48)]"
+              :style="fanStyle(index, fanSpots.length)"
             >
-            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/5 to-black/10" />
-            <span class="absolute left-2 top-2 grid h-5 w-5 place-items-center rounded-full bg-lime-300 text-[9px] font-black text-stone-900">✓</span>
-            <p class="absolute inset-x-2 bottom-2 line-clamp-2 text-[9px] font-bold leading-3 text-white">{{ spot.name }}</p>
+              <img
+                v-if="spot.coverImageUrl || spot.coverImageFallbackUrl"
+                :src="spot.coverImageUrl || spot.coverImageFallbackUrl"
+                :alt="spot.name"
+                class="absolute inset-0 h-full w-full object-cover"
+                @error="hideBrokenImage"
+              >
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/5 to-black/10" />
+              <span class="absolute left-2 top-2 grid h-5 w-5 place-items-center rounded-full bg-lime-300 text-[9px] font-black text-stone-900">✓</span>
+              <p class="absolute inset-x-2 bottom-2 line-clamp-2 text-[9px] font-bold leading-3 text-white">{{ spot.name }}</p>
+            </div>
           </div>
         </div>
 
@@ -330,19 +425,71 @@ async function saveTicket() {
         </div>
       </div>
 
-      <button class="btn-primary mt-4 w-full py-3.5 text-sm font-bold" :disabled="saving" @click="saveTicket">
-        {{ saving ? '正在生成…' : '保存票根图片' }}
-      </button>
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <button class="btn-primary py-3.5 text-sm font-bold" :disabled="saving" aria-describedby="ticket-save-status" @click="saveTicket">
+          {{ saving ? '正在生成…' : '保存图片' }}
+        </button>
+        <button class="rounded-2xl bg-stone-900 py-3.5 text-sm font-bold text-lime-300 active:scale-[0.99]" :disabled="saving" @click="shareTicket">
+          {{ saving ? '正在生成…' : '分享票根' }}
+        </button>
+      </div>
+      <p
+        id="ticket-save-status"
+        class="mt-2 min-h-4 text-center text-[10px]"
+        :class="saveFailed ? 'text-red-600' : 'text-emerald-700'"
+        aria-live="polite"
+      >
+        {{ saveMessage }}
+      </p>
     </section>
   </div>
 </template>
 
 <style scoped>
+/* 票根预览淡入：给整张预览一个干净的舞台。 */
+.ticket-preview {
+  animation: ticket-fadein 480ms ease-out both;
+}
+@keyframes ticket-fadein {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 打卡点扇形入场：默认从地图区域附近（translateY 负值）缩在视觉外，挂 is-entering 后
+   依次落到 fan-stage 底部的扇形位置。translateX(-50%) 让 wrap 在父元素水平居中。 */
+.fan-card-wrap {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  opacity: 0;
+  transform: translateX(calc(-50% + var(--enter-x, 0px))) translateY(-180px) scale(0.6) rotate(-6deg);
+  will-change: transform, opacity;
+}
+.fan-card-wrap.is-entering {
+  animation: fan-rise 720ms cubic-bezier(0.2, 1, 0.3, 1) both;
+  animation-delay: var(--enter-delay, 0s);
+}
+@keyframes fan-rise {
+  0% { opacity: 0; transform: translateX(calc(-50% + var(--enter-x, 0px))) translateY(-180px) scale(0.6) rotate(-6deg); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1) rotate(0); }
+}
+
 .fan-card {
   transition: transform 0.25s ease, filter 0.25s ease;
 }
 
 .fan-stage:hover .fan-card {
   filter: saturate(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-preview,
+  .fan-card-wrap.is-entering {
+    animation: none !important;
+  }
+  .fan-card-wrap {
+    opacity: 1 !important;
+    transform: translateX(-50%) !important;
+  }
 }
 </style>

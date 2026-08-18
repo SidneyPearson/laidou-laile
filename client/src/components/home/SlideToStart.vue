@@ -38,7 +38,7 @@ function recomputeMax() {
   const knob = track.value.querySelector('.slide-knob') as HTMLElement | null
   const knobW = knob ? knob.offsetWidth : 56
   maxOffset = track.value.clientWidth - padX - knobW
-  if (!dragging.value) offset.value = 0
+  if (!dragging.value) offset.value = Math.min(offset.value, Math.max(0, maxOffset))
 }
 
 function onPointerDown(e: PointerEvent) {
@@ -74,15 +74,47 @@ function finishDrag() {
   dragging.value = false
   pointerId = null
   if (maxOffset > 0 && offset.value >= maxOffset * TRIGGER_RATIO) {
-    unlocked.value = true
-    offset.value = maxOffset
-    hapticSuccess()
-    emit('unlock')
+    completeUnlock()
     return
   }
   // spring back
   thresholdReached.value = false
   offset.value = 0
+}
+
+function completeUnlock() {
+  if (props.disabled || unlocked.value) return
+  unlocked.value = true
+  dragging.value = false
+  pointerId = null
+  thresholdReached.value = true
+  offset.value = maxOffset
+  hapticSuccess()
+  emit('unlock')
+}
+
+function onKeyDown(event: KeyboardEvent) {
+  if (props.disabled || unlocked.value) return
+  recomputeMax()
+  if (maxOffset <= 0) return
+
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'End') {
+    event.preventDefault()
+    completeUnlock()
+    return
+  }
+  if (event.key === 'Home') {
+    event.preventDefault()
+    offset.value = 0
+    thresholdReached.value = false
+    return
+  }
+  if (!['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown'].includes(event.key)) return
+  event.preventDefault()
+  const direction = event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : -1
+  offset.value = Math.min(maxOffset, Math.max(0, offset.value + maxOffset * 0.2 * direction))
+  thresholdReached.value = offset.value >= maxOffset * TRIGGER_RATIO
+  if (thresholdReached.value) completeUnlock()
 }
 
 function onPointerUp(e: PointerEvent) {
@@ -133,11 +165,14 @@ const hintText = () => {
       :class="{ 'slide-knob--ready': thresholdReached }"
       :style="{ transform: `translateX(${offset}px)` }"
       role="slider"
+      :tabindex="disabled || unlocked ? -1 : 0"
       :aria-valuemin="0"
       :aria-valuemax="100"
       :aria-valuenow="Math.round(progress() * 100)"
       aria-label="滑动开始探索"
       :aria-disabled="disabled || unlocked"
+      aria-keyshortcuts="ArrowRight ArrowUp End Enter Space"
+      @keydown="onKeyDown"
     >
       <svg v-if="!unlocked" class="slide-knob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 12h14M13 5l7 7-7 7" />
@@ -222,6 +257,11 @@ const hintText = () => {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   cursor: grab;
+}
+
+.slide-knob:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
 }
 
 .is-dragging .slide-knob {

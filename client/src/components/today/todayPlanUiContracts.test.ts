@@ -9,6 +9,8 @@ describe('user-curated today plan UI contracts', () => {
     expect(spotDetailSheet).toContain('就去这里')
     expect(spotDetailSheet).toContain('加入今天')
     expect(spotDetailSheet).toContain('已加入今天')
+    expect(spotDetailSheet).toContain(':disabled="!actionReady || inToday"')
+    expect(spotDetailSheet).not.toContain('再次点击“已加入今天”')
     expect(spotDetailSheet).not.toContain('围绕这里生成路线')
     expect(spotDetailSheet).not.toContain('2小时')
     expect(spotDetailSheet).toContain('暂不能导航或加入今天')
@@ -20,6 +22,9 @@ describe('user-curated today plan UI contracts', () => {
     expect(todayPlanMap).toContain("strokeStyle: 'dashed'")
     expect(todayPlanMap).toContain('只显示你加入的地点')
     expect(todayPlanMap).toContain('参考顺序')
+    expect(todayPlanMap).toContain('dragEnable: false')
+    expect(todayPlanMap).toContain('pointer-events-none')
+    expect(todayPlanMap).toContain('地图仅展示')
     expect(todayPlanMap).not.toContain('searchNearby')
   })
 

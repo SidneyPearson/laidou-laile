@@ -193,7 +193,7 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
             <label>名称<input v-model="form.name" required class="admin-input mt-1"></label>
             <label>高德搜索名称<input v-model="form.searchName" required class="admin-input mt-1"></label>
             <label>城市<select v-model="form.cityAdcode" required class="admin-input mt-1"><option v-for="city in cities" :key="city.adcode" :value="city.adcode">{{ city.name }} · {{ city.adcode }}</option><option v-if="!cities.some(city => city.adcode === form.cityAdcode)" :value="form.cityAdcode">{{ form.cityAdcode }}</option></select></label>
-            <label>区县<input v-model="form.district" class="admin-input mt-1"></label>
+            <label>区县（发布必填）<input v-model="form.district" class="admin-input mt-1"></label>
             <label>地址<input v-model="form.address" class="admin-input mt-1"></label>
             <label>经度<input v-model.number="form.lng" type="number" step="any" class="admin-input mt-1"></label>
             <label>纬度<input v-model.number="form.lat" type="number" step="any" class="admin-input mt-1"></label>
@@ -220,7 +220,7 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
           <div class="grid gap-4 md:grid-cols-2">
             <label>适用画像（逗号分隔）<input v-model="personasText" class="admin-input mt-1"></label>
             <label>标签（逗号分隔）<input v-model="tagsText" class="admin-input mt-1"></label>
-            <label>建议停留时间<input v-model="form.suggestedDuration" class="admin-input mt-1"></label>
+            <label>建议停留时间（发布必填）<input v-model="form.suggestedDuration" class="admin-input mt-1"></label>
             <label>推荐时段<input v-model="form.bestTime" class="admin-input mt-1"></label>
             <label class="check-field"><input v-model="form.indoorFriendly" type="checkbox" class="accent-primary-600">室内友好</label>
             <label class="check-field"><input v-model="form.reservationRequired" type="checkbox" class="accent-primary-600">需要预约</label>

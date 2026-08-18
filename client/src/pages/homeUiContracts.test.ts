@@ -57,9 +57,12 @@ describe('HomePage immersive redesign contracts', () => {
   })
 
   it('wires real persona images and the requested copy overrides', () => {
-    // Persona cards pull from homepageAssets, not pure gradients.
-    expect(personaSelector).toContain('homepageAssets')
+    // Persona cards render the configured image (repository resolves null to
+    // bundled artwork via personaImage); per-persona gradient is only a
+    // fallback when the image fails to load.
+    expect(personaSelector).toContain('card.imageUrl')
     expect(personaSelector).toContain('object-fit: cover')
+    expect(personaSelector).toContain('PERSONA_FALLBACK')
     // Copy overrides for the four image-backed personas live in the asset
     // registry (the repository consumes them via personaCardCopy).
     expect(homepageAssets).toContain('情侣约会')

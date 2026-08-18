@@ -56,6 +56,7 @@ const personaDisplayNames = ref(new Map<string, string>())
 /** Cards accepted so far (all actually added to todayPlan). */
 const selected = ref<InspirationSpot[]>([])
 const cardIndex = ref(0)
+const reviewedCount = ref(0)
 const finished = ref(false)
 const toast = ref('')
 const addError = ref('')
@@ -85,11 +86,9 @@ const weatherSummary = computed(() => {
   return `${weather.value.weather} · ${weather.value.temperature}℃`
 })
 const totalCount = computed(() => spots.value.length)
-const progressText = computed(() =>
-  cardIndex.value >= totalCount.value && totalCount.value > 0
-    ? `${selected.value.length}`
-    : `${selected.value.length} / ${totalCount.value}`,
-)
+const progressText = computed(() => totalCount.value > 0
+  ? `第 ${cardIndex.value + 1} / ${totalCount.value} · 已加入 ${todayPlan.count.value}`
+  : '0 / 0')
 const categoryLabel = (category: Exclude<ExploreCategory, 'all'>): string =>
   EXPLORE_CATEGORIES.find(item => item.id === category)?.name ?? '灵感推荐'
 
@@ -133,13 +132,16 @@ interface DeckItem {
   index: number
   layer: 'front' | 'back-1' | 'back-2'
 }
-const deck = computed<DeckItem[]>(() =>
-  spots.value.slice(cardIndex.value, cardIndex.value + 3).map((spot, offset) => ({
-    spot,
-    index: cardIndex.value + offset,
+const deck = computed<DeckItem[]>(() => {
+  if (spots.value.length === 0) return []
+  return Array.from({ length: Math.min(3, spots.value.length) }, (_, offset) => {
+    const index = (cardIndex.value + offset) % spots.value.length
+    return {
+    spot: spots.value[index],
+    index,
     layer: (offset === 0 ? 'front' : offset === 1 ? 'back-1' : 'back-2') as DeckItem['layer'],
-  })),
-)
+  }})
+})
 const frontStyle = computed(() => {
   if (flying.value || dragActive.value || Math.abs(dragX.value) > 0) {
     return { transform: `translateX(${dragX.value}px) rotate(${dragX.value / 18}deg)` }
@@ -179,6 +181,7 @@ function localFallback(): InspirationSpot[] {
 
 function resetSwipe() {
   cardIndex.value = 0
+  reviewedCount.value = 0
   finished.value = false
   // Keep the confirmation count aligned with the persisted Today Plan. The
   // previous empty reset made the header show a per-session count (for
@@ -198,16 +201,25 @@ async function loadRecommendations() {
   feedError.value = ''
 
   try {
-    const result = await fetchExploreRecommendations({
-      city: normalizeCityName(cityName.value),
-      adcode: adcode.value,
-      persona: persona.value,
-      category: 'all',
-      limit: 6,
-      isRainy: weather.value?.isRainy ?? false,
-    }, feedController.signal)
-    if (requestId !== feedRequestId) return
-    spots.value = result.spots
+    const all: InspirationSpot[] = []
+    let cursor: number | null = 0
+    let pages = 0
+    while (cursor !== null && pages < 20) {
+      const result = await fetchExploreRecommendations({
+        city: normalizeCityName(cityName.value),
+        adcode: adcode.value,
+        persona: persona.value,
+        category: 'all',
+        cursor,
+        limit: 6,
+        isRainy: weather.value?.isRainy ?? false,
+      }, feedController.signal)
+      if (requestId !== feedRequestId) return
+      all.push(...result.spots)
+      cursor = result.nextCursor
+      pages += 1
+    }
+    spots.value = [...new Map(all.map(spot => [spot.id, spot])).values()]
     usingFallback.value = false
   } catch (error) {
     if (requestId !== feedRequestId) return
@@ -299,7 +311,7 @@ function onCardCancel(event: PointerEvent) {
 }
 
 function swipe(type: 'add' | 'skip') {
-  const spot = spots.value[cardIndex.value]
+  const spot = spots.value[cardIndex.value % spots.value.length]
   if (!spot || finished.value || flying.value) return
 
   if (type === 'add') {
@@ -349,7 +361,11 @@ function swipe(type: 'add' | 'skip') {
   flyTimer = setTimeout(() => {
     flying.value = false
     dragX.value = 0
-    cardIndex.value += 1
+    reviewedCount.value += 1
+    cardIndex.value = (cardIndex.value + 1) % spots.value.length
+    if (reviewedCount.value % spots.value.length === 0) {
+      showToast('这一轮看完了，已从第一张继续推荐')
+    }
   }, 280)
 }
 
@@ -418,7 +434,7 @@ const routeList = computed(() =>
   selected.value.map((spot, index) => ({
     index: index + 1,
     name: spot.name,
-    stay: spot.suggestedDuration ? spot.suggestedDuration.replace(/^建议\s*/, '') : '约 90 分钟',
+    stay: spot.suggestedDuration ? spot.suggestedDuration.replace(/^建议\s*/, '') : '待补充',
   })),
 )
 </script>
@@ -462,7 +478,7 @@ const routeList = computed(() =>
           <h2>先确认今天想去的地方</h2>
           <p>左右滑动卡片，喜欢就加入今天</p>
         </div>
-        <div class="progress">已确认 <b>{{ progressText }}</b></div>
+        <div class="progress"><b>{{ progressText }}</b></div>
       </div>
 
       <div v-if="feedLoading" class="stack-wrap">
@@ -486,7 +502,7 @@ const routeList = computed(() =>
         <div v-else-if="!finished" class="stack-wrap swipe-deck">
           <article
             v-for="item in deck"
-            :key="item.spot.id"
+            :key="`${reviewedCount}-${item.layer}-${item.spot.id}`"
             class="card"
             :class="[item.layer, { dragging: dragActive && item.layer === 'front', flying: flying && item.layer === 'front' }]"
             :style="item.layer === 'front' ? frontStyle : undefined"
@@ -591,7 +607,7 @@ const routeList = computed(() =>
   overflow-x: hidden;
   background: linear-gradient(to bottom, rgba(3, 7, 12, 0.08), #05080d 32%), #05080d;
   color: var(--text);
-  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
 .hero-bg {
@@ -607,7 +623,7 @@ const routeList = computed(() =>
 .content {
   position: relative;
   z-index: 2;
-  padding: calc(22px + env(safe-area-inset-top)) 18px 40px;
+  padding: calc(22px + env(safe-area-inset-top)) 18px 20px;
 }
 
 /* ---------- top row ---------- */
@@ -1039,12 +1055,13 @@ const routeList = computed(() =>
 
 /* ---------- dock ---------- */
 .dock {
-  position: fixed;
+  position: relative;
   z-index: 12;
-  left: 50%;
-  bottom: calc(14px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  left: auto;
+  bottom: auto;
+  transform: none;
   width: min(calc(100% - 28px), 362px);
+  margin: 8px auto calc(14px + env(safe-area-inset-bottom));
   min-height: 86px;
   padding: 12px 12px 12px 14px;
   border-radius: 28px;

@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import type { InspirationSpot } from '../types/explore'
+import { haversineDist } from '../utils/geo'
 import {
   TODAY_PLAN_LIMIT,
   type AddTodaySpotResult,
@@ -7,7 +8,7 @@ import {
 } from '../types/todayPlan'
 
 const STORAGE_KEY = 'laidou-v03-today-plan'
-const STORAGE_VERSION = 1
+const STORAGE_VERSION = 2
 
 interface StoredTodayPlan {
   version: number
@@ -27,6 +28,32 @@ type VerifiedInspirationSpot = InspirationSpot & {
 const spots = ref<TodaySpot[]>([])
 const storageAvailable = ref(true)
 let loaded = false
+let storageNeedsMigration = false
+
+function normalizedPlaceName(value: string): string {
+  return compactPlaceName(value)
+    .replace(/(?:国家级)?(?:旅游)?(?:风景名胜区|主题乐园|度假区|风景区|乐园|景区)$/u, '')
+}
+
+function compactPlaceName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+/** Stable identity across curation migrations where ids/POI ids may change. */
+export function isSameTodayPlace(a: Pick<TodaySpot, 'id' | 'city' | 'name' | 'amapPoiId' | 'lng' | 'lat'>, b: Pick<TodaySpot, 'id' | 'city' | 'name' | 'amapPoiId' | 'lng' | 'lat'>): boolean {
+  if (a.id === b.id || (!!a.amapPoiId && a.amapPoiId === b.amapPoiId)) return true
+  if (normalizedPlaceName(a.city) !== normalizedPlaceName(b.city)) return false
+  const aName = normalizedPlaceName(a.name)
+  const bName = normalizedPlaceName(b.name)
+  const relatedNames = (aName && aName === bName)
+    || (aName.length >= 4
+    && bName.length >= 4
+    && (aName.includes(bName) || bName.includes(aName)))
+  return !!relatedNames && haversineDist(a.lat, a.lng, b.lat, b.lng) <= 500
+}
 
 function isVerifiedSpot(spot: InspirationSpot): spot is VerifiedInspirationSpot {
   return spot.verificationStatus === 'verified'
@@ -77,24 +104,34 @@ function sanitizeSpot(value: unknown): TodaySpot | null {
 }
 
 function readStoredSpots(): TodaySpot[] {
+  storageNeedsMigration = false
   if (typeof localStorage === 'undefined') return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as Partial<StoredTodayPlan>
-    if (parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.spots)) return []
+    if (![1, STORAGE_VERSION].includes(parsed.version as number) || !Array.isArray(parsed.spots)) return []
+    storageNeedsMigration = parsed.version !== STORAGE_VERSION
 
-    const seen = new Set<string>()
-    const seenPoiIds = new Set<string>()
-    return parsed.spots
-      .map(sanitizeSpot)
-      .filter((spot): spot is TodaySpot => {
-        if (!spot || seen.has(spot.id) || seenPoiIds.has(spot.amapPoiId)) return false
-        seen.add(spot.id)
-        seenPoiIds.add(spot.amapPoiId)
-        return true
-      })
-      .slice(0, TODAY_PLAN_LIMIT)
+    const unique: TodaySpot[] = []
+    for (const value of parsed.spots) {
+      const spot = sanitizeSpot(value)
+      if (!spot) {
+        storageNeedsMigration = true
+        continue
+      }
+      const duplicateIndex = unique.findIndex(item => isSameTodayPlace(item, spot))
+      if (duplicateIndex >= 0) {
+        // Later snapshots normally come from the latest curation response.
+        unique[duplicateIndex] = spot
+        storageNeedsMigration = true
+        continue
+      }
+      unique.push(spot)
+      if (unique.length === TODAY_PLAN_LIMIT) break
+    }
+    if (unique.length !== parsed.spots.length) storageNeedsMigration = true
+    return unique
   } catch {
     return []
   }
@@ -104,12 +141,14 @@ function loadFromStorage() {
   if (loaded) return
   loaded = true
   spots.value = readStoredSpots()
+  if (storageNeedsMigration) persist()
 }
 
 /** Reconcile state changed in another tab or before a hot reload. */
 function syncFromStorage() {
   if (typeof localStorage === 'undefined') return
   spots.value = readStoredSpots()
+  if (storageNeedsMigration) persist()
 }
 
 function persist() {
@@ -163,7 +202,7 @@ export function durationMinutesOf(label: string): number {
   const range = label.match(/(\d+(?:\.\d+)?)\s*[–—~-]\s*(\d+(?:\.\d+)?)\s*小时/)
   if (range) return Math.round(((Number(range[1]) + Number(range[2])) / 2) * 60)
   const matched = label.match(/(\d+(?:\.\d+)?)\s*(小时|分钟)/)
-  if (!matched) return 90
+  if (!matched) return 0
   const value = Number(matched[1])
   return matched[2] === '小时' ? Math.round(value * 60) : Math.round(value)
 }
@@ -183,14 +222,16 @@ export function useTodayPlan() {
 
   function addSpot(spot: InspirationSpot): AddTodaySpotResult {
     syncFromStorage()
-    if (
-      hasSpot(spot.id)
-      || (!!spot.amapPoiId && spots.value.some(item => item.amapPoiId === spot.amapPoiId))
-    ) return { status: 'duplicate' }
     if (!isVerifiedSpot(spot)) return { status: 'unverified' }
+    const snapshot = snapshotSpot(spot)
+    const duplicateIndex = spots.value.findIndex(item => isSameTodayPlace(item, snapshot))
+    if (duplicateIndex >= 0) {
+      spots.value = spots.value.map((item, index) => index === duplicateIndex ? snapshot : item)
+      persist()
+      return { status: 'duplicate' }
+    }
     if (spots.value.length >= TODAY_PLAN_LIMIT) return { status: 'limit' }
 
-    const snapshot = snapshotSpot(spot)
     spots.value = [...spots.value, snapshot]
     persist()
     return { status: 'added', spot: snapshot }
@@ -236,6 +277,23 @@ export function useTodayPlan() {
     return true
   }
 
+  /** 用策展库里的最新快照刷新某个地点的字段（保持位置与 addedAt 不变），
+   *  供「POI 已变更」场景一键修复本地过期信息。 */
+  function updateSpot(id: string, patch: Partial<TodaySpot>): boolean {
+    const index = spots.value.findIndex(spot => spot.id === id)
+    if (index < 0) return false
+    const next = [...spots.value]
+    next[index] = {
+      ...next[index],
+      ...patch,
+      id,
+      addedAt: next[index].addedAt,
+    }
+    spots.value = next
+    persist()
+    return true
+  }
+
   return {
     spots,
     count,
@@ -248,6 +306,7 @@ export function useTodayPlan() {
     clear,
     moveSpot,
     replaceOrder,
+    updateSpot,
   }
 }
 

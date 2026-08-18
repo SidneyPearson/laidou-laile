@@ -2,13 +2,15 @@
 import type { TodaySpot } from '../../types/todayPlan'
 import SpotCover from '../explore/SpotCover.vue'
 
-defineProps<{
+const props = defineProps<{
   spot: TodaySpot
   index: number
   total: number
   journeyState?: 'current' | 'completed' | 'upcoming'
   journeyActive?: boolean
 }>()
+
+const spotMeta = () => [props.spot.district, props.spot.suggestedDuration].filter(Boolean).join(' · ') || '停留信息待补充'
 
 const emit = defineEmits<{
   up: []
@@ -47,7 +49,7 @@ const emit = defineEmits<{
           <p v-if="journeyState" class="mt-1 text-[9px] font-bold" :class="journeyState === 'current' ? 'text-lime-700' : journeyState === 'completed' ? 'text-emerald-700' : 'text-stone-400'">
             {{ journeyState === 'current' ? '● 当前下一站' : journeyState === 'completed' ? '✓ 已经到过' : '稍后出发' }}
           </p>
-          <p class="mt-1 truncate text-[10px] text-stone-400">{{ spot.district }} · {{ spot.suggestedDuration }}</p>
+          <p class="mt-1 truncate text-[10px] text-stone-400">{{ spotMeta() }}</p>
           <p class="mt-1 line-clamp-2 text-[10px] leading-4 text-stone-500">{{ spot.address }}</p>
         </button>
 

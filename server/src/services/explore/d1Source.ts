@@ -44,6 +44,37 @@ const PERSONA_TAG_MAP: Record<string, Persona> = {
 
 const ALL_PERSONAS: Persona[] = ['fast', 'couple', 'family', 'lazy', 'urban']
 
+function normalizedPlaceName(value: string): string {
+  return compactPlaceName(value)
+    .replace(/(?:国家级)?(?:旅游)?(?:风景名胜区|主题乐园|度假区|风景区|乐园|景区)$/u, '')
+}
+
+function compactPlaceName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+function isSamePublicPlace(a: InspirationSpot, b: InspirationSpot): boolean {
+  if (a.id === b.id || (!!a.amapPoiId && a.amapPoiId === b.amapPoiId)) return true
+  const aName = normalizedPlaceName(a.name)
+  const bName = normalizedPlaceName(b.name)
+  const relatedNames = (aName && aName === bName)
+    || (aName.length >= 4
+    && bName.length >= 4
+    && (aName.includes(bName) || bName.includes(aName)))
+  return !!relatedNames && haversineDist(a.lat, a.lng, b.lat, b.lng) <= 500
+}
+
+function deduplicatePublicPlaces(spots: InspirationSpot[]): InspirationSpot[] {
+  const unique: InspirationSpot[] = []
+  for (const spot of spots) {
+    if (!unique.some(item => isSamePublicPlace(item, spot))) unique.push(spot)
+  }
+  return unique
+}
+
 export function mapSpotCategory(category: SpotRecord['category']): Exclude<ExploreCategory, 'all'> {
   return CATEGORY_MAP[category]
 }
@@ -122,9 +153,9 @@ export function selectInspirationSpots(
   cityName: string,
   selection: InspirationSelection,
 ): { spots: InspirationSpot[]; nextCursor: number | null } {
-  const converted = spots
+  const converted = deduplicatePublicPlaces(spots
     .map(spot => spotToInspiration(spot, cityName))
-    .filter((spot): spot is InspirationSpot => spot !== null)
+    .filter((spot): spot is InspirationSpot => spot !== null))
 
   const filtered = selection.category === 'all'
     ? converted

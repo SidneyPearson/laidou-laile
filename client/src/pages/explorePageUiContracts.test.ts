@@ -7,8 +7,10 @@ import homePage from './HomePage.vue?raw'
 describe('ExplorePage browse experience contracts', () => {
   it('uses a dedicated explore route without replacing the swipe flow', () => {
     expect(router).toContain("path: '/explore'")
-    expect(router).toContain("path: '/city', redirect: { name: 'explore' }")
+    expect(router).toContain("path: '/city', name: 'city-explore'")
+    expect(router).toContain("import('../pages/CityExplorePage.vue')")
     expect(homePage).toContain("router.push({ name: 'explore' })")
+    expect(homePage).toContain("name: 'city-explore'")
   })
 
   it('requires an explicit or remembered city instead of defaulting to Shanghai', () => {
@@ -24,6 +26,7 @@ describe('ExplorePage browse experience contracts', () => {
     expect(explorePage).toContain('while (cursor !== null')
     expect(explorePage).toContain('<ExploreSpotMap')
     expect(exploreMap).toContain("marker.on('click'")
+    expect(exploreMap).toContain('layoutMarkerOffsets')
   })
 
   it('opens real details and lets verified spots join today directly', () => {

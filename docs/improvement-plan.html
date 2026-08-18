@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>「来都来了」公开端改进方案清单</title>
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --card: #ffffff;
+    --ink: #1c1917;
+    --muted: #78716c;
+    --line: #e7e5e4;
+    --p0-bg: #fef2f2; --p0-border: #f87171; --p0-text: #b91c1c;
+    --p1-bg: #fffbeb; --p1-border: #fbbf24; --p1-text: #b45309;
+    --p2-bg: #f0fdf4; --p2-border: #4ade80; --p2-text: #15803d;
+    --accent: #f97316;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 20px 60px;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  header { margin-bottom: 24px; }
+  header h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  header p { color: var(--muted); font-size: 13px; margin: 0; }
+  .legend { display: flex; gap: 8px; margin: 16px 0 4px; flex-wrap: wrap; }
+  .legend span { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--muted); }
+  .legend .p0 { border-color: var(--p0-border); color: var(--p0-text); background: var(--p0-bg); }
+  .legend .p1 { border-color: var(--p1-border); color: var(--p1-text); background: var(--p1-bg); }
+  .legend .p2 { border-color: var(--p2-border); color: var(--p2-text); background: var(--p2-bg); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+  table { width: 100%; border-collapse: collapse; min-width: 860px; }
+  thead th {
+    text-align: left; font-size: 12px; font-weight: 600; color: var(--muted);
+    padding: 14px 16px; border-bottom: 1px solid var(--line); background: #faf9f7;
+    white-space: nowrap;
+  }
+  tbody td { padding: 16px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; line-height: 1.6; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .pri { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 12px; white-space: nowrap; }
+  .pri::before { content: ""; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .pri.p0 { color: var(--p0-text); } .pri.p0::before { background: var(--p0-border); }
+  .pri.p1 { color: var(--p1-text); } .pri.p1::before { background: var(--p1-border); }
+  .pri.p2 { color: var(--p2-text); } .pri.p2::before { background: var(--p2-border); }
+  .issue { font-weight: 600; margin-bottom: 4px; }
+  .impact { color: var(--muted); font-size: 12px; }
+  .fix strong { color: var(--accent); }
+  .num { color: #a8a29e; font-size: 12px; min-width: 24px; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>「来都来了」公开端改进方案清单</h1>
+    <p>基于用户视角全流程走查（首页 → 定位/选城市 → 灵感浏览 → 今日计划）与 API 实测。共 10 项（底部导航「收藏/个人中心」经确认保留、由用户自行完善，未列入）。</p>
+    <div class="legend">
+      <span class="p0">P0 · 影响信任与主流程</span>
+      <span class="p1">P1 · 体验断层</span>
+      <span class="p2">P2 · 打磨项</span>
+    </div>
+  </header>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:44px">#</th>
+          <th style="width:80px">优先级</th>
+          <th>问题</th>
+          <th>现状 / 影响</th>
+          <th style="width:34%">改进方案</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td><span class="pri p0">P0</span></td>
+          <td><div class="issue">「美食探店」分类无内容时误导为故障</div></td>
+          <td class="impact">上海「美食探店」（id food）是唯一空分类：后端返回 503 NO_VERIFIED_SPOTS，前端 loadAllSpots 吞掉服务端文案、统一显示「地点暂时加载失败，请稍后重试」+「重新加载」，用户反复重试以为服务挂了。其余 7 个分类均有内容。</td>
+          <td class="fix">后端区分「城市不支持(404)」与「分类为空(200+空)」，前端空态显示 <strong>「该分类内容筹备中」</strong>，而不是可重试的错误态。</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td><span class="pri p0">P0</span></td>
+          <td><div class="issue">首页「滑动解锁」静默清空今日计划</div></td>
+          <td class="impact"><code>handleFreshStart</code> 直接 clear()，手滑一下精心选的 6 个地点全没了，无任何确认。</td>
+          <td class="fix">计划非空时滑动后 <strong>弹确认</strong>，或改为普通进入 + 单独的「重新开始」入口。</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td><span class="pri p1">P1</span></td>
+          <td><div class="issue">探索页看不到距离 / 雨天不生效</div></td>
+          <td class="impact">首页有「923m / 2.1km」，探索页请求不传 lat/lng 与 isRainy，距离消失、排序不贴合位置、雨天不过滤。</td>
+          <td class="fix">探索页请求带上已授权真实坐标与 <strong>isRainy</strong>，卡片 meta 补距离。</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td><span class="pri p1">P1</span></td>
+          <td><div class="issue">地点更新后只能「手动删了重加」</div></td>
+          <td class="impact">suggest-order 对旧 POI 返回 POI_MISMATCH，用户需自己找出过期地点、删除、重新查找、重新加入。</td>
+          <td class="fix">检测到 mismatch 时提供 <strong>「一键刷新地点信息」</strong>（按 hotspotId 重拉 POI/坐标）。</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td><span class="pri p1">P1</span></td>
+          <td><div class="issue">清空计划用原生 confirm</div></td>
+          <td class="impact">精致黑底 UI 里蹦出系统级确认框，出戏。</td>
+          <td class="fix">换成与 SpotDetailSheet 同语言的 <strong>底部确认弹层</strong>。</td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td><span class="pri p1">P1</span></td>
+          <td><div class="issue">探索页串行分页拉全量，加载慢</div></td>
+          <td class="impact">切一次分类 while 循环最多 10 次串行请求（每页 6 条），弱网下长时间转圈。</td>
+          <td class="fix">服务端支持更大 limit / <strong>all=true</strong> 一次拉全，或改成分页「加载更多」。</td>
+        </tr>
+        <tr>
+          <td class="num">7</td>
+          <td><span class="pri p2">P2</span></td>
+          <td><div class="issue">首页画像卡图片全空</div></td>
+          <td class="impact">/api/home/personas 返回的 4 张卡 imageUrl 全为 null，卡片裸奔。</td>
+          <td class="fix">后台补图，或前端做 <strong>渐变兜底</strong>。</td>
+        </tr>
+        <tr>
+          <td class="num">8</td>
+          <td><span class="pri p2">P2</span></td>
+          <td><div class="issue">未支持城市静默降级 demo 数据</div></td>
+          <td class="impact">定位到拉萨 → 404 → 前端悄悄切本地 demo，地点还不能加计划，体验断层无提示。</td>
+          <td class="fix">城市名旁加 <strong>「内容筹备中」徽标</strong>，demo 卡片直接标「示例」。</td>
+        </tr>
+        <tr>
+          <td class="num">9</td>
+          <td><span class="pri p2">P2</span></td>
+          <td><div class="issue">英文错误信息透出</div></td>
+          <td class="impact">参数异常时透出 zod 原文（"Required"、"Array must contain…"）。</td>
+          <td class="fix">zodErrorToBody 统一 <strong>映射成中文</strong>。</td>
+        </tr>
+        <tr>
+          <td class="num">10</td>
+          <td><span class="pri p2">P2</span></td>
+          <td><div class="issue">行程单无法带走</div></td>
+          <td class="impact">今日计划只能截图，缺分享/传播出口。</td>
+          <td class="fix">基于现成的城市票根，加 <strong>「生成今日行程图」</strong>。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>建议先动 P0 两条（「美食探店」空态误导 + 滑动解锁清空计划）。底部导航死入口经确认保留、由用户自行完善。</footer>
+</div>
+</body>
+</html>

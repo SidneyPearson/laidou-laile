@@ -34,7 +34,9 @@ describe('exploreRecommendRequestSchema', () => {
   it('rejects unknown personas, categories and oversized pages', () => {
     expect(exploreRecommendRequestSchema.safeParse({ ...valid, persona: 'solo' }).success).toBe(false)
     expect(exploreRecommendRequestSchema.safeParse({ ...valid, category: 'hotel' }).success).toBe(false)
-    expect(exploreRecommendRequestSchema.safeParse({ ...valid, limit: 7 }).success).toBe(false)
+    // 上限已放宽到 60（探索页一次大页拉全），61 才拒绝。
+    expect(exploreRecommendRequestSchema.safeParse({ ...valid, limit: 60 }).success).toBe(true)
+    expect(exploreRecommendRequestSchema.safeParse({ ...valid, limit: 61 }).success).toBe(false)
   })
 
   it('rejects malformed adcodes', () => {

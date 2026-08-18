@@ -51,7 +51,7 @@ const reminder = computed(() => departureReminder(props.spot))
               {{ tag }}
             </span>
           </div>
-          <p class="text-[10px] text-white/70">{{ spot.city }} · {{ spot.district }}</p>
+          <p class="text-[10px] text-white/70">{{ [spot.city, spot.district].filter(Boolean).join(' · ') }}</p>
           <h2 class="mt-1 text-2xl font-bold">{{ spot.name }}</h2>
         </div>
       </div>
@@ -70,11 +70,11 @@ const reminder = computed(() => departureReminder(props.spot))
           <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-stone-100 pt-4">
             <div>
               <dt class="text-[9px] text-stone-400">建议停留</dt>
-              <dd class="mt-1 text-xs font-semibold text-stone-700">{{ spot.suggestedDuration }}</dd>
+              <dd class="mt-1 text-xs font-semibold text-stone-700">{{ spot.suggestedDuration || '待补充' }}</dd>
             </div>
             <div>
               <dt class="text-[9px] text-stone-400">推荐时段</dt>
-              <dd class="mt-1 text-xs font-semibold text-stone-700">{{ spot.bestTime }}</dd>
+              <dd class="mt-1 text-xs font-semibold text-stone-700">{{ spot.bestTime || '待补充' }}</dd>
             </div>
           </dl>
           <p v-if="spot.address" class="mt-3 text-[10px] leading-4 text-stone-400">
@@ -105,15 +105,12 @@ const reminder = computed(() => departureReminder(props.spot))
           <button
             class="rounded-2xl py-3.5 text-sm font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             :class="inToday ? 'bg-stone-200 text-stone-700' : 'bg-primary-600 text-white'"
-            :disabled="!actionReady"
+            :disabled="!actionReady || inToday"
             @click="emit('toggle-today')"
           >
             {{ inToday ? '已加入今天' : '加入今天' }}
           </button>
         </div>
-        <p v-if="inToday && actionReady" class="mt-2 text-center text-[10px] leading-4 text-stone-400">
-          再次点击“已加入今天”可从清单移除。
-        </p>
       </div>
     </section>
   </div>

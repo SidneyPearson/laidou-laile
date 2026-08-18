@@ -9,10 +9,12 @@ import { PERSONAS } from '../data/mockExploreSpots'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { useTodayJourney } from '../composables/useTodayJourney'
 import { suggestTodayOrder, ApiRequestError } from '../services/api'
+import { fetchExploreRecommendations } from '../services/exploreApi'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import { haversineDist } from '../utils/geo'
 import { hapticSelect, hapticSuccess } from '../utils/haptics'
-import type { Persona } from '../types/explore'
+import { burstConfetti } from '../utils/delight'
+import type { Persona, InspirationSpot } from '../types/explore'
 import type { TodaySpot } from '../types/todayPlan'
 
 const router = useRouter()
@@ -30,6 +32,9 @@ const picking = ref(false)
 const pickedName = ref('')
 const showTicket = ref(false)
 const clearNotice = ref('')
+const showClearConfirm = ref(false)
+const needsSpotRefresh = ref(false)
+const refreshingSpots = ref(false)
 let pickTimer: ReturnType<typeof setInterval> | null = null
 let clearNoticeTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -46,9 +51,15 @@ const cityLabel = computed(() => plan.cities.value.join('、'))
 const sameCity = computed(() => plan.cities.value.length === 1)
 const durationLabel = computed(() => {
   const minutes = plan.totalStayMinutes.value
+  if (minutes === 0) return '待补充'
   if (minutes < 60) return `${minutes} 分钟`
   const hours = minutes / 60
   return Number.isInteger(hours) ? `${hours} 小时` : `${hours.toFixed(1)} 小时`
+})
+const durationSummary = computed(() => {
+  if (plan.totalStayMinutes.value === 0) return '停留时长待补充'
+  const missing = plan.spots.value.filter(spot => !spot.suggestedDuration.trim()).length
+  return `预计停留约 ${durationLabel.value}${missing ? `，另有 ${missing} 个地点待补充时长` : ''}`
 })
 const maxSpanMeters = computed(() => {
   let max = 0
@@ -65,12 +76,12 @@ const pressureNote = computed(() => {
   if (plan.count.value === 0) return ''
   if (!sameCity.value) return `你选了 ${plan.count.value} 个地方，涉及 ${cityLabel.value}。跨城安排不适合放在同一天，建议分开游玩。`
   if (maxSpanMeters.value >= 15_000) {
-    return `你选了 ${plan.count.value} 个地方，预计停留约 ${durationLabel.value}。地点跨度较大，建议删掉一个，玩得会更轻松。`
+    return `你选了 ${plan.count.value} 个地方，${durationSummary.value}。地点跨度较大，建议删掉一个，玩得会更轻松。`
   }
   if (plan.totalStayMinutes.value >= 480 || plan.count.value >= 5) {
-    return `你选了 ${plan.count.value} 个地方，预计停留约 ${durationLabel.value}。安排比较充实，记得给交通和休息留出时间。`
+    return `你选了 ${plan.count.value} 个地方，${durationSummary.value}。安排比较充实，记得给交通和休息留出时间。`
   }
-  return `你选了 ${plan.count.value} 个地方，预计停留约 ${durationLabel.value}。顺序可以继续自由调整。`
+  return `你选了 ${plan.count.value} 个地方，${durationSummary.value}。顺序可以继续自由调整。`
 })
 const planIds = computed(() => plan.spots.value.map(spot => spot.id))
 const completedSet = computed(() => new Set(journey.completedIds.value))
@@ -104,6 +115,10 @@ const suggestedNames = computed(() => {
   return pendingOrder.value.map(id => byId.get(id)).filter(Boolean).join(' → ')
 })
 
+function spotMeta(spot: TodaySpot): string {
+  return [spot.district, spot.suggestedDuration].filter(Boolean).join(' · ') || '停留信息待补充'
+}
+
 function clearSuggestionForSetChange() {
   referenceActive.value = false
   originalOrder.value = null
@@ -111,6 +126,7 @@ function clearSuggestionForSetChange() {
   suggestionReason.value = ''
   suggestionReminders.value = []
   suggestionError.value = ''
+  needsSpotRefresh.value = false
 }
 
 function removeSpot(id: string) {
@@ -132,8 +148,12 @@ function resetJourney() {
 
 function clearTodayPlan() {
   if (plan.count.value === 0) return
-  if (!window.confirm('确定清空今天的全部地点吗？路线进度和城市票根也会一起重置。')) return
+  // 用自定义确认弹层替代原生 confirm，与整体视觉一致。
+  showClearConfirm.value = true
+}
 
+function confirmClearTodayPlan() {
+  showClearConfirm.value = false
   plan.clear()
   resetJourney()
   selectedSpot.value = null
@@ -151,11 +171,20 @@ function completeCurrent() {
   if (!spot || !journey.completeSpot(spot.id, planIds.value)) return
   hapticSuccess()
   pickedName.value = ''
+  celebrateArrival(journey.status.value === 'complete')
 }
 
 function completeSpot(id: string) {
   if (!journey.completeSpot(id, planIds.value)) return
   hapticSuccess()
+  celebrateArrival(journey.status.value === 'complete')
+}
+
+/** 打卡成功的欢愉瞬间：单站小爆彩，全部到达来一场大的。 */
+function celebrateArrival(allDone: boolean) {
+  const anchor = document.querySelector<HTMLElement>('main')
+  if (allDone) burstConfetti(anchor, { count: 44, size: [6, 14], duration: 1500 })
+  else burstConfetti(anchor, { count: 18, size: [5, 10], duration: 950 })
 }
 
 function pickNext() {
@@ -226,11 +255,87 @@ async function askForOrder() {
     suggestionReason.value = result.reason
     suggestionReminders.value = result.reminders
   } catch (error) {
-    suggestionError.value = error instanceof ApiRequestError
-      ? error.message
-      : '暂时无法给出参考顺序，已保留原顺序。'
+    if (error instanceof ApiRequestError && error.code === 'POI_MISMATCH') {
+      needsSpotRefresh.value = true
+      suggestionError.value = '部分地点的信息已经更新，一键刷新后可重新排序。'
+    } else {
+      suggestionError.value = error instanceof ApiRequestError
+        ? error.message
+        : '暂时无法给出参考顺序，已保留原顺序。'
+    }
   } finally {
     suggesting.value = false
+  }
+}
+
+/** POI 变更后的一键修复：按城市重拉策展库最新地点，用 hotspotId 匹配并替换
+ *  本地旧快照（保持顺序与 addedAt），随后重新尝试排序。 */
+async function refreshSpotData() {
+  const cityName = plan.cities.value[0]
+  if (!cityName || refreshingSpots.value) return
+  refreshingSpots.value = true
+  suggestionError.value = ''
+
+  try {
+    const all: InspirationSpot[] = []
+    let cursor: number | null = 0
+    let pages = 0
+    while (cursor !== null && pages < 10) {
+      const result = await fetchExploreRecommendations({
+        city: cityName.replace(/市$/, ''),
+        category: 'all',
+        cursor,
+        limit: 60,
+      })
+      all.push(...result.spots)
+      cursor = result.nextCursor
+      pages += 1
+    }
+    const freshById = new Map(all.map(spot => [spot.id, spot]))
+    const missing: string[] = []
+    let updated = 0
+    for (const spot of plan.spots.value) {
+      const fresh = freshById.get(spot.id)
+      if (!fresh || !fresh.amapPoiId) {
+        missing.push(spot.name)
+        continue
+      }
+      if (plan.updateSpot(spot.id, {
+        name: fresh.name,
+        amapName: fresh.amapName,
+        district: fresh.district,
+        category: fresh.category,
+        reason: fresh.reason,
+        tags: fresh.tags,
+        suitablePersonas: fresh.suitablePersonas,
+        suggestedDuration: fresh.suggestedDuration,
+        bestTime: fresh.bestTime,
+        theme: fresh.theme,
+        amapPoiId: fresh.amapPoiId,
+        address: fresh.address ?? '',
+        lat: fresh.lat as number,
+        lng: fresh.lng as number,
+        verifiedAt: fresh.verifiedAt,
+        coverImageUrl: fresh.coverImageUrl,
+        reservationNote: fresh.reservationNote,
+      })) updated += 1
+    }
+
+    if (missing.length > 0) {
+      needsSpotRefresh.value = false
+      suggestionError.value = `「${missing.join('、')}」已不在精选库里，移出后再排序吧。`
+      return
+    }
+    if (updated === 0) {
+      suggestionError.value = '地点信息已是最新，仍无法排序，请稍后重试。'
+      return
+    }
+    needsSpotRefresh.value = false
+    await askForOrder()
+  } catch {
+    suggestionError.value = '刷新地点信息失败，请稍后重试。'
+  } finally {
+    refreshingSpots.value = false
   }
 }
 
@@ -303,7 +408,7 @@ onBeforeUnmount(() => {
         <div class="mt-2 flex items-end justify-between">
           <div>
             <p class="text-2xl font-bold">{{ plan.count.value }} 个地点</p>
-            <p class="mt-1 text-xs text-white/60">预计停留约 {{ durationLabel }}</p>
+            <p class="mt-1 text-xs text-white/60">{{ durationSummary }}</p>
           </div>
           <span class="rounded-full bg-white/10 px-3 py-1.5 text-[9px] text-white/65">本机保存</span>
         </div>
@@ -350,7 +455,7 @@ onBeforeUnmount(() => {
         </div>
         <p class="mt-5 text-[10px] text-white/45">下一站</p>
         <h2 class="mt-1 text-2xl font-black">{{ pickedName || currentSpot.name }}</h2>
-        <p class="mt-1 text-[10px] text-white/45">{{ currentSpot.district }} · {{ currentSpot.suggestedDuration }}</p>
+        <p class="mt-1 text-[10px] text-white/45">{{ spotMeta(currentSpot) }}</p>
         <div class="mt-4 grid grid-cols-2 gap-2">
           <button class="rounded-2xl bg-white/10 py-3 text-xs font-bold" @click="navigate(currentSpot)">导航过去</button>
           <button class="rounded-2xl bg-lime-300 py-3 text-xs font-black text-stone-900" @click="completeCurrent">✓ 到过了</button>
@@ -399,6 +504,14 @@ onBeforeUnmount(() => {
         <p v-if="suggestionError" class="mt-2 text-center text-[10px] leading-4 text-red-500">
           {{ suggestionError }}
         </p>
+        <button
+          v-if="needsSpotRefresh"
+          class="mx-auto mt-2 block rounded-full border border-red-300 bg-white px-4 py-2 text-[11px] font-bold text-red-600 disabled:opacity-50"
+          :disabled="refreshingSpots"
+          @click="refreshSpotData"
+        >
+          {{ refreshingSpots ? '正在刷新地点信息…' : '刷新地点信息' }}
+        </button>
       </section>
 
       <section v-if="suggestionReason" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
@@ -491,6 +604,29 @@ onBeforeUnmount(() => {
         :duration="durationLabel"
         @close="showTicket = false"
       />
+    </Transition>
+
+    <Transition name="slide-up">
+      <div v-if="showClearConfirm" class="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 backdrop-blur-sm" @click.self="showClearConfirm = false">
+        <div class="w-full max-w-md rounded-t-[28px] bg-white p-6 pb-[max(24px,env(safe-area-inset-bottom))] shadow-[0_-16px_40px_rgba(0,0,0,0.18)]">
+          <h3 class="text-lg font-black text-stone-900">清空今天的计划？</h3>
+          <p class="mt-2 text-xs leading-5 text-stone-500">路线进度和城市票根也会一起重置，清空后无法恢复。</p>
+          <div class="mt-6 grid grid-cols-2 gap-3">
+            <button
+              class="rounded-2xl bg-stone-100 py-3 text-sm font-bold text-stone-600 active:scale-[0.99]"
+              @click="showClearConfirm = false"
+            >
+              取消
+            </button>
+            <button
+              class="rounded-2xl bg-red-500 py-3 text-sm font-black text-white active:scale-[0.99]"
+              @click="confirmClearTodayPlan"
+            >
+              清空计划
+            </button>
+          </div>
+        </div>
+      </div>
     </Transition>
   </main>
 </template>

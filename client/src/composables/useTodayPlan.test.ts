@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { InspirationSpot } from '../types/explore'
-import { resetTodayPlanForTests, useTodayPlan } from './useTodayPlan'
+import { durationMinutesOf, resetTodayPlanForTests, useTodayPlan } from './useTodayPlan'
 
 class MemoryStorage {
   private data = new Map<string, string>()
@@ -96,6 +96,36 @@ describe('useTodayPlan', () => {
 
     expect(plan.addSpot(verifiedSpot(7)).status).toBe('added')
     expect(plan.spots.value.map(spot => spot.id)).toEqual(['spot-1', 'spot-7'])
+  })
+
+  it('migrates legacy storage and collapses renamed copies of the same place', () => {
+    const resort = {
+      ...verifiedSpot(1),
+      id: 'shanghai-disney',
+      name: '上海迪士尼度假区',
+      amapPoiId: 'OLD-POI',
+      addedAt: new Date(0).toISOString(),
+    }
+    const park = {
+      ...verifiedSpot(2),
+      id: 'shanghai-disneyland',
+      name: '上海迪士尼乐园',
+      amapPoiId: 'NEW-POI',
+      lng: (resort.lng as number) + 0.0001,
+      lat: (resort.lat as number) + 0.0001,
+      addedAt: new Date(0).toISOString(),
+    }
+    localStorage.setItem('laidou-v03-today-plan', JSON.stringify({ version: 1, spots: [resort, park] }))
+
+    const plan = useTodayPlan()
+    expect(plan.spots.value.map(spot => spot.id)).toEqual(['shanghai-disneyland'])
+    expect(localStorage.getItem('laidou-v03-today-plan')).toContain('"version":2')
+    expect(plan.addSpot(park).status).toBe('duplicate')
+  })
+
+  it('does not invent a duration when curation data is incomplete', () => {
+    expect(durationMinutesOf('')).toBe(0)
+    expect(durationMinutesOf('待补充')).toBe(0)
   })
 
   it('moves, removes, and accepts only an exact replacement order', () => {

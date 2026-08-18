@@ -26,9 +26,10 @@ import { PERSONAS, EXPLORE_CATEGORIES, getExploreSpots, filterAndRankSpots } fro
 import { usePersona } from '../composables/usePersona'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { useTodayJourney } from '../composables/useTodayJourney'
-import { useExploreCity } from '../composables/useExploreCity'
+import { matchRememberedCity, useExploreCity } from '../composables/useExploreCity'
 import { useGeolocation } from '../composables/useGeolocation'
 import { openAmapNavigation } from '../utils/amapNavigation'
+import { floatEmojis, timeGreeting, pickCopy } from '../utils/delight'
 import {
   defaultHomePersonaCards,
   fetchHomePersonas,
@@ -40,7 +41,7 @@ const router = useRouter()
 const { persona, hasChosenPersona, setPersona } = usePersona()
 const todayPlan = useTodayPlan()
 const todayJourney = useTodayJourney()
-const { setExploreCity } = useExploreCity()
+const { city: exploreCity, setExploreCity } = useExploreCity()
 const { coords, isMock, error: locError, requestLocation, setManualLocation } = useGeolocation()
 
 const cities = ref<RecommendationCity[]>([])
@@ -54,6 +55,9 @@ const weatherLoading = ref(false)
 const spots = ref<InspirationSpot[]>([])
 const spotsLoading = ref(true)
 const selectedSpot = ref<InspirationSpot | null>(null)
+const confirmReset = ref(false)
+/** 请求失败后的降级状态：'unsupported' = 城市未发布（筹备中），'error' = 加载失败。 */
+const demoFallback = ref<'unsupported' | 'error' | null>(null)
 
 let weatherController: AbortController | null = null
 let spotsController: AbortController | null = null
@@ -68,6 +72,36 @@ const coordsKey = (c: { lat: number; lng: number }) => `${c.lat.toFixed(4)},${c.
 
 const currentPersonaOption = () =>
   PERSONAS.find(p => p.id === persona.value) ?? PERSONAS[0]
+
+/** 画像面板标题：按时段换一句轻快问候，给每次回首页一点新鲜感。 */
+const personaPanelTitle = computed(() => timeGreeting())
+
+/** 加入今日的文案池：轮换使用，避免每次都是同一句干巴巴的通知。 */
+const ADD_TO_TODAY_COPY = [
+  '已加入「{name}」',
+  '「{name}」已入袋，今天有盼头了',
+  '好眼光！「{name}」收进今天了',
+  '「{name}」进今天了，记得给它留点时间',
+] as const
+function addToTodayMessage(name: string): string {
+  // 用地点名长度 + 计划数量做“盐”，同一地点重复加入也能换文案。
+  const salt = todayPlan.count.value + name.length
+  return pickCopy(ADD_TO_TODAY_COPY, salt).replace('{name}', name)
+}
+
+/** 页脚彩蛋：连点 5 下（2 秒内）触发 emoji 漂浮。 */
+const FOOTER_TAP_COUNT = 5
+let footerTapCount = 0
+let footerTapTimer: ReturnType<typeof setTimeout> | null = null
+function tapFooter() {
+  footerTapCount += 1
+  if (footerTapTimer) clearTimeout(footerTapTimer)
+  footerTapTimer = setTimeout(() => { footerTapCount = 0 }, 2000)
+  if (footerTapCount < FOOTER_TAP_COUNT) return
+  footerTapCount = 0
+  floatEmojis(document.querySelector<HTMLElement>('.home-footer'))
+  showToast('彩蛋！来都来了，不能白来 ✨')
+}
 
 function handlePersonaChange(next: Persona) {
   setPersona(next)
@@ -216,6 +250,7 @@ async function loadSpots() {
   spotsController?.abort()
   spotsController = new AbortController()
   spotsLoading.value = true
+  demoFallback.value = null
   try {
     // Send the user's real coordinates only after they authorized geolocation.
     // Mock/manually-picked coords are omitted: they'd just measure distance
@@ -228,7 +263,6 @@ async function loadSpots() {
       adcode: city.adcode,
       ...(hasChosenPersona.value ? { persona: persona.value } : {}),
       category: 'all',
-      // Server caps the page size at 6 (see exploreRoutes.schemas).
       limit: 6,
       isRainy: weather.value?.isRainy ?? false,
       ...realLocation,
@@ -239,6 +273,8 @@ async function loadSpots() {
     if (requestId !== spotsRequestId) return
     const reqErr = err instanceof ApiRequestError ? err : null
     if (reqErr?.code === 'CANCELLED') return
+    // 城市未发布(404)与网络/服务异常(5xx)区分对待，避免用户以为示例内容就是该城市的真实数据。
+    demoFallback.value = reqErr?.code === 'CITY_NOT_SUPPORTED' ? 'unsupported' : 'error'
     spots.value = localFallback(city.name)
   } finally {
     if (requestId === spotsRequestId) spotsLoading.value = false
@@ -248,6 +284,21 @@ async function loadSpots() {
 /* -------------------- events -------------------- */
 
 const FIRST_VISIT_KEY = 'laidou-home-loc-dismissed'
+
+function resetJourneyForCityChange(next: RecommendationCity) {
+  const previous = exploreCity.value ?? selectedCity.value
+  const switchedCity = !!previous && previous.adcode !== next.adcode
+  if (!switchedCity) return
+  const clearedPlan = todayPlan.clear()
+  todayJourney.reset()
+  if (clearedPlan) showToast(`已切换到${next.name.replace(/市$/, '')}，今日计划已清空`)
+}
+
+function adoptCity(next: RecommendationCity) {
+  resetJourneyForCityChange(next)
+  selectedCity.value = next
+  setExploreCity(next)
+}
 
 function openPicker() {
   showPicker.value = true
@@ -290,14 +341,14 @@ async function handleUseLocation() {
     const locatedName = ctx.city.replace(/市$/, '')
     const matched = cities.value.find(c => c.adcode === ctx.adcode)
       ?? cities.value.find(c => c.name.replace(/市$/, '') === locatedName)
-    selectedCity.value = matched ?? {
+    const resolvedCity = matched ?? {
       adcode: ctx.adcode,
       name: ctx.city,
       province: '',
       coverImageUrl: null,
       center,
     }
-    setExploreCity(selectedCity.value)
+    adoptCity(resolvedCity)
     weather.value = ctx.weather
     // Mark these coords as already weather-resolved so loadWeatherAndSpots
     // doesn't call /api/city/context a second time for the same location.
@@ -325,8 +376,7 @@ function dismissLocationSheet() {
 async function handleCitySelect(city: RecommendationCity) {
   if (!city.center) return
   setManualLocation(city.center.lat, city.center.lng, city.name)
-  selectedCity.value = city
-  setExploreCity(city)
+  adoptCity(city)
   showPicker.value = false
   showLocationSheet.value = false
   weather.value = null
@@ -348,7 +398,7 @@ function handleStart() {
     ? coords.value
     : city.center
   router.push({
-    name: 'explore',
+    name: 'city-explore',
     query: {
       city: city.name,
       lat: String(center.lat),
@@ -362,9 +412,23 @@ function handleStart() {
 /** A hero unlock starts a new recommendation round. Other Explore entry
  *  points keep using handleStart() so they can resume the current plan. */
 function handleFreshStart() {
+  // 已有今日计划时先弹确认，避免滑动误触静默清空用户的选择。
+  if (todayPlan.count.value > 0) {
+    confirmReset.value = true
+    return
+  }
+  proceedFreshStart()
+}
+
+function proceedFreshStart() {
+  confirmReset.value = false
   todayPlan.clear()
   todayJourney.reset()
   handleStart()
+}
+
+function cancelFreshStart() {
+  confirmReset.value = false
 }
 
 function handleSpotSelect(spot: InspirationSpot) {
@@ -395,7 +459,7 @@ function toggleTodaySpot() {
     return
   }
   selectedSpot.value = null
-  showToast(`已加入“${spot.name}”`)
+  showToast(addToTodayMessage(spot.name))
 }
 
 function handleBottomNav(tab: BottomTab) {
@@ -448,7 +512,8 @@ onMounted(async () => {
   const result = await loadCityRecommendations()
   cities.value = result.cities
   if (result.cities.length > 0) {
-    selectedCity.value = result.cities[0]
+    selectedCity.value = matchRememberedCity(exploreCity.value, result.cities) ?? result.cities[0]
+    setExploreCity(selectedCity.value)
     await loadWeatherAndSpots()
   } else {
     spotsLoading.value = false
@@ -494,7 +559,7 @@ watch(persona, () => {
     <!-- Floating persona + CTA panel overlaps the hero -->
     <section class="persona-panel-wrap" data-reveal>
       <div class="persona-panel">
-        <h2 class="persona-panel-title">选择适合你今天的身份</h2>
+        <h2 class="persona-panel-title">{{ personaPanelTitle }}</h2>
         <PersonaSelector
           :model-value="persona"
           :cards="personaCards"
@@ -511,6 +576,16 @@ watch(persona, () => {
     </section>
 
     <div class="home-content">
+      <div v-if="demoFallback" class="demo-notice" data-reveal>
+        <template v-if="demoFallback === 'unsupported'">
+          <strong>{{ selectedCity?.name?.replace(/市$/, '') }}的内容还在筹备中</strong>
+          <span>下面展示的是示例地点，标注「示例」的卡片暂不能加入今日计划。</span>
+        </template>
+        <template v-else>
+          <strong>内容加载失败</strong>
+          <span>暂时展示示例地点，请稍后重试。</span>
+        </template>
+      </div>
       <div data-reveal>
         <InspirationCarousel
           :cards="inspirationCards"
@@ -526,7 +601,7 @@ watch(persona, () => {
         />
       </div>
 
-      <p class="home-footer">来都来了，不能白来 · v0.4</p>
+      <p class="home-footer" @click="tapFooter">来都来了，不能白来 · v0.4</p>
     </div>
 
     <Transition name="sheet">
@@ -551,6 +626,19 @@ watch(persona, () => {
         @navigate="navigateToSpot"
         @toggle-today="toggleTodaySpot"
       />
+    </Transition>
+
+    <Transition name="sheet">
+      <div v-if="confirmReset" class="sheet-mask" @click.self="cancelFreshStart">
+        <div class="sheet-panel sheet-panel--dark confirm-sheet">
+          <h3>重新开始一轮推荐？</h3>
+          <p>你已选了 {{ todayPlan.count.value }} 个地点，开始新推荐会<strong>清空今天的安排</strong>。</p>
+          <div class="confirm-actions">
+            <button class="btn-ghost" type="button" @click="cancelFreshStart">取消</button>
+            <button class="btn-danger" type="button" @click="proceedFreshStart">清空并开始</button>
+          </div>
+        </div>
+      </div>
     </Transition>
 
     <Transition name="toast">
@@ -654,6 +742,30 @@ watch(persona, () => {
   background: var(--page-bg);
 }
 
+/* 降级为示例内容时的提示条 */
+.demo-notice {
+  margin: 0 14px 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(199, 255, 31, 0.28);
+  border-radius: 16px;
+  background: rgba(199, 255, 31, 0.07);
+}
+
+.demo-notice strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #eaffb0;
+}
+
+.demo-notice span {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 .home-footer {
   text-align: center;
   font-size: 11px;
@@ -728,6 +840,54 @@ watch(persona, () => {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
   max-width: 80vw;
   text-align: center;
+}
+
+/* 重新开始推荐前的确认弹层 */
+.confirm-sheet {
+  padding: 26px 20px calc(22px + env(safe-area-inset-bottom));
+}
+
+.confirm-sheet h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.confirm-sheet p {
+  margin: 0 0 22px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.confirm-sheet p strong {
+  color: #fff;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-actions button {
+  flex: 1;
+  height: 48px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.confirm-actions .btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.confirm-actions .btn-danger {
+  border: 0;
+  background: #ff5252;
+  color: #fff;
 }
 
 .toast-enter-active,

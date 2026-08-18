@@ -65,7 +65,7 @@ describe('recommendCitySpots', () => {
 
   it('maps D1 spots and caps the response to the requested limit', async () => {
     const spots = Array.from({ length: 8 }, (_, index) =>
-      spot({ id: `spot-${index}`, amapPoiId: `B0${index}` }))
+      spot({ id: `spot-${index}`, name: `地点 ${index}`, searchName: `地点 ${index}`, amapPoiId: `B0${index}` }))
     const result = await recommendCitySpots(base, { repository: fakeRepository(shanghai, spots) })
 
     expect(result?.spots).toHaveLength(6)
@@ -92,8 +92,8 @@ describe('recommendCitySpots', () => {
 
   it('prefers museum/mall over outdoor spots when rainy', async () => {
     const spots = [
-      spot({ id: 'park', category: 'nature', personas: ['nature'] }),
-      spot({ id: 'gallery', category: 'museum_culture', personas: ['culture'] }),
+      spot({ id: 'park', name: '城市公园', category: 'nature', personas: ['nature'] }),
+      spot({ id: 'gallery', name: '城市美术馆', amapPoiId: 'B0GALLERY', category: 'museum_culture', personas: ['culture'] }),
     ]
     const result = await recommendCitySpots(
       { ...base, isRainy: true },
@@ -104,8 +104,8 @@ describe('recommendCitySpots', () => {
 
   it('ranks nearer spots higher and returns distanceMeters when user coords are given', async () => {
     // User stands near the first spot (~31.24,121.48); the second is ~1.4km away.
-    const near = spot({ id: 'near', lng: 121.481, lat: 31.239, personas: ['first_visit'] })
-    const far = spot({ id: 'far', lng: 121.495, lat: 31.245, amapPoiId: 'B0FAR', personas: ['first_visit'] })
+    const near = spot({ id: 'near', name: '近处地点', lng: 121.481, lat: 31.239, personas: ['first_visit'] })
+    const far = spot({ id: 'far', name: '远处地点', lng: 121.495, lat: 31.245, amapPoiId: 'B0FAR', personas: ['first_visit'] })
     const result = await recommendCitySpots(
       { ...base, lat: 31.24, lng: 121.48 },
       { repository: fakeRepository(shanghai, [far, near]) },

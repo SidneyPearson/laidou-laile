@@ -23,7 +23,7 @@ const env = {
   AMAP_TIMEOUT_MS: 10000,
   ADMIN_PASSWORD_HASH: 'unused',
   ADMIN_SESSION_SECRET: sessionSecret,
-  ADMIN_ALLOWED_ORIGINS: 'http://localhost:9090',
+  ADMIN_ALLOWED_ORIGINS: 'http://localhost:9090,http://127.0.0.1:9090',
   ADMIN_SESSION_TTL_SECONDS: 3600,
   DB: {} as D1Database,
 } satisfies Bindings
@@ -36,7 +36,7 @@ function makeSpot(overrides: Partial<SpotRecord> = {}): SpotRecord {
     searchName: '地点',
     amapName: null,
     amapPoiId: null,
-    district: null,
+    district: '黄浦区',
     address: null,
     lng: 121,
     lat: 31,
@@ -47,7 +47,7 @@ function makeSpot(overrides: Partial<SpotRecord> = {}): SpotRecord {
     tierReason: '级别理由',
     personas: [],
     tags: [],
-    suggestedDuration: null,
+    suggestedDuration: '建议 2 小时',
     bestTime: null,
     indoorFriendly: false,
     reservationRequired: false,
@@ -121,12 +121,12 @@ function createApp(repository: FakeRepository) {
   return app
 }
 
-async function authHeaders(origin = true) {
+async function authHeaders(origin: string | false = 'http://localhost:9090') {
   const now = Math.floor(Date.now() / 1000)
   const token = await createSession(sessionSecret, now, 3600)
   return {
     Cookie: `${ADMIN_COOKIE}=${token}`,
-    ...(origin ? { Origin: 'http://localhost:9090' } : {}),
+    ...(origin ? { Origin: origin } : {}),
     'Content-Type': 'application/json',
   }
 }
@@ -187,6 +187,24 @@ describe('admin curation routes', () => {
     expect(await missingReason.text()).toContain('级别理由不能为空')
   })
 
+  it('does not publish a spot with incomplete public metadata', async () => {
+    repository.spot = makeSpot({
+      verificationStatus: 'verified',
+      amapPoiId: 'B0TEST',
+      district: null,
+      suggestedDuration: '',
+    })
+    const response = await createApp(repository).request('/api/admin/spots/spot-id/publish', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ expectedVersion: 1 }),
+    }, env)
+    expect(response.status).toBe(422)
+    const body = await response.text()
+    expect(body).toContain('区县不能为空')
+    expect(body).toContain('建议停留时间不能为空')
+  })
+
   it('publishes a valid spot, increments version and writes an audit record', async () => {
     repository.spot = makeSpot({
       verificationStatus: 'verified',
@@ -194,7 +212,7 @@ describe('admin curation routes', () => {
     })
     const response = await createApp(repository).request('/api/admin/spots/spot-id/publish', {
       method: 'POST',
-      headers: await authHeaders(),
+      headers: await authHeaders('http://127.0.0.1:9090'),
       body: JSON.stringify({ expectedVersion: 1 }),
     }, env)
     expect(response.status).toBe(200)

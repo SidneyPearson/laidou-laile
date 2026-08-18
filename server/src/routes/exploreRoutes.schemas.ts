@@ -29,7 +29,8 @@ export const exploreRecommendRequestSchema = z.object({
   persona: personaSchema.optional(),
   category: exploreCategorySchema,
   cursor: z.number().int().min(0).max(1000).default(0),
-  limit: z.number().int().min(1).max(6).default(6),
+  // 上限 60：探索页一次拉全（替代串行小页），首页仍用 6 取轮播。
+  limit: z.number().int().min(1).max(60).default(6),
   isRainy: z.boolean().default(false),
   // Optional user location. When both are provided the feed is boosted/ranked
   // by real distance from the user (and each spot returns distanceMeters).

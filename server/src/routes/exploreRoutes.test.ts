@@ -85,12 +85,12 @@ describe('POST /recommend', () => {
     expect(recommend).not.toHaveBeenCalled()
   })
 
-  it('distinguishes unsupported cities from Amap verification outages', async () => {
+  it('returns 404 for unsupported cities and 200+empty for categories without spots', async () => {
     const unsupported = createExploreRoutes({
       recommend: vi.fn().mockResolvedValue(null),
       repository: noopRepository,
     })
-    const unverified = createExploreRoutes({
+    const emptyCategory = createExploreRoutes({
       recommend: vi.fn().mockResolvedValue({
         spots: [], nextCursor: null, source: 'curated_amap_verified',
       }),
@@ -103,15 +103,16 @@ describe('POST /recommend', () => {
       body: JSON.stringify(validBody),
     }
     const unsupportedResponse = await unsupported.request('/recommend', options, env)
-    const unverifiedResponse = await unverified.request('/recommend', options, env)
+    const emptyResponse = await emptyCategory.request('/recommend', options, env)
 
     expect(unsupportedResponse.status).toBe(404)
     expect(await unsupportedResponse.json()).toMatchObject({
       error: { code: 'CITY_NOT_SUPPORTED' },
     })
-    expect(unverifiedResponse.status).toBe(503)
-    expect(await unverifiedResponse.json()).toMatchObject({
-      error: { code: 'NO_VERIFIED_SPOTS' },
+    // 空分类不是故障：返回 200 + 空列表，前端展示「内容筹备中」空态。
+    expect(emptyResponse.status).toBe(200)
+    expect(await emptyResponse.json()).toEqual({
+      spots: [], nextCursor: null, source: 'curated_amap_verified',
     })
   })
 })

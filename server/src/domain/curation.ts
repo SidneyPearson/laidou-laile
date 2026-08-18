@@ -96,7 +96,7 @@ export interface RecommendationContext {
 const TIER_ORDER: Record<SpotTier, number> = { S: 0, A: 1, B: 2, C: 3 }
 
 export function canPublishSpot(spot: Pick<SpotRecord,
-  'verificationStatus' | 'amapPoiId' | 'lng' | 'lat' | 'category' | 'tier' | 'reason' | 'tierReason'
+  'verificationStatus' | 'amapPoiId' | 'lng' | 'lat' | 'category' | 'tier' | 'reason' | 'tierReason' | 'district' | 'suggestedDuration'
 >): string[] {
   const errors: string[] = []
   if (spot.verificationStatus !== 'verified') errors.push('地点尚未通过高德验证')
@@ -106,6 +106,8 @@ export function canPublishSpot(spot: Pick<SpotRecord,
   if (!SPOT_TIERS.includes(spot.tier)) errors.push('级别不合法')
   if (!spot.reason.trim()) errors.push('推荐理由不能为空')
   if (!spot.tierReason.trim()) errors.push('级别理由不能为空')
+  if (!spot.district?.trim()) errors.push('区县不能为空')
+  if (!spot.suggestedDuration?.trim()) errors.push('建议停留时间不能为空')
   return errors
 }
 

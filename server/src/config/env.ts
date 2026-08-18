@@ -6,7 +6,7 @@ const envSchema = z.object({
   AMAP_TIMEOUT_MS: z.coerce.number().default(10000),
   ADMIN_PASSWORD_HASH: z.string().min(1),
   ADMIN_SESSION_SECRET: z.string().min(32),
-  ADMIN_ALLOWED_ORIGINS: z.string().min(1).default('http://localhost:9090').refine(value => {
+  ADMIN_ALLOWED_ORIGINS: z.string().min(1).default('http://localhost:9090,http://127.0.0.1:9090').refine(value => {
     try {
       return value.split(',').every(origin => new URL(origin.trim()).origin === origin.trim())
     } catch { return false }

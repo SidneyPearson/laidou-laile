@@ -23,13 +23,13 @@
 citywalk/
 ├── client/                      # Vue 3 前端 SPA
 │   ├── src/
-│   │   ├── pages/               # HomePage / CityExplorePage / TodayPlanPage + admin/*
+│   │   ├── pages/               # HomePage / ExplorePage / TodayPlanPage + admin/*
 │   │   ├── components/explore/  # 城市灵感 UI（CategoryTabs/InspirationFeed/PersonaSelector/...）
 │   │   ├── components/today/    # 今日计划 UI
 │   │   ├── components/admin/    # 后台设计系统组件
 │   │   ├── composables/         # Geolocation、useTodayPlan
 │   │   ├── services/            # api.ts（suggest-order）、exploreApi.ts
-│   │   └── data/                # 热门城市、城市灵感静态 seed
+│   │   └── data/                # UI 枚举与本地降级数据
 │   └── index.html               # 入口页（含 Amap JS SDK 加载）
 ├── server/                      # Hono 后端（Cloudflare Workers）
 │   ├── src/
@@ -37,7 +37,7 @@ citywalk/
 │   │   ├── routes/              # explore/city/recommendation/plan(仅 suggest-order)/admin*
 │   │   ├── services/
 │   │   │   ├── amap/            # client/placeVerifier/geocode/weather/imagePolicy
-│   │   │   ├── explore/         # 城市灵感：seed 读取 → persona 排序 → 高德校验 → 距离排序
+│   │   │   ├── explore/         # 城市灵感：读取 D1 已发布地点 → persona/天气/距离排序
 │   │   │   ├── poiQuality.ts    # POI 质量硬筛（explore 与 admin 共用）
 │   │   │   └── weeklyRefreshService.ts
 │   │   ├── repositories/        # D1 访问
@@ -104,10 +104,10 @@ npm run build     # 前端 vite build + esbuild 打包 _worker.js
 
 | 端点 | 说明 |
 |------|------|
-| `POST /api/explore/recommend` | 按城市 + persona 返回策展灵感地点（静态 seed + 高德校验） |
+| `POST /api/explore/recommend` | 按城市 + persona 返回 D1 中已发布且已验证的策展地点 |
 | `GET /api/city/context` | 反查坐标对应城市/adcode + 天气 |
 | `POST /api/plan/suggest-order` | 对已选地点做最近邻距离排序（纯确定性，不调 LLM/不搜索） |
-| `GET /api/recommendations/cities` | 读取 D1 已发布城市地点；D1 故障时显式标记静态降级（前台预留） |
+| `GET /api/recommendations/cities` | 首页城市选择与卡片数据；读取 D1，故障时显式标记降级 |
 | `GET /api/health` | 健康检查 |
 
 后台端点（需登录会话）：`/api/admin/auth/*`、`/api/admin/cities`、`/api/admin/spots`、`/api/admin/city-refresh/*`、`/api/admin/refresh-runs/*`、`/api/admin/refresh-candidates/*`。
@@ -119,16 +119,16 @@ npm run build     # 前端 vite build + esbuild 打包 _worker.js
 ```
 HomePage（定位/选城市）
   └─ GET /api/city/context           reverseGeocode + 天气
-  └─ CityExplorePage
+  └─ ExplorePage
        └─ POST /api/explore/recommend
-             exploreService：读 services/explore/cities/*.ts 静态 seed
-               → personaRanker 排序 → hotspotVerifier（amap/placeVerifier 补坐标/图片）
+             exploreService：读取 D1 已发布、已通过高德验证的地点
+               → persona / 天气 / 用户距离排序 → 去重与分页
        └─ 选中地点 → useTodayPlan（localStorage）
   └─ TodayPlanPage
        └─ POST /api/plan/suggest-order   最近邻距离排序
 ```
 
-`verifyPlace`（`services/amap/placeVerifier.ts`）用高德 text search + 名称相似度 + Haversine 选最佳 POI，内部经 `services/poiQuality.ts` 的 `filterUsablePois` 剔除内部/不对外开放地点；explore 与 admin 共用。
+`verifyPlace`（`services/amap/placeVerifier.ts`）用于后台发布前验证：通过高德 text search + 名称相似度 + Haversine 选最佳 POI，并经 `services/poiQuality.ts` 剔除内部/不对外开放地点。公开探索只读取已验证数据，不在用户请求中实时调用高德 POI 搜索。
 
 ## 部署
 
@@ -162,14 +162,14 @@ npm run build && npx wrangler pages deploy client/dist --project-name laidou-lai
 |------|--------|------|
 | `AMAP_TIMEOUT_MS` | `10000` | 高德 API 超时 |
 | `NODE_ENV` | `production` | 运行环境 |
-| `ADMIN_ALLOWED_ORIGINS` | `http://localhost:9090` | 后台写请求允许的精确 Origin，逗号分隔 |
+| `ADMIN_ALLOWED_ORIGINS` | `http://localhost:9090,http://127.0.0.1:9090` | 后台写请求允许的精确 Origin，逗号分隔 |
 | `ADMIN_SESSION_TTL_SECONDS` | `28800` | HttpOnly 后台会话有效期（秒） |
 
 完整后台 D1 初始化、安全配置、三城种子和回滚说明见 [`docs/admin-curation-v0.1.md`](docs/admin-curation-v0.1.md)。
 
 ## 已知限制
 
-- **城市灵感当前读静态 seed**：`services/explore/cities/*.ts`；D1 已发布数据的读取通路（`recommendationRoutes`）已预留但前台尚未接入。
+- **公开内容依赖 D1 完整性**：地点必须通过高德验证，并补齐区县、建议停留时长、推荐与分级理由后才能发布。
 - **Amap JS SDK 必须配置域名白名单**：否则地图无法加载（见密钥配置说明）。
 - **后台 V0.1 为单管理员**：无 RBAC、图片上传、自动抓取或自动发布。
 - **城市复核 V0.2 完全人工触发**：不运行 Cron、不自动联网，也不调用 LLM；见 [`docs/weekly-city-refresh-v0.2.md`](docs/weekly-city-refresh-v0.2.md)。

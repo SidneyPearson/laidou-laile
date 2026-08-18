@@ -69,7 +69,19 @@ onMounted(async () => {
   const first = props.spots[0]
   const map = await createMap(containerId, [first.lng, first.lat], 13)
   if (!map) failed.value = true
-  else drawPlaces()
+  else {
+    map.setStatus?.({
+      dragEnable: false,
+      zoomEnable: false,
+      doubleClickZoom: false,
+      scrollWheel: false,
+      touchZoom: false,
+      keyboardEnable: false,
+      rotateEnable: false,
+      pitchEnable: false,
+    })
+    drawPlaces()
+  }
   loading.value = false
 })
 
@@ -86,7 +98,7 @@ onUnmounted(() => {
 
 <template>
   <div class="relative h-[210px] overflow-hidden rounded-[22px] border border-stone-200 bg-stone-100">
-    <div v-show="!failed" :id="containerId" class="absolute inset-0" />
+    <div v-show="!failed" :id="containerId" class="pointer-events-none absolute inset-0 touch-pan-y" />
     <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-stone-100">
       <div class="h-6 w-6 animate-spin rounded-full border-2 border-stone-300 border-t-primary-600" />
     </div>
@@ -103,7 +115,7 @@ onUnmounted(() => {
         ? '荧光点是下一站 · ✓ 表示已到过'
         : completedIds?.length === spots.length && spots.length > 0
           ? '今日地点已全部到达 ✓'
-          : connected ? '参考顺序 · 虚线仅供参考' : '只显示你加入的地点' }}
+          : connected ? '参考顺序 · 地图仅展示' : '只显示你加入的地点 · 地图仅展示' }}
     </div>
   </div>
 </template>

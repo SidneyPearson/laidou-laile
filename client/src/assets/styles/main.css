@@ -97,3 +97,39 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+/* ===== Delight 微交互（client/src/utils/delight.ts）===== */
+/* 彩带/光点爆裂：绝对定位于文档流，从 (left, top) 原点向 --tx/--ty 飞出。 */
+.delight-confetti {
+  position: absolute;
+  z-index: 9999;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: delight-pop 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes delight-pop {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot, 220deg)) scale(0.4); opacity: 0; }
+}
+
+/* 彩蛋漂浮 emoji：从底部原点向上升起并横向飘散。 */
+.delight-emoji {
+  position: absolute;
+  z-index: 9999;
+  line-height: 1;
+  pointer-events: none;
+  animation: delight-rise 3s ease-out both;
+}
+@keyframes delight-rise {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  12% { transform: translate(calc(var(--dx) * 0.3), -14px) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), calc(-1 * var(--rise))) scale(1); opacity: 0; }
+}
+
+/* 系统要求减少动效时整体关闭装饰动画。 */
+@media (prefers-reduced-motion: reduce) {
+  .delight-confetti,
+  .delight-emoji {
+    display: none;
+  }
+}

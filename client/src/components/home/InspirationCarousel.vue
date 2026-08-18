@@ -80,6 +80,8 @@ function onImgError(e: Event) {
           {{ card.tag }}
         </span>
 
+        <span v-if="!card.verified" class="rec-demo">示例</span>
+
         <span class="rec-info">
           <strong>{{ card.title }}</strong>
           <p>{{ card.tagline }}</p>
@@ -205,6 +207,24 @@ function onImgError(e: Event) {
 .rec-tag--violet { color: #fff;    background: #6d5efc; }
 .rec-tag--orange { color: #2a1206; background: #ff8a3d; }
 .rec-tag--sky    { color: #04223a; background: #38bdf8; }
+
+/* 非已验证（示例/演示）卡片的角标，避免用户把示例数据当成真实内容 */
+.rec-demo {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 10px;
+  padding: 4px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(2, 7, 14, 0.5);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
 
 .rec-info {
   position: absolute;

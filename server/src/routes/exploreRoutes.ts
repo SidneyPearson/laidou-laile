@@ -51,10 +51,10 @@ export function createExploreRoutes(dependencies: ExploreRouteDependencies = {})
         error: { code: 'CITY_NOT_SUPPORTED', message: '这座城市的精选内容还在准备中' },
       }, 404)
     }
+    // 城市已发布但没有符合条件（分类/画像/雨天）的已验证地点：返回 200 + 空列表，
+    // 由前端展示「内容筹备中」空态。不要用 503，否则用户会误以为是服务故障而反复重试。
     if (result.spots.length === 0) {
-      return c.json({
-        error: { code: 'NO_VERIFIED_SPOTS', message: '地点校验暂时不可用，请稍后重试' },
-      }, 503)
+      return c.json(result, 200)
     }
 
     c.header('Cache-Control', 'private, max-age=300')

@@ -10,6 +10,7 @@ describe('V0.4 city swipe-confirmation UI contracts', () => {
     expect(cityExplorePage).toContain('fetchCityContext')
     expect(cityExplorePage).toContain('fetchExploreRecommendations')
     expect(cityExplorePage).toContain('isRainy: weather.value?.isRainy')
+    expect(cityExplorePage).toContain('while (cursor !== null')
   })
 
   it('keeps fallback content transparent instead of presenting it as verified', () => {
@@ -33,10 +34,17 @@ describe('V0.4 city swipe-confirmation UI contracts', () => {
     expect(cityExplorePage).toContain("swipe('skip')")
     expect(cityExplorePage).toContain('先确认今天想去的地方')
     expect(cityExplorePage).toContain('左右滑动卡片')
+    expect(cityExplorePage).toContain('(cardIndex.value + 1) % spots.value.length')
+    expect(cityExplorePage).toContain('这一轮看完了')
     // No anchored-route generation; no legacy detail-sheet flow on this page.
     expect(cityExplorePage).not.toContain('planAroundSpot')
     expect(cityExplorePage).not.toContain('useRouteRequest')
     expect(cityExplorePage).not.toContain('<SpotDetailSheet')
+  })
+
+  it('keeps the plan dock in document flow so it cannot cover swipe hints', () => {
+    expect(cityExplorePage).toContain('position: relative')
+    expect(cityExplorePage).not.toContain('position: fixed;\n  z-index: 12;\n  left: 50%')
   })
 
   it('shows card imagery with a gradient fallback and persona-matched reasons', () => {

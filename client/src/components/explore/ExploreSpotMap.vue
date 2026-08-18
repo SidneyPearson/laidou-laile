@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useAmapMap } from '../../composables/useAmapMap'
 import type { InspirationSpot } from '../../types/explore'
+import { layoutMarkerOffsets } from '../../utils/mapMarkerLayout'
 
 const props = defineProps<{
   spots: InspirationSpot[]
@@ -33,13 +34,21 @@ function drawMarkers() {
   clearMarkers()
   const AMap = (window as any).AMap
   const selected = new Set(props.selectedIds)
+  const offsets = layoutMarkerOffsets(visible)
   markers = visible.map((spot, index) => {
     const inToday = selected.has(spot.id)
+    const offset = offsets.get(spot.id) ?? { x: 0, y: 0 }
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.setAttribute('aria-label', `查看${spot.name}`)
+    button.textContent = inToday ? '✓' : String(index + 1)
+    button.style.cssText = `min-width:30px;height:30px;padding:0 8px;border-radius:999px;background:${inToday ? '#c7ff1f' : '#121923'};border:2px solid ${inToday ? '#efffb2' : '#fff'};color:${inToday ? '#071007' : '#fff'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer`
     const marker = new AMap.Marker({
       position: [spot.lng, spot.lat],
       title: spot.name,
       anchor: 'center',
-      content: `<div style="min-width:30px;height:30px;padding:0 8px;border-radius:999px;background:${inToday ? '#c7ff1f' : '#121923'};border:2px solid ${inToday ? '#efffb2' : '#fff'};color:${inToday ? '#071007' : '#fff'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.35)">${inToday ? '✓' : index + 1}</div>`,
+      offset: new AMap.Pixel(offset.x, offset.y),
+      content: button,
     })
     marker.on('click', () => emit('select', spot))
     return marker
@@ -87,7 +96,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div v-else class="pointer-events-none absolute left-3 top-3 rounded-full bg-[#0b1119]/85 px-3 py-2 text-[10px] font-semibold text-white/75 shadow-lg backdrop-blur">
-      点击地图标记查看地点 · 荧光点已加入今天
+      点击地图标记查看地点 · 重叠地点已自动展开
     </div>
   </div>
 </template>

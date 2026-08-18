@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import CityPicker from '../components/CityPicker.vue'
 import MobileBottomNav, { type BottomTab } from '../components/home/MobileBottomNav.vue'
 import ExploreSpotMap from '../components/explore/ExploreSpotMap.vue'
@@ -15,10 +15,12 @@ import {
   loadCityRecommendations,
   type RecommendationCity,
 } from '../repositories/cityRecommendations'
-import { fetchExploreRecommendations } from '../services/exploreApi'
+import { fetchCityContext, fetchExploreRecommendations } from '../services/exploreApi'
 import { openAmapNavigation } from '../utils/amapNavigation'
+import { pickCopy } from '../utils/delight'
 import type { ExploreCategory, InspirationSpot } from '../types/explore'
 
+const route = useRoute()
 const router = useRouter()
 const todayPlan = useTodayPlan()
 const todayJourney = useTodayJourney()
@@ -34,9 +36,32 @@ const loading = ref(false)
 const error = ref('')
 const showPicker = ref(false)
 const toast = ref('')
+const isRainy = ref(false)
 let loadController: AbortController | null = null
 let loadRequestId = 0
 let toastTimer: ReturnType<typeof setTimeout> | null = null
+let weatherLoaded = false
+
+/** 首页 handleStart 只有在用户授权过真实定位时才传 source=location；
+ * 手动选城市的坐标（source=manual）会误导距离排序，这里同样只认真实定位。 */
+const userLocation = computed<{ lat: number; lng: number } | null>(() => {
+  if (route.query.source !== 'location') return null
+  const lat = Number(route.query.lat)
+  const lng = Number(route.query.lng)
+  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
+})
+
+/** 有真实定位时顺带取一次天气，让列表也参与雨天排序（博物馆/商场优先）。 */
+async function loadWeatherOnce() {
+  if (weatherLoaded || !userLocation.value) return
+  weatherLoaded = true
+  try {
+    const ctx = await fetchCityContext(userLocation.value.lat, userLocation.value.lng)
+    isRainy.value = ctx.weather?.isRainy ?? false
+  } catch {
+    /* 天气获取失败不阻塞浏览 */
+  }
+}
 
 const categoryName = (id: ExploreCategory) =>
   EXPLORE_CATEGORIES.find(item => item.id === id)?.name ?? '全部'
@@ -59,6 +84,19 @@ const visibleSpots = computed(() => {
 const featuredSpot = computed(() => visibleSpots.value[0] ?? null)
 const moreSpots = computed(() => visibleSpots.value.slice(1))
 const selectedIds = computed(() => todayPlan.spots.value.map(spot => spot.id))
+
+// 空态文案区分「搜索无结果」/「分类无内容」/「整城暂无内容」，
+// 避免把内容筹备中的分类渲染成可重试的故障态。
+const emptyTitle = computed(() => {
+  if (normalizedQuery.value) return '没有找到合适的地点'
+  if (category.value !== 'all') return `「${categoryName(category.value)}」的内容还在筹备中`
+  return '这座城市暂时还没有可看的地点'
+})
+const emptyHint = computed(() => {
+  if (normalizedQuery.value) return '换个关键词或分类继续看看。'
+  if (category.value !== 'all') return '先看看其他分类，或者过阵子再来。'
+  return '编辑部正在加紧上内容，敬请期待。'
+})
 
 function showToast(message: string) {
   toast.value = message
@@ -115,7 +153,10 @@ async function loadAllSpots() {
         ...(hasChosenPersona.value ? { persona: persona.value } : {}),
         category: category.value,
         cursor,
-        limit: 6,
+        // 服务端上限 60：一次大页拉全，替代串行小页（保留循环兜底 >60 的城市）。
+        limit: 60,
+        isRainy: isRainy.value,
+        ...(userLocation.value ? { lat: userLocation.value.lat, lng: userLocation.value.lng } : {}),
       }, loadController.signal)
       if (requestId !== loadRequestId) return
       all.push(...result.spots)
@@ -161,9 +202,21 @@ function toggleToday(spot: InspirationSpot) {
   }
   const result = todayPlan.addSpot(spot)
   if (result.status === 'limit') showToast('今天先选 6 个，避免行程过满')
-  else if (result.status === 'added') showToast(`已加入“${spot.name}”`)
+  else if (result.status === 'added') showToast(addToTodayMessage(spot.name))
   else if (result.status === 'duplicate') showToast('这个地点已经在今日计划里')
   else showToast('这个地点暂时不能加入今天')
+}
+
+/** 加入今日的文案池：轮换使用，避免每次都是同一句干巴巴的通知。 */
+const ADD_TO_TODAY_COPY = [
+  '已加入「{name}」',
+  '「{name}」已入袋，今天有盼头了',
+  '好眼光！「{name}」收进今天了',
+  '「{name}」进今天了，记得给它留点时间',
+] as const
+function addToTodayMessage(name: string): string {
+  const salt = todayPlan.count.value + name.length
+  return pickCopy(ADD_TO_TODAY_COPY, salt).replace('{name}', name)
 }
 
 function toggleSelectedSpot() {
@@ -205,7 +258,11 @@ watch(persona, () => {
 
 onMounted(async () => {
   await restoreLegacyRecentCity()
-  if (city.value) await loadAllSpots()
+  if (city.value) {
+    // 天气先于列表加载，保证雨天排序在首帧就生效。
+    await loadWeatherOnce()
+    await loadAllSpots()
+  }
 })
 
 onBeforeUnmount(() => {
@@ -231,7 +288,7 @@ onBeforeUnmount(() => {
       <section class="explore-tools">
         <label class="search-box">
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <input v-model="query" type="search" placeholder="搜索地点、街区或体验">
+          <input v-model="query" type="search" aria-label="搜索地点、街区或体验" placeholder="搜索地点、街区或体验">
           <button v-if="query" type="button" aria-label="清空搜索" @click="query = ''">×</button>
         </label>
 
@@ -273,9 +330,9 @@ onBeforeUnmount(() => {
 
       <div v-else-if="visibleSpots.length === 0" class="explore-empty">
         <span>⌕</span>
-        <h2>没有找到合适的地点</h2>
-        <p>换个关键词或分类继续看看。</p>
-        <button @click="query = ''; category = 'all'">查看全部地点</button>
+        <h2>{{ emptyTitle }}</h2>
+        <p>{{ emptyHint }}</p>
+        <button v-if="category !== 'all' || query" @click="query = ''; category = 'all'">查看全部地点</button>
       </div>
 
       <section v-else-if="viewMode === 'map'" class="px-4 pb-32">

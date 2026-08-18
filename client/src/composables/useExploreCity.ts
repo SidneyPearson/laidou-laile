@@ -30,6 +30,20 @@ function readCity(): RecommendationCity | null {
 
 const city = ref<RecommendationCity | null>(readCity())
 
+/** Reconcile the remembered city with the latest published city list.
+ *  The API copy wins so renamed cities, covers and representative centers do
+ *  not stay stale in localStorage forever. */
+export function matchRememberedCity(
+  remembered: RecommendationCity | null,
+  cities: RecommendationCity[],
+): RecommendationCity | null {
+  if (!remembered) return null
+  const rememberedName = remembered.name.trim().replace(/市$/, '')
+  return cities.find(item => item.adcode === remembered.adcode)
+    ?? cities.find(item => item.name.trim().replace(/市$/, '') === rememberedName)
+    ?? null
+}
+
 export function useExploreCity() {
   function setExploreCity(next: RecommendationCity) {
     city.value = next
