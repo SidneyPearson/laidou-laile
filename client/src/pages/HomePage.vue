@@ -729,8 +729,9 @@ watch(persona, () => {
     linear-gradient(180deg, rgba(14, 20, 30, 0.92), rgba(5, 10, 16, 0.96)),
     rgba(7, 12, 18, 0.92);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /* 大面积 backdrop-blur 是滚动掉帧主因：底色已近不透明，blur 从 18→10 视觉无差 */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .persona-panel-title {

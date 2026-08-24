@@ -178,3 +178,12 @@
     overflow: hidden;
   }
 }
+
+/* ===== 滚动性能优化（2026-08-24）===== */
+/* 视口外的列表项跳过渲染/布局，滚动时显著降卡顿（不影响可见内容）。 */
+.spot-row,
+.rec-card,
+.today-card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
