@@ -18,7 +18,7 @@ const emit = defineEmits<{
     >
       <span>
         <span class="block text-xs font-bold">今天想去 {{ count }} 个地方</span>
-        <span class="mt-0.5 block text-[9px] text-white/55">选择只保存在这台设备</span>
+        <span class="mt-0.5 block text-[10px] text-white/65">选择只保存在这台设备</span>
       </span>
       <span class="text-xs font-semibold text-primary-200">查看今天安排 →</span>
     </button>

@@ -310,6 +310,13 @@ function onCardCancel(event: PointerEvent) {
   dragX.value = 0
 }
 
+/** 键盘可达（P1-6）：front 卡片聚焦后，← 跳过 / → 加入，按住的连发忽略。 */
+function onCardKeydown(event: KeyboardEvent, type: 'add' | 'skip') {
+  if (event.repeat || finished.value || flying.value) return
+  event.preventDefault()
+  swipe(type)
+}
+
 function swipe(type: 'add' | 'skip') {
   const spot = spots.value[cardIndex.value % spots.value.length]
   if (!spot || finished.value || flying.value) return
@@ -462,7 +469,7 @@ const routeList = computed(() =>
 
       <section class="mode">
         <div class="mode-top">
-          <div class="mode-kicker">⚡ {{ currentPersona.name }}模式已开启</div>
+          <div class="mode-kicker"><span aria-hidden="true">⚡</span> {{ currentPersona.name }}模式已开启</div>
         </div>
         <p>
           已从{{ cityReady ? cityName : '当前城市' }}地点库中为你筛出
@@ -506,14 +513,18 @@ const routeList = computed(() =>
             class="card"
             :class="[item.layer, { dragging: dragActive && item.layer === 'front', flying: flying && item.layer === 'front' }]"
             :style="item.layer === 'front' ? frontStyle : undefined"
+            :tabindex="item.layer === 'front' ? 0 : -1"
+            :aria-label="item.layer === 'front' ? `当前地点：${item.spot.name}。按 → 加入今天，按 ← 跳过` : undefined"
             @pointerdown="onCardDown($event, item)"
             @pointermove="onCardMove($event, item)"
             @pointerup="onCardUp($event, item)"
             @pointercancel="onCardCancel($event)"
+            @keydown.left="onCardKeydown($event, 'skip')"
+            @keydown.right="onCardKeydown($event, 'add')"
           >
             <div class="card-image" :style="{ backgroundImage: cardBackground(item.spot) }" />
             <div class="card-shade" />
-            <div class="badge">⚡ {{ currentPersona.name }}推荐</div>
+            <div class="badge"><span aria-hidden="true">⚡</span> {{ currentPersona.name }}推荐</div>
             <div class="swipe-label right" :style="item.layer === 'front' ? { opacity: String(frontLabelRight) } : undefined">加入今天</div>
             <div class="swipe-label left" :style="item.layer === 'front' ? { opacity: String(frontLabelLeft) } : undefined">先跳过</div>
             <div class="card-body">
@@ -523,7 +534,7 @@ const routeList = computed(() =>
                 <span v-for="tag in item.spot.tags.slice(0, 3)" :key="tag" class="tag">{{ tag }}</span>
               </div>
               <div class="reason-box">
-                <div class="reason-title">⚡ 为什么适合{{ currentPersona.name }}？</div>
+                <div class="reason-title"><span aria-hidden="true">⚡</span> 为什么适合{{ currentPersona.name }}？</div>
                 <ul>
                   <li v-for="(reason, reasonIndex) in spotReasons(item.spot).slice(0, 3)" :key="reasonIndex">{{ reason }}</li>
                 </ul>
@@ -591,8 +602,8 @@ const routeList = computed(() =>
   --line: rgba(255, 255, 255, 0.12);
   --line-strong: rgba(196, 255, 27, 0.46);
   --text: #f5f7fa;
-  --muted: rgba(255, 255, 255, 0.62);
-  --faint: rgba(255, 255, 255, 0.36);
+  --muted: rgba(255, 255, 255, 0.70);
+  --faint: rgba(255, 255, 255, 0.50);
   --lime: #c9ff1f;
   --lime-2: #aaf600;
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.44);
@@ -781,13 +792,16 @@ const routeList = computed(() =>
   margin-top: 12px;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 4px 14px;
 }
 .confirm-head h2 {
   margin: 0;
   font-size: 20px;
   color: var(--text);
+  /* 标题独占一行不换行：右侧进度让位给标题，避免“先确认…的 / 地方”这种断行 */
+  flex: 1 1 100%;
+  white-space: nowrap;
 }
 .confirm-head p {
   margin: 4px 0 0;

@@ -63,6 +63,7 @@ function onImgError(e: Event) {
         :key="card.key"
         class="rec-card"
         :class="`rec-card--${card.theme ?? 'city'}`"
+        :aria-label="`查看${card.title}的详情`"
         @click="emit('select', card)"
       >
         <img

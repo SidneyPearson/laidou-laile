@@ -386,7 +386,7 @@ async function shareTicket() {
       <div class="ticket-preview relative overflow-hidden rounded-[24px] bg-stone-950 p-6 text-white">
         <div class="ticket-glow pointer-events-none absolute -right-16 top-20 h-48 w-48 rounded-full bg-lime-300/10 blur-3xl" />
         <div class="absolute inset-x-0 top-0 h-1.5 bg-lime-300" />
-        <p class="text-[9px] font-bold tracking-[0.2em] text-lime-300">来 都 来 了 · CITY PASS</p>
+        <p class="text-[10px] font-bold tracking-[0.2em] text-lime-300">来 都 来 了 · CITY PASS</p>
         <h2 class="mt-4 text-3xl font-black">{{ city }}</h2>
         <p class="mt-1 text-[10px] text-white/45">{{ dateLabel }} · {{ persona }}模式</p>
 
@@ -399,7 +399,7 @@ async function shareTicket() {
             @error="hideBrokenImage"
           >
           <div class="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-stone-950/80" />
-          <span class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-[9px] font-bold text-emerald-900 shadow">
+          <span class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold text-emerald-900 shadow">
             今日足迹 · {{ spots.length }} 站
           </span>
         </div>
@@ -424,19 +424,19 @@ async function shareTicket() {
                 @error="hideBrokenImage"
               >
               <div class="absolute inset-0 bg-gradient-to-t from-black via-black/5 to-black/10" />
-              <span class="absolute left-2 top-2 grid h-5 w-5 place-items-center rounded-full bg-lime-300 text-[9px] font-black text-stone-900">✓</span>
-              <p class="absolute inset-x-2 bottom-2 line-clamp-2 text-[9px] font-bold leading-3 text-white">{{ spot.name }}</p>
+              <span class="absolute left-2 top-2 grid h-5 w-5 place-items-center rounded-full bg-lime-300 text-[10px] font-black text-stone-900">✓</span>
+              <p class="absolute inset-x-2 bottom-2 line-clamp-2 text-[10px] font-bold leading-3 text-white">{{ spot.name }}</p>
             </div>
           </div>
         </div>
 
         <div class="relative rounded-2xl bg-lime-300 p-4 text-stone-900 shadow-[0_8px_24px_rgba(186,255,24,.12)]">
           <p class="text-lg font-black">{{ spots.length }} 个地点 · 全部到达</p>
-          <p class="mt-1 text-[9px] font-semibold text-stone-700">预计停留 {{ duration }} · 今日收藏完成</p>
+          <p class="mt-1 text-[10px] font-semibold text-stone-700">预计停留 {{ duration }} · 今日收藏完成</p>
         </div>
         <div class="relative mt-5 flex items-end justify-between border-t border-dashed border-white/15 pt-4">
           <p class="text-xs font-bold text-lime-300">今天没有白来。</p>
-          <p class="text-[8px] text-white/25">NO TRIP WASTED</p>
+          <p class="text-[10px] text-white/25">NO TRIP WASTED</p>
         </div>
       </div>
 
@@ -505,6 +505,20 @@ async function shareTicket() {
   .fan-card-wrap {
     opacity: 1 !important;
     transform: translateX(-50%) !important;
+  }
+}
+
+/* P1-5：小屏（≤360px）压缩票根预览，避免横向溢出。 */
+@media (max-width: 360px) {
+  .ticket-preview {
+    padding: 16px 14px;
+  }
+  .fan-stage {
+    height: 148px;
+  }
+  .fan-card {
+    height: 134px;
+    width: 96px;
   }
 }
 </style>

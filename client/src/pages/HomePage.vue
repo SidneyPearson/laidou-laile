@@ -103,6 +103,14 @@ function tapFooter() {
   showToast('彩蛋！来都来了，不能白来 ✨')
 }
 
+/** 深夜限定文案：23 点后到凌晨，页脚悄悄换一句。 */
+const footerCopy = computed(() => {
+  const hour = new Date().getHours()
+  return hour >= 23 || hour < 5
+    ? '夜深了，来都来了，明天再来'
+    : '来都来了，不能白来 · v0.4'
+})
+
 function handlePersonaChange(next: Persona) {
   setPersona(next)
 }
@@ -586,6 +594,10 @@ watch(persona, () => {
           <span>暂时展示示例地点，请稍后重试。</span>
         </template>
       </div>
+      <!-- 雨天人格化：不扫兴，把坏天气变成推荐理由 -->
+      <div v-if="weather?.isRainy && spots.length > 0 && !demoFallback" class="rainy-note" data-reveal>
+        ☔ 下雨天不扫兴，下面这些地方有屋檐
+      </div>
       <div data-reveal>
         <InspirationCarousel
           :cards="inspirationCards"
@@ -601,7 +613,7 @@ watch(persona, () => {
         />
       </div>
 
-      <p class="home-footer" @click="tapFooter">来都来了，不能白来 · v0.4</p>
+      <p class="home-footer" @click="tapFooter">{{ footerCopy }}</p>
     </div>
 
     <Transition name="sheet">
@@ -668,7 +680,7 @@ watch(persona, () => {
   --panel-border: rgba(255, 255, 255, 0.14);
   --text-main: #f7f9fb;
   --text-muted: rgba(255, 255, 255, 0.68);
-  --text-faint: rgba(255, 255, 255, 0.42);
+  --text-faint: rgba(255, 255, 255, 0.52);
   --accent: #c7ff1f;
   --accent-2: #a9ef16;
   --accent-shadow: rgba(185, 255, 27, 0.35);
@@ -749,6 +761,18 @@ watch(persona, () => {
   border: 1px solid rgba(199, 255, 31, 0.28);
   border-radius: 16px;
   background: rgba(199, 255, 31, 0.07);
+}
+
+/* 雨天人格化提示条 */
+.rainy-note {
+  margin: 0 14px 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  border-radius: 16px;
+  background: rgba(56, 189, 248, 0.10);
+  color: rgba(224, 242, 254, 0.92);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .demo-notice strong {

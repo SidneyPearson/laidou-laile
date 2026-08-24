@@ -27,7 +27,7 @@ const emit = defineEmits<{
       <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-white/10" />
       <span
         v-if="spot.verificationStatus !== 'verified'"
-        class="absolute left-2.5 top-2.5 rounded-full bg-black/25 px-2 py-1 text-[9px] font-medium text-white backdrop-blur"
+        class="absolute left-2.5 top-2.5 rounded-full bg-black/25 px-2 py-1 text-[10px] font-medium text-white backdrop-blur"
       >
         演示数据
       </span>
@@ -45,17 +45,17 @@ const emit = defineEmits<{
         <span
           v-for="tag in spot.tags.slice(0, 2)"
           :key="tag"
-          class="rounded-full bg-primary-50 px-2 py-1 text-[9px] font-medium text-primary-700"
+          class="rounded-full bg-primary-50 px-2 py-1 text-[10px] font-medium text-primary-700"
         >
           {{ tag }}
         </span>
       </div>
       <div class="mt-3 border-t border-stone-100 pt-2.5">
         <p class="text-[10px] font-medium text-stone-500">{{ spot.suggestedDuration }}</p>
-        <p class="mt-0.5 text-[9px] text-stone-400">{{ spot.bestTime }}</p>
+        <p class="mt-0.5 text-[10px] text-stone-400">{{ spot.bestTime }}</p>
         <p
           v-if="spot.verificationStatus === 'verified'"
-          class="mt-1 truncate text-[9px] text-primary-600"
+          class="mt-1 truncate text-[10px] text-primary-600"
           :title="spot.address"
         >
           📍 {{ spot.address || spot.district }}

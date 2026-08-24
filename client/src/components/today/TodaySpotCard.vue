@@ -27,9 +27,10 @@ const emit = defineEmits<{
     class="overflow-hidden rounded-[22px] bg-white shadow-[0_6px_22px_rgba(44,44,44,0.06)] transition"
     :class="{
       'ring-2 ring-lime-400': journeyState === 'current',
-      'opacity-60': journeyState === 'completed',
+      // 完成态不整体变暗：印章盖好就是盖好了，卡片保持鲜亮。
+      'ring-1 ring-emerald-300/80': journeyState === 'completed',
     }"
-  >
+  >    
     <div class="flex">
       <button
         class="relative h-32 w-[36%] flex-shrink-0 overflow-hidden text-left"
@@ -46,7 +47,7 @@ const emit = defineEmits<{
       <div class="min-w-0 flex-1 p-3">
         <button class="block w-full text-left" @click="emit('details')">
           <p class="truncate text-sm font-bold text-stone-900">{{ spot.name }}</p>
-          <p v-if="journeyState" class="mt-1 text-[9px] font-bold" :class="journeyState === 'current' ? 'text-lime-700' : journeyState === 'completed' ? 'text-emerald-700' : 'text-stone-400'">
+          <p v-if="journeyState" class="mt-1 text-[10px] font-bold" :class="journeyState === 'current' ? 'text-lime-700' : journeyState === 'completed' ? 'text-emerald-700' : 'text-stone-400'">
             {{ journeyState === 'current' ? '● 当前下一站' : journeyState === 'completed' ? '✓ 已经到过' : '稍后出发' }}
           </p>
           <p class="mt-1 truncate text-[10px] text-stone-400">{{ spotMeta() }}</p>
@@ -97,3 +98,4 @@ const emit = defineEmits<{
     </div>
   </article>
 </template>
+

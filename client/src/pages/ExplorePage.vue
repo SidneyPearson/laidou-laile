@@ -107,6 +107,24 @@ function showToast(message: string) {
   }, 1800)
 }
 
+/** 加载陪伴：骨架屏下方轮换一句小话，等待也有温度。 */
+const LOADING_COPY = [
+  '正在翻城市的小纸条…',
+  '帮你在路上踩好点了…',
+  '把值得去的地方挑出来…',
+  '在问本地人哪儿好玩…',
+] as const
+const loadingCopy = ref<string>(LOADING_COPY[0])
+let loadingCopyIndex = 0
+let loadingCopyTimer: ReturnType<typeof setInterval> | null = null
+function startLoadingCopy() {
+  if (loadingCopyTimer) return
+  loadingCopyTimer = setInterval(() => {
+    loadingCopyIndex += 1
+    loadingCopy.value = LOADING_COPY[loadingCopyIndex % LOADING_COPY.length]
+  }, 1600)
+}
+
 function formatDistance(meters?: number): string {
   if (!Number.isFinite(meters)) return ''
   return (meters as number) < 1000
@@ -257,6 +275,7 @@ watch(persona, () => {
 })
 
 onMounted(async () => {
+  startLoadingCopy()
   await restoreLegacyRecentCity()
   if (city.value) {
     // 天气先于列表加载，保证雨天排序在首帧就生效。
@@ -268,6 +287,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   loadController?.abort()
   if (toastTimer) clearTimeout(toastTimer)
+  if (loadingCopyTimer) clearInterval(loadingCopyTimer)
 })
 </script>
 
@@ -319,6 +339,7 @@ onBeforeUnmount(() => {
       <div v-if="loading" class="space-y-3 px-4 pb-32">
         <div class="h-64 animate-pulse rounded-[26px] bg-white/[0.06]" />
         <div v-for="n in 3" :key="n" class="h-32 animate-pulse rounded-[22px] bg-white/[0.06]" />
+        <p class="pt-1 text-center text-[10px] text-white/35">{{ loadingCopy }}</p>
       </div>
 
       <div v-else-if="error" class="explore-empty">

@@ -202,10 +202,11 @@ function pickNext() {
   if (picking.value || remainingSpots.value.length < 2) return
   picking.value = true
   let ticks = 0
+  // 开始抽签的轻震动必须发生在用户手势内（定时器回调会被 Chrome 拦截 vibrate）。
+  hapticSelect()
   pickTimer = setInterval(() => {
     const candidates = remainingSpots.value
     pickedName.value = candidates[ticks % candidates.length]?.name || ''
-    if (ticks % 4 === 0) hapticSelect()
     ticks += 1
     if (ticks < 14) return
     if (pickTimer) clearInterval(pickTimer)
@@ -214,6 +215,13 @@ function pickNext() {
     if (chosen) {
       journey.chooseNext(chosen.id, planIds.value)
       pickedName.value = chosen.name
+      // 揭晓瞬间：爆一簇彩带，把「随机决定」变成「命运揭晓」。
+      // 注意：此处是定时器回调（非用户手势窗口），Chrome 会拦截 vibrate，故不再震动。
+      burstConfetti(document.querySelector<HTMLElement>('main'), {
+        count: 26,
+        size: [5, 11],
+        duration: 1100,
+      })
     }
     picking.value = false
   }, 85)
@@ -394,7 +402,7 @@ onBeforeUnmount(() => {
         </button>
         <div class="text-center">
           <p class="text-sm font-bold text-stone-900">今天安排</p>
-          <p class="text-[9px] text-stone-400">只包含你主动加入的地点</p>
+          <p class="text-[10px] text-stone-400">只包含你主动加入的地点</p>
         </div>
         <div class="h-10 w-10" />
       </div>
@@ -421,7 +429,7 @@ onBeforeUnmount(() => {
             <p class="text-2xl font-bold">{{ plan.count.value }} 个地点</p>
             <p class="mt-1 text-xs text-white/60">{{ durationSummary }}</p>
           </div>
-          <span class="rounded-full bg-white/10 px-3 py-1.5 text-[9px] text-white/65">本机保存</span>
+          <span class="rounded-full bg-white/10 px-3 py-1.5 text-[10px] text-white/65">本机保存</span>
         </div>
         <p class="mt-4 rounded-2xl bg-white/10 px-3 py-2.5 text-[10px] leading-4 text-white/75">
           {{ pressureNote }}
@@ -437,7 +445,7 @@ onBeforeUnmount(() => {
               :style="{ width: `${Math.max(16, Math.min(100, (plan.count.value / 6) * 100))}%` }"
             />
           </div>
-          <p class="mt-2 text-[9px] text-white/45">{{ rhythm.note }}</p>
+          <p class="mt-2 text-[10px] text-white/60">{{ rhythm.note }}</p>
         </div>
       </section>
 
@@ -459,14 +467,14 @@ onBeforeUnmount(() => {
       >
         <div class="flex items-center justify-between text-[10px]">
           <span class="font-bold text-lime-300">正在进行 · {{ completedSpots.length }}/{{ plan.count.value }}</span>
-          <span class="text-white/45">{{ journeyProgress }}%</span>
+          <span class="text-white/60">{{ journeyProgress }}%</span>
         </div>
         <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
           <div class="h-full rounded-full bg-lime-300 transition-all duration-500" :style="{ width: `${journeyProgress}%` }" />
         </div>
-        <p class="mt-5 text-[10px] text-white/45">下一站</p>
+        <p class="mt-5 text-[10px] text-white/60">下一站</p>
         <h2 class="mt-1 text-2xl font-black">{{ pickedName || currentSpot.name }}</h2>
-        <p class="mt-1 text-[10px] text-white/45">{{ spotMeta(currentSpot) }}</p>
+        <p class="mt-1 text-[10px] text-white/60">{{ spotMeta(currentSpot) }}</p>
         <div class="mt-4 grid grid-cols-2 gap-2">
           <button class="rounded-2xl bg-white/10 py-3 text-xs font-bold" @click="navigate(currentSpot)">导航过去</button>
           <button class="rounded-2xl bg-lime-300 py-3 text-xs font-black text-stone-900" @click="completeCurrent">✓ 到过了</button>
@@ -477,7 +485,8 @@ onBeforeUnmount(() => {
           :disabled="picking"
           @click="pickNext"
         >
-          {{ picking ? `🎲 正在抽：${pickedName}` : '🎲 纠结救星：帮我抽下一站' }}
+          <span aria-hidden="true">🎲</span>
+          {{ picking ? `正在抽：${pickedName}` : '纠结救星：帮我抽下一站' }}
         </button>
       </section>
 

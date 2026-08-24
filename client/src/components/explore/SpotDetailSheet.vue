@@ -46,7 +46,7 @@ const reminder = computed(() => departureReminder(props.spot))
             <span
               v-for="tag in spot.tags.slice(0, 3)"
               :key="tag"
-              class="rounded-full bg-white/15 px-2 py-1 text-[9px] backdrop-blur"
+              class="rounded-full bg-white/15 px-2 py-1 text-[10px] backdrop-blur"
             >
               {{ tag }}
             </span>
@@ -69,11 +69,11 @@ const reminder = computed(() => departureReminder(props.spot))
           <p class="mt-2 text-xs leading-5 text-stone-600">{{ spot.reason }}</p>
           <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-stone-100 pt-4">
             <div>
-              <dt class="text-[9px] text-stone-400">建议停留</dt>
+              <dt class="text-[10px] text-stone-400">建议停留</dt>
               <dd class="mt-1 text-xs font-semibold text-stone-700">{{ spot.suggestedDuration || '待补充' }}</dd>
             </div>
             <div>
-              <dt class="text-[9px] text-stone-400">推荐时段</dt>
+              <dt class="text-[10px] text-stone-400">推荐时段</dt>
               <dd class="mt-1 text-xs font-semibold text-stone-700">{{ spot.bestTime || '待补充' }}</dd>
             </div>
           </dl>
@@ -85,7 +85,7 @@ const reminder = computed(() => departureReminder(props.spot))
         <section class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <h3 class="text-xs font-bold text-amber-900">出发前提醒</h3>
           <p class="mt-1.5 text-[11px] leading-5 text-amber-800">{{ reminder }}</p>
-          <p class="mt-1 text-[9px] text-amber-600">预约、票务与营业信息以当天官方公告为准。</p>
+          <p class="mt-1 text-[10px] text-amber-600">预约、票务与营业信息以当天官方公告为准。</p>
         </section>
 
         <p v-if="!actionReady" class="text-center text-[10px] leading-4 text-amber-700">
