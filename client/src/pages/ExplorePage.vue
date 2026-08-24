@@ -336,36 +336,37 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <div v-if="loading" class="space-y-3 px-4 pb-32">
-        <div class="h-64 animate-pulse rounded-[26px] bg-white/[0.06]" />
-        <div v-for="n in 3" :key="n" class="h-32 animate-pulse rounded-[22px] bg-white/[0.06]" />
-        <p class="pt-1 text-center text-[10px] text-white/35">{{ loadingCopy }}</p>
-      </div>
+      <Transition name="fade-up">
+        <div v-if="loading" key="loading" class="space-y-3 px-4 pb-32">
+          <div class="h-64 animate-pulse rounded-[26px] bg-white/[0.06]" />
+          <div v-for="n in 3" :key="n" class="h-32 animate-pulse rounded-[22px] bg-white/[0.06]" />
+          <p class="pt-1 text-center text-[10px] text-white/35">{{ loadingCopy }}</p>
+        </div>
 
-      <div v-else-if="error" class="explore-empty">
-        <span>↻</span>
-        <h2>地点没有加载出来</h2>
-        <p>{{ error }}</p>
-        <button @click="loadAllSpots">重新加载</button>
-      </div>
+        <div v-else-if="error" key="error" class="explore-empty">
+          <span>↻</span>
+          <h2>地点没有加载出来</h2>
+          <p>{{ error }}</p>
+          <button @click="loadAllSpots">重新加载</button>
+        </div>
 
-      <div v-else-if="visibleSpots.length === 0" class="explore-empty">
-        <span>⌕</span>
-        <h2>{{ emptyTitle }}</h2>
-        <p>{{ emptyHint }}</p>
-        <button v-if="category !== 'all' || query" @click="query = ''; category = 'all'">查看全部地点</button>
-      </div>
+        <div v-else-if="visibleSpots.length === 0" key="empty" class="explore-empty">
+          <span>⌕</span>
+          <h2>{{ emptyTitle }}</h2>
+          <p>{{ emptyHint }}</p>
+          <button v-if="category !== 'all' || query" @click="query = ''; category = 'all'">查看全部地点</button>
+        </div>
 
-      <section v-else-if="viewMode === 'map'" class="px-4 pb-32">
-        <ExploreSpotMap
-          :key="`${city.adcode}-${category}`"
-          :spots="visibleSpots"
-          :selected-ids="selectedIds"
-          @select="selectedSpot = $event"
-        />
-      </section>
+        <section v-else-if="viewMode === 'map'" key="map" class="px-4 pb-32">
+          <ExploreSpotMap
+            :key="`${city.adcode}-${category}`"
+            :spots="visibleSpots"
+            :selected-ids="selectedIds"
+            @select="selectedSpot = $event"
+          />
+        </section>
 
-      <section v-else class="spot-feed">
+        <section v-else key="list" class="spot-feed">
         <article v-if="featuredSpot" class="featured-card" @click="selectedSpot = featuredSpot">
           <SpotCover :spot="featuredSpot" eager />
           <div class="featured-shade" />
@@ -408,6 +409,7 @@ onBeforeUnmount(() => {
           </div>
         </article>
       </section>
+      </Transition>
     </template>
 
     <section v-else class="city-empty">

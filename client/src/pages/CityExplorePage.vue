@@ -1199,6 +1199,24 @@ const routeList = computed(() =>
 }
 
 /* ---------- empty ---------- */
+/* 数据到达后的内容入场：骨架 → 卡组/路线/空态 平滑淡入，避免硬切。 */
+.swipe-deck,
+.route-panel,
+.empty.show {
+  animation: deck-in 0.3s ease both;
+}
+@keyframes deck-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .swipe-deck,
+  .route-panel,
+  .empty.show {
+    animation: none;
+  }
+}
+
 .empty {
   margin: 28px 0 0;
   padding: 30px 18px;

@@ -14,6 +14,8 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 const saving = ref(false)
 const saveMessage = ref('')
 const saveFailed = ref(false)
+/** 票根静态地图加载完成标记（未完成时显示 shimmer 占位，避免灰块）。 */
+const mapLoaded = ref(false)
 const fanSpots = computed(() => props.spots.slice(0, 6))
 const staticMapUrl = computed(() => {
   const points = props.spots
@@ -391,11 +393,14 @@ async function shareTicket() {
         <p class="mt-1 text-[10px] text-white/45">{{ dateLabel }} · {{ persona }}模式</p>
 
         <div class="relative -mx-2 mt-4 h-[205px] overflow-hidden rounded-[20px] bg-emerald-950">
+          <div v-if="!mapLoaded" class="ticket-map-loading" aria-hidden="true" />
           <img
             :src="staticMapUrl"
             alt="今日地点地图"
             crossorigin="anonymous"
-            class="absolute inset-0 h-full w-full object-cover"
+            class="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+            :class="{ 'opacity-0': !mapLoaded }"
+            @load="mapLoaded = true"
             @error="hideBrokenImage"
           >
           <div class="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-stone-950/80" />
@@ -495,6 +500,19 @@ async function shareTicket() {
 
 .fan-stage:hover .fan-card {
   filter: saturate(1.08);
+}
+
+/* 票根地图加载占位：shimmer 微光，加载完成后 img 淡入覆盖。 */
+.ticket-map-loading {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, #12301f 30%, #1d4a31 50%, #12301f 70%);
+  background-size: 200% 100%;
+  animation: ticket-map-shimmer 1.3s ease infinite;
+}
+@keyframes ticket-map-shimmer {
+  0% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -129,6 +129,17 @@ function onImgError(e: Event) {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
+  /* 骨架 → 内容淡入（数据加载完才出现） */
+  animation: rail-in 0.3s ease both;
+}
+@keyframes rail-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    animation: none;
+  }
 }
 .rail::-webkit-scrollbar { display: none; }
 
