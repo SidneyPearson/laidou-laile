@@ -64,8 +64,8 @@ const items: Item[] = [
   transform: translateX(-50%);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(8, 12, 18, 0.92);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;

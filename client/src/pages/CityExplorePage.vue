@@ -201,6 +201,9 @@ async function loadRecommendations() {
   feedError.value = ''
 
   try {
+    // 一次拉全该城市所有已发布地点（后端上限 60，见 exploreRoutes.schemas 注释：
+    // 探索页一次拉全替代串行小页）。旧实现 limit:6 + while 翻页会在 4G 上串行
+    // 多次往返，是骨架屏长时间不消失的主因。保留循环仅作分页兜底。
     const all: InspirationSpot[] = []
     let cursor: number | null = 0
     let pages = 0
@@ -211,7 +214,7 @@ async function loadRecommendations() {
         persona: persona.value,
         category: 'all',
         cursor,
-        limit: 6,
+        limit: 60,
         isRainy: weather.value?.isRainy ?? false,
       }, feedController.signal)
       if (requestId !== feedRequestId) return
@@ -840,17 +843,33 @@ const routeList = computed(() =>
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  transition: transform 0.26s ease, opacity 0.26s ease, filter 0.26s ease;
+  transition: transform 0.26s ease, opacity 0.26s ease;
+}
+/* 后卡压暗用静态黑色遮罩（::after），不用 filter:brightness——后者在 388px 大图上
+   随 transform 动画每帧重算，是换卡/拖拽掉帧的主因。遮罩位于图片之上、文字之下。 */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  background: #000;
+  transition: opacity 0.26s ease;
 }
 .card.back-1 {
   transform: translateY(12px) scale(0.965) rotate(2.2deg);
-  filter: brightness(0.62);
   z-index: 1;
+}
+.card.back-1::after {
+  opacity: 0.38;
 }
 .card.back-2 {
   transform: translateY(24px) scale(0.92) rotate(4.2deg);
-  filter: brightness(0.40);
   z-index: 0;
+}
+.card.back-2::after {
+  opacity: 0.6;
 }
 .card.front {
   z-index: 3;
@@ -882,13 +901,12 @@ const routeList = computed(() =>
   z-index: 4;
   padding: 7px 10px;
   border-radius: 12px;
-  background: rgba(6, 11, 17, 0.76);
+  /* 不透明底色，避免 backdrop-blur 在拖动中随卡片 transform 每帧重光栅化（移动端掉帧主因） */
+  background: rgba(6, 11, 17, 0.92);
   border: 1px solid rgba(201, 255, 31, 0.22);
   color: var(--lime);
   font-size: 11px;
   font-weight: 800;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .swipe-label {
   position: absolute;
@@ -1080,9 +1098,9 @@ const routeList = computed(() =>
   padding: 12px 12px 12px 14px;
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(14, 19, 27, 0.86);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(14, 19, 27, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
   display: grid;
   grid-template-columns: auto 1fr auto;

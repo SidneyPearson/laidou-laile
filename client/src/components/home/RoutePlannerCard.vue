@@ -47,9 +47,9 @@ const emit = defineEmits<{
   padding: 0 14px 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  background: rgba(11, 16, 24, 0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(11, 16, 24, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   overflow: hidden;
   text-align: left;

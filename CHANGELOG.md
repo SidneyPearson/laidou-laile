@@ -1,5 +1,19 @@
 # 来都来了 · 更新日志
 
+## 2026-08（城市灵感 → 今日计划 → 票根）
+
+### 变更
+- **移除实时 LLM 规划栈**（2026-08-01）：旧的「选偏好/时长 → DeepSeek 提名 → 高德验证 → 路线生成/精调」整套（`/api/plan/generate|refine|replace-stop`、`services/llm/`、`services/planner/`、前台 `RoutePage`/`HistoryPage`）已删除。移动端暂不做 AI 搜索/规划，不依赖任何 AI key。`/api/plan/suggest-order` 保留，是纯确定性距离排序。
+- **产品主线**：用户选城市/定位 → 浏览 D1 中后台策展且已通过高德验证的灵感地点 → 加入「今日计划」并按距离给出参考顺序 → 生成城市**票根**并可保存到系统相册。
+- **首页改版**：「City Inspiration」沉浸 hero、热门城市选择、身份画像、向右滑动解锁进入新版城市探索页；「灵感推荐」接 D1 地点库（cover/reason/分区 + 按用户实际距离排序，缺图用主题渐变兜底）。
+- **首页画像后台配置化**：新增 `home_persona_cards` 表（迁移 0005–0007），5 个画像 id 固定不可增删，后台可改标题/副标题/图/排序/启用；公开接口 `GET /api/home/personas` 带静态兜底，后台 `PATCH /api/admin/home-personas/:id` 带乐观锁与审计。
+- **后台内容编辑部**：城市档案、地点编目台账、城市 7/14/30 天周期复核（`AdminCityRefreshPage`）、公开地点完整性校验（迁移 0008–0009）。
+- **今日计划与票根**：`TodayPlanPage` + `components/today/`（地图、地点卡、`CityTicketSheet`），状态在 `useTodayPlan`/`useTodayJourney`；票根可直达系统相册，保存成功有闭环提示。
+- **体验与性能**：欢愉动效注入、加载过渡与页面切换动画、滚动性能优化（图片压缩 + `content-visibility` + blur 降级）、UI/UX 无障碍修复。
+
+### 说明
+- 以下 2026-07 及更早条目记录的是已被移除的 LLM 规划时代，仅作历史保留；当前架构以 `AGENTS.md`（2026-08-13 更新）为准。
+
 ## 2026-07-15（工程化重构）
 
 ### 变更

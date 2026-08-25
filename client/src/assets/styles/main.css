@@ -57,7 +57,7 @@
 /* Swipe animation */
 .slide-enter-active,
 .slide-leave-active {
-  transition: all 0.3s ease-out;
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 .slide-enter-from {
   transform: translateX(40px);
@@ -161,21 +161,31 @@
   top: 12px;
 }
 
-/* P1-4：桌面浏览器打开时，公开 H5 卡片化居中，避免两侧黑边空洞。 */
+/* P1-4：桌面浏览器打开时，公开 H5 卡片化居中，避免两侧黑边空洞。
+   后台（.admin-shell）不受影响：保持暖纸背景、无圆角阴影。 */
 @media (min-width: 768px) {
   body {
     background: #0b1119 radial-gradient(circle at 50% 0%, #16202e 0%, #0a1018 68%);
   }
+  /* 后台：还原原来的暖纸背景与布局（body 深色仅对公开页生效） */
+  body:has(.admin-shell) {
+    background: #f3eee5;
+  }
   .home-page,
   .explore-page,
   .swipe-app,
-  .today-plan-page,
-  .admin-shell {
+  .today-plan-page {
     margin-top: 32px;
     margin-bottom: 32px;
     border-radius: 28px;
     box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55);
     overflow: hidden;
+  }
+  .admin-shell {
+    margin-top: 0;
+    margin-bottom: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 
