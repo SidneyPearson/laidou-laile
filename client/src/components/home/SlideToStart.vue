@@ -117,6 +117,17 @@ function onKeyDown(event: KeyboardEvent) {
   if (thresholdReached.value) completeUnlock()
 }
 
+/** 父组件在解锁被"取消"（如确认弹层点取消）时调用，把滑块复位回初始锁定态。 */
+function reset() {
+  unlocked.value = false
+  dragging.value = false
+  pointerId = null
+  thresholdReached.value = false
+  offset.value = 0
+}
+
+defineExpose({ reset })
+
 function onPointerUp(e: PointerEvent) {
   if (e.pointerId !== pointerId) return
   finishDrag()

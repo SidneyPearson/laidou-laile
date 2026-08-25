@@ -56,6 +56,8 @@ const spots = ref<InspirationSpot[]>([])
 const spotsLoading = ref(true)
 const selectedSpot = ref<InspirationSpot | null>(null)
 const confirmReset = ref(false)
+/** 滑动解锁滑块引用：取消"重新开始"时复位，避免卡在解锁终态。 */
+const slideToStartRef = ref<InstanceType<typeof SlideToStart> | null>(null)
 /** 请求失败后的降级状态：'unsupported' = 城市未发布（筹备中），'error' = 加载失败。 */
 const demoFallback = ref<'unsupported' | 'error' | null>(null)
 
@@ -435,8 +437,11 @@ function proceedFreshStart() {
   handleStart()
 }
 
+/** 取消"重新开始"：关闭确认层，并把滑动解锁滑块复位回锁定态，
+ *  否则滑块会卡在"已解锁"终态无法再拖（表现为页面交互消失）。 */
 function cancelFreshStart() {
   confirmReset.value = false
+  slideToStartRef.value?.reset()
 }
 
 function handleSpotSelect(spot: InspirationSpot) {
@@ -574,6 +579,7 @@ watch(persona, () => {
           @update:model-value="handlePersonaChange"
         />
         <SlideToStart
+          ref="slideToStartRef"
           class="start-slider"
           hint="向右滑动为你推荐"
           ready-hint="正在为你推荐…"
@@ -616,7 +622,7 @@ watch(persona, () => {
       <p class="home-footer" @click="tapFooter">{{ footerCopy }}</p>
     </div>
 
-    <Transition name="sheet">
+    <Transition name="sheet" :duration="220">
       <div v-if="showPicker" class="sheet-mask" @click.self="showPicker = false">
         <div class="sheet-panel sheet-panel--dark">
           <CityPicker
@@ -627,7 +633,7 @@ watch(persona, () => {
       </div>
     </Transition>
 
-    <Transition name="sheet">
+    <Transition name="sheet" :duration="220">
       <SpotDetailSheet
         v-if="selectedSpot"
         :spot="selectedSpot"
@@ -640,7 +646,7 @@ watch(persona, () => {
       />
     </Transition>
 
-    <Transition name="sheet">
+    <Transition name="sheet" :duration="220">
       <div v-if="confirmReset" class="sheet-mask" @click.self="cancelFreshStart">
         <div class="sheet-panel sheet-panel--dark confirm-sheet">
           <h3>重新开始一轮推荐？</h3>
@@ -805,11 +811,14 @@ watch(persona, () => {
   inset: 0;
   z-index: 60;
   background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
+}
+/* iOS Safari + backdrop-filter 经典 bug：退出动画结束后不触发 transitionend，
+   mask 残留挡住全屏点击。已去掉 backdrop-filter（视觉无差）。 */
+.sheet-leave-active {
+  pointer-events: none;
 }
 
 .sheet-panel {
@@ -832,7 +841,8 @@ watch(persona, () => {
 
 .sheet-enter-active,
 .sheet-leave-active {
-  transition: opacity 0.25s ease;
+  /* 缩短到 0.18s，减少 mask 残留窗口；同时去掉 backdrop-filter 后 iOS 退出动画正常 */
+  transition: opacity 0.18s ease;
 }
 
 .sheet-enter-active .sheet-panel,
