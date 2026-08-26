@@ -659,7 +659,8 @@ const routeList = computed(() =>
   overflow-x: hidden;
   background: linear-gradient(to bottom, rgba(3, 7, 12, 0.08), #05080d 32%), #05080d;
   color: var(--text);
-  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  /* 给常驻底部导航和已选地点栏留出滚动安全区。 */
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
 }
 
 .hero-bg {
@@ -862,7 +863,7 @@ const routeList = computed(() =>
 /* ---------- swipe deck ---------- */
 .stack-wrap {
   position: relative;
-  height: 408px;
+  height: 332px;
   margin-top: 8px;
   perspective: 1200px;
 }
@@ -872,7 +873,7 @@ const routeList = computed(() =>
   right: 0;
   margin: auto;
   width: 100%;
-  height: 388px;
+  height: 312px;
   border-radius: 26px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1050,7 +1051,7 @@ const routeList = computed(() =>
   grid-template-columns: 72px 1fr 72px;
   align-items: center;
   gap: 14px;
-  margin-top: 4px;
+  margin: 4px 0 12px;
 }
 .action-round {
   width: 62px;
@@ -1147,19 +1148,26 @@ const routeList = computed(() =>
 }
 .thumbs {
   display: flex;
-  min-width: 64px;
+  align-items: center;
+  gap: 4px;
+  /* 缩略图不再叠放，删除叉号也不会压到相邻地点。 */
+  width: max-content;
+  min-width: 44px;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 .thumb {
   position: relative;
-  width: 44px;
-  height: 44px;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border-radius: 50%;
   border: 2px solid #dbe0e6;
   background-color: transparent;
   background-size: cover;
   background-position: center;
-  margin-right: -13px;
+  margin-right: 0;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   font-size: 0;
@@ -1178,6 +1186,7 @@ const routeList = computed(() =>
   font-weight: 700;
   line-height: 16px;
   text-align: center;
+  pointer-events: none;
 }
 .dock-copy {
   min-width: 0;
@@ -1393,10 +1402,24 @@ const routeList = computed(() =>
     font-size: 25px;
   }
   .stack-wrap {
-    height: 396px;
+    height: 312px;
   }
   .card {
-    height: 376px;
+    height: 292px;
+  }
+  .swipe-app {
+    gap: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .thumb {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+  }
+  .thumbs {
+    gap: 3px;
+    min-width: 40px;
   }
 }
 </style>

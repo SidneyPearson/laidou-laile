@@ -12,6 +12,9 @@ const navToast = ref('')
 let navToastTimer: ReturnType<typeof setTimeout> | null = null
 
 const isPublicRoute = computed(() => !route.path.startsWith('/admin'))
+const isDarkPublicRoute = computed(() =>
+  route.name === 'home' || route.name === 'explore' || route.name === 'city-explore',
+)
 const activeBottomTab = computed<BottomTab>(() => {
   if (route.name === 'today-plan') return 'plan'
   if (route.name === 'explore' || route.name === 'city-explore') return 'explore'
@@ -74,36 +77,31 @@ onBeforeUnmount(() => {
     </div>
   </div>
   <template v-else>
-    <div v-if="routeLoading" class="route-bar" aria-hidden="true" />
-    <router-view v-slot="{ Component }">
-      <transition name="page" mode="out-in">
+    <div class="app-shell" :class="{ 'app-shell--dark': isDarkPublicRoute }">
+      <div v-if="routeLoading" class="route-bar" aria-hidden="true" />
+      <router-view v-slot="{ Component }">
+        <!-- 轻量 H5 采用即时换页，避免 out-in 先卸载旧页再挂载新页造成空白闪烁。 -->
         <component :is="Component" />
-      </transition>
-    </router-view>
-    <Transition name="nav-toast">
-      <div v-if="navToast" class="app-nav-toast" role="status">{{ navToast }}</div>
-    </Transition>
-    <MobileBottomNav
-      v-if="isPublicRoute"
-      :active="activeBottomTab"
-      @navigate="handleBottomNav"
-    />
+      </router-view>
+      <Transition name="nav-toast">
+        <div v-if="navToast" class="app-nav-toast" role="status">{{ navToast }}</div>
+      </Transition>
+      <MobileBottomNav
+        v-if="isPublicRoute"
+        :active="activeBottomTab"
+        @navigate="handleBottomNav"
+      />
+    </div>
   </template>
 </template>
 
 <style>
-/* 页面切换过渡：淡入 + 轻微上移，out-in 避免滚动条跳变。 */
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
+.app-shell {
+  min-height: 100%;
+  min-height: 100dvh;
 }
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
+.app-shell--dark {
+  background: #02070e;
 }
 
 /* 路由加载进度条：懒加载 chunk 下载期间顶部细条流动，给用户"正在加载"的反馈。 */
