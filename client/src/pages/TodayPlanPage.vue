@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import TodayPlanMap from '../components/today/TodayPlanMap.vue'
 import TodaySpotCard from '../components/today/TodaySpotCard.vue'
@@ -16,6 +16,7 @@ import { hapticSelect, hapticSuccess } from '../utils/haptics'
 import { burstConfetti } from '../utils/delight'
 import type { Persona, InspirationSpot } from '../types/explore'
 import type { TodaySpot } from '../types/todayPlan'
+import { TODAY_PLAN_LIMIT } from '../types/todayPlan'
 
 const router = useRouter()
 const plan = useTodayPlan()
@@ -135,9 +136,19 @@ function removeSpot(id: string) {
   clearSuggestionForSetChange()
 }
 
+/** 进入页面/切换到新行程状态时回到顶部，避免继承上一页的 scrollY 把
+ *  页面顶部摘要和「下一站」首屏截掉。nextTick 等新内容布局完成再滚。 */
+function scrollToTop() {
+  void nextTick(() => {
+    if (typeof window === 'undefined') return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  })
+}
+
 function startJourney() {
   if (!journey.start(planIds.value)) return
   hapticSuccess()
+  scrollToTop()
 }
 
 function resetJourney() {
@@ -182,7 +193,10 @@ function completeCurrent() {
   if (!spot || !journey.completeSpot(spot.id, planIds.value)) return
   hapticSuccess()
   pickedName.value = ''
-  celebrateArrival(journey.status.value === 'complete')
+  const allDone = journey.status.value === 'complete'
+  celebrateArrival(allDone)
+  // 完成全部站点后，从顶部展示完成态（下一站卡片消失、票根入口出现）。
+  if (allDone) scrollToTop()
 }
 
 function completeSpot(id: string) {
@@ -383,6 +397,9 @@ function restoreOriginalOrder() {
 
 watch(planIds, ids => journey.syncWithSpots(ids), { immediate: true })
 
+// 进入今日计划页时强制回到顶部：从探索页长列表点进来时不能继承旧 scrollY。
+onMounted(() => scrollToTop())
+
 onBeforeUnmount(() => {
   if (pickTimer) clearInterval(pickTimer)
   if (clearNoticeTimer) clearTimeout(clearNoticeTimer)
@@ -390,7 +407,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="mx-auto min-h-full max-w-md bg-[#f7f6f2] pb-12">
+  <main class="mx-auto min-h-full max-w-md bg-[#f7f6f2] pb-[calc(96px+env(safe-area-inset-bottom))]">
     <header class="sticky top-0 z-30 border-b border-white/60 bg-[#f7f6f2]/90 px-5 pb-3 pt-[max(18px,env(safe-area-inset-top))] backdrop-blur-xl">
       <div class="flex items-center justify-between">
         <button
@@ -442,7 +459,7 @@ onBeforeUnmount(() => {
           <div class="relative mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
             <div
               class="h-full rounded-full bg-gradient-to-r from-emerald-300 to-lime-300 transition-all duration-500"
-              :style="{ width: `${Math.max(16, Math.min(100, (plan.count.value / 6) * 100))}%` }"
+              :style="{ width: `${Math.max(16, Math.min(100, (plan.count.value / TODAY_PLAN_LIMIT) * 100))}%` }"
             />
           </div>
           <p class="mt-2 text-[10px] text-white/60">{{ rhythm.note }}</p>

@@ -82,10 +82,20 @@ export function mapSpotCategory(category: SpotRecord['category']): Exclude<Explo
 function mapPersonas(tags: string[]): Persona[] {
   const mapped = new Set<Persona>()
   for (const tag of tags) {
-    const persona = PERSONA_TAG_MAP[tag.trim().toLowerCase()]
-    if (persona) mapped.add(persona)
+    const normalized = tag.trim().toLowerCase()
+    // 后台直接写入的画像 id 优先（与 H5 首页画像同源）：用户在 H5 选了哪个画像，
+    // 就按同一个 id 命中对应地点，保证 H5 推荐与后台画像完全一致。
+    if ((ALL_PERSONAS as readonly string[]).includes(normalized)) {
+      mapped.add(normalized as Persona)
+      continue
+    }
+    // 兼容旧数据：自由文本标签 → 营销画像。
+    const legacy = PERSONA_TAG_MAP[normalized]
+    if (legacy) mapped.add(legacy)
   }
-  return mapped.size > 0 ? [...mapped] : ALL_PERSONAS
+  // 返回后台实际标注的画像集合：未标注（或全为未知标签）的地点返回空集，
+  // 不会在「按画像推荐」时匹配到任何画像，避免把整座城市的地点点库都推给用户。
+  return [...mapped]
 }
 
 /** Convert a D1 published+verified spot to the H5 InspirationSpot shape.
@@ -157,9 +167,15 @@ export function selectInspirationSpots(
     .map(spot => spotToInspiration(spot, cityName))
     .filter((spot): spot is InspirationSpot => spot !== null))
 
-  const filtered = selection.category === 'all'
+  const categoryFiltered = selection.category === 'all'
     ? converted
     : converted.filter(spot => spot.category === selection.category)
+
+  // 画像筛选：用户选了哪个画像，就只推荐后台标注了该画像的地点（与后台画像
+  // 完全一致），未命中画像的地点直接不进入推荐列表，而不是只降权后仍然出现。
+  const filtered = selection.persona
+    ? categoryFiltered.filter(spot => spot.suitablePersonas.includes(selection.persona as Persona))
+    : categoryFiltered
 
   const hasLocation = Number.isFinite(selection.userLat) && Number.isFinite(selection.userLng)
 

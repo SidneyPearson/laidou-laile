@@ -115,3 +115,17 @@ export function pickCopy(pool: readonly string[], index: number): string {
   if (pool.length === 0) return ''
   return pool[Math.abs(index) % pool.length]
 }
+
+/** 超过今日计划上限（默认 3 个）时的趣味提醒，反复触发时轮换文案不重复念叨。 */
+const PLAN_LIMIT_MESSAGES = [
+  '今天 3 个已满员，这个先留给下次吧',
+  '一天逛不完，3 个已经是今天的体力极限',
+  '再贪就逛不完啦，3 个是今天的满分',
+  '先记 3 个，腿和相机都谢谢你的克制',
+] as const
+let planLimitMessageCounter = 0
+export function playfulPlanLimitMessage(): string {
+  const message = pickCopy(PLAN_LIMIT_MESSAGES, planLimitMessageCounter)
+  planLimitMessageCounter += 1
+  return message
+}

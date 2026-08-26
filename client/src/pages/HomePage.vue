@@ -8,7 +8,6 @@ import InspirationCarousel, {
   type InspirationCard,
 } from '../components/home/InspirationCarousel.vue'
 import RoutePlannerCard from '../components/home/RoutePlannerCard.vue'
-import MobileBottomNav, { type BottomTab } from '../components/home/MobileBottomNav.vue'
 import LocationSheet from '../components/home/LocationSheet.vue'
 import CityPicker from '../components/CityPicker.vue'
 import SpotDetailSheet from '../components/explore/SpotDetailSheet.vue'
@@ -29,7 +28,7 @@ import { useTodayJourney } from '../composables/useTodayJourney'
 import { matchRememberedCity, useExploreCity } from '../composables/useExploreCity'
 import { useGeolocation } from '../composables/useGeolocation'
 import { openAmapNavigation } from '../utils/amapNavigation'
-import { floatEmojis, timeGreeting, pickCopy } from '../utils/delight'
+import { floatEmojis, playfulPlanLimitMessage, timeGreeting } from '../utils/delight'
 import {
   defaultHomePersonaCards,
   fetchHomePersonas,
@@ -56,6 +55,9 @@ const spots = ref<InspirationSpot[]>([])
 const spotsLoading = ref(true)
 const selectedSpot = ref<InspirationSpot | null>(null)
 const confirmReset = ref(false)
+/** 切换城市二次确认：当前城市有今日计划时，先确认再切换（各城市计划分别保留）。 */
+const pendingCity = ref<RecommendationCity | null>(null)
+const showCityConfirm = ref(false)
 /** 滑动解锁滑块引用：取消"重新开始"时复位，避免卡在解锁终态。 */
 const slideToStartRef = ref<InstanceType<typeof SlideToStart> | null>(null)
 /** 请求失败后的降级状态：'unsupported' = 城市未发布（筹备中），'error' = 加载失败。 */
@@ -77,19 +79,6 @@ const currentPersonaOption = () =>
 
 /** 画像面板标题：按时段换一句轻快问候，给每次回首页一点新鲜感。 */
 const personaPanelTitle = computed(() => timeGreeting())
-
-/** 加入今日的文案池：轮换使用，避免每次都是同一句干巴巴的通知。 */
-const ADD_TO_TODAY_COPY = [
-  '已加入「{name}」',
-  '「{name}」已入袋，今天有盼头了',
-  '好眼光！「{name}」收进今天了',
-  '「{name}」进今天了，记得给它留点时间',
-] as const
-function addToTodayMessage(name: string): string {
-  // 用地点名长度 + 计划数量做“盐”，同一地点重复加入也能换文案。
-  const salt = todayPlan.count.value + name.length
-  return pickCopy(ADD_TO_TODAY_COPY, salt).replace('{name}', name)
-}
 
 /** 页脚彩蛋：连点 5 下（2 秒内）触发 emoji 漂浮。 */
 const FOOTER_TAP_COUNT = 5
@@ -295,19 +284,70 @@ async function loadSpots() {
 
 const FIRST_VISIT_KEY = 'laidou-home-loc-dismissed'
 
-function resetJourneyForCityChange(next: RecommendationCity) {
-  const previous = exploreCity.value ?? selectedCity.value
-  const switchedCity = !!previous && previous.adcode !== next.adcode
-  if (!switchedCity) return
-  const clearedPlan = todayPlan.clear()
-  todayJourney.reset()
-  if (clearedPlan) showToast(`已切换到${next.name.replace(/市$/, '')}，今日计划已清空`)
+/** 当前城市是否已有今日计划或进行中的行程（切换城市需要二次确认的判据）。 */
+const currentCityLabel = computed(() =>
+  (exploreCity.value ?? selectedCity.value)?.name.replace(/市$/, '') ?? '当前城市')
+
+function isSameCity(a: RecommendationCity | null, b: RecommendationCity): boolean {
+  return !!a && a.adcode === b.adcode
 }
 
-function adoptCity(next: RecommendationCity) {
-  resetJourneyForCityChange(next)
+/** 真正执行切换：切到该城市的计划桶、重置行程进度、记住选择。
+ *  各城市的今日计划分别保存，切回原城市会恢复，不再静默清空。 */
+function applyCitySwitch(next: RecommendationCity) {
+  todayPlan.setActiveCity({ adcode: next.adcode, cityName: next.name })
+  todayJourney.reset()
   selectedCity.value = next
   setExploreCity(next)
+}
+
+/** 切换城市入口：当前城市有计划/行程时先弹二次确认，避免误触丢失上下文；
+ *  同城市或空计划直接切换。afterSwitch 在真正切换后执行（加载天气/地点等），
+ *  onCancel 在用户取消时执行（用于还原定位流程里乐观设置的临时城市）。 */
+const pendingAfterSwitch = ref<(() => void | Promise<void>) | null>(null)
+const pendingCancel = ref<(() => void) | null>(null)
+function requestCitySwitch(
+  next: RecommendationCity,
+  afterSwitch?: () => void | Promise<void>,
+  onCancel?: () => void,
+) {
+  const previous = exploreCity.value ?? selectedCity.value
+  if (previous && isSameCity(previous, next)) {
+    applyCitySwitch(next)
+    if (afterSwitch) void afterSwitch()
+    return
+  }
+  const needConfirm = todayPlan.count.value > 0 || todayJourney.status.value !== 'idle'
+  if (!needConfirm) {
+    applyCitySwitch(next)
+    if (afterSwitch) void afterSwitch()
+    return
+  }
+  pendingCity.value = next
+  pendingAfterSwitch.value = afterSwitch ?? null
+  pendingCancel.value = onCancel ?? null
+  showCityConfirm.value = true
+}
+
+function confirmCitySwitch() {
+  const next = pendingCity.value
+  showCityConfirm.value = false
+  if (!next) return
+  applyCitySwitch(next)
+  const after = pendingAfterSwitch.value
+  pendingCity.value = null
+  pendingAfterSwitch.value = null
+  pendingCancel.value = null
+  if (after) void after()
+}
+
+function cancelCitySwitch() {
+  showCityConfirm.value = false
+  pendingCity.value = null
+  pendingAfterSwitch.value = null
+  const onCancel = pendingCancel.value
+  pendingCancel.value = null
+  if (onCancel) onCancel()
 }
 
 function openPicker() {
@@ -331,6 +371,8 @@ async function handleUseLocation() {
     return
   }
   const center = { lat: coords.value.lat, lng: coords.value.lng }
+  // 记住切换前的城市，定位到新城市且用户取消切换时还原。
+  const previousCity = selectedCity.value
   // Optimistically set a transient city; real name/adcode/cover resolved below.
   selectedCity.value = {
     adcode: '',
@@ -342,6 +384,8 @@ async function handleUseLocation() {
   // Resolve actual city name + weather. If it matches a known recommended
   // city, upgrade to it so we get a cover image; otherwise keep the resolved
   // name and continue with recommendation API.
+  let resolvedCity: RecommendationCity | null = null
+  let resolvedWeather: CityContextResponse['weather'] = null
   try {
     const ctx = await fetchCityContext(center.lat, center.lng)
     // Reverse geocoding returns the *district* adcode (e.g. 310105 长宁区),
@@ -351,22 +395,34 @@ async function handleUseLocation() {
     const locatedName = ctx.city.replace(/市$/, '')
     const matched = cities.value.find(c => c.adcode === ctx.adcode)
       ?? cities.value.find(c => c.name.replace(/市$/, '') === locatedName)
-    const resolvedCity = matched ?? {
+    resolvedCity = matched ?? {
       adcode: ctx.adcode,
       name: ctx.city,
       province: '',
       coverImageUrl: null,
       center,
     }
-    adoptCity(resolvedCity)
-    weather.value = ctx.weather
-    // Mark these coords as already weather-resolved so loadWeatherAndSpots
-    // doesn't call /api/city/context a second time for the same location.
-    weatherCoordsKey = coordsKey(center)
+    resolvedWeather = ctx.weather
   } catch {
     /* keep transient city, spots will fall back to local demo */
   }
-  await loadWeatherAndSpots()
+  // requestCitySwitch 在确认/直接切换时已经调用过 applyCitySwitch，
+  // 这里只负责设置天气并加载内容，不要重复切换。
+  const applyLocatedContent = () => {
+    weather.value = resolvedWeather
+    // Mark these coords as already weather-resolved so loadWeatherAndSpots
+    // doesn't call /api/city/context a second time for the same location.
+    weatherCoordsKey = coordsKey(center)
+    void loadWeatherAndSpots()
+  }
+  if (resolvedCity) {
+    requestCitySwitch(resolvedCity, applyLocatedContent, () => {
+      // 用户取消切换：还原定位前的城市，不加载新城市内容。
+      if (previousCity) selectedCity.value = previousCity
+    })
+  } else {
+    void loadWeatherAndSpots()
+  }
 }
 
 function handleManualCity() {
@@ -385,13 +441,16 @@ function dismissLocationSheet() {
 
 async function handleCitySelect(city: RecommendationCity) {
   if (!city.center) return
-  setManualLocation(city.center.lat, city.center.lng, city.name)
-  adoptCity(city)
   showPicker.value = false
   showLocationSheet.value = false
-  weather.value = null
-  weatherCoordsKey = null
-  await loadWeatherAndSpots()
+  // 城市切换可能清空（实际上是切走）当前计划，先确认；确认后再设定手动定位并加载。
+  const center = city.center
+  requestCitySwitch(city, () => {
+    setManualLocation(center.lat, center.lng, city.name)
+    weather.value = null
+    weatherCoordsKey = null
+    void loadWeatherAndSpots()
+  })
 }
 
 function handleStart() {
@@ -459,40 +518,20 @@ function toggleTodaySpot() {
   if (!spot || !selectedActionReady(spot)) return
   if (todayPlan.hasSpot(spot.id)) {
     todayPlan.removeSpot(spot.id)
-    showToast(`已将“${spot.name}”移出今天`)
+    showToast(`已将“${spot.name}”移出今日计划`)
     return
   }
   const result = todayPlan.addSpot(spot)
   if (result.status === 'limit') {
-    showToast('今天先选 6 个，避免行程过满')
+    showToast(playfulPlanLimitMessage())
     return
   }
   if (result.status !== 'added') {
-    showToast('这个地点暂时不能加入真实安排')
+    showToast('这个地点暂时不能加入今日计划')
     return
   }
   selectedSpot.value = null
-  showToast(addToTodayMessage(spot.name))
-}
-
-function handleBottomNav(tab: BottomTab) {
-  switch (tab) {
-    case 'home':
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      break
-    case 'explore':
-      router.push({ name: 'explore' })
-      break
-    case 'plan':
-      router.push({ name: 'today-plan' })
-      break
-    case 'favorites':
-      showToast('收藏功能建设中')
-      break
-    case 'me':
-      showToast('个人中心建设中')
-      break
-  }
+  showToast('已加入今日计划')
 }
 
 /* -------------------- scroll reveal -------------------- */
@@ -659,6 +698,19 @@ watch(persona, () => {
       </div>
     </Transition>
 
+    <Transition name="sheet" :duration="220">
+      <div v-if="showCityConfirm" class="sheet-mask" @click.self="cancelCitySwitch">
+        <div class="sheet-panel sheet-panel--dark confirm-sheet">
+          <h3>切换到{{ pendingCity?.name.replace(/市$/, '') }}？</h3>
+          <p>切换后，当前「<strong>{{ currentCityLabel }}</strong>」的今日计划会暂时收起，切回该城市时自动恢复。</p>
+          <div class="confirm-actions">
+            <button class="btn-ghost" type="button" @click="cancelCitySwitch">取消</button>
+            <button class="btn-danger" type="button" @click="confirmCitySwitch">切换城市</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <Transition name="toast">
       <div v-if="toast" class="home-toast">{{ toast }}</div>
     </Transition>
@@ -670,10 +722,6 @@ watch(persona, () => {
       @dismiss="dismissLocationSheet"
     />
 
-    <MobileBottomNav
-      active="home"
-      @navigate="handleBottomNav"
-    />
   </main>
 </template>
 

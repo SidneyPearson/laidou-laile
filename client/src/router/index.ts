@@ -4,6 +4,12 @@ import { useAdminAuth } from '../admin/auth'
 
 export const router = createRouter({
   history: createWebHashHistory(),
+  // 新页面从顶部开始；只有浏览器返回/前进时恢复历史滚动位置。
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.fullPath !== from.fullPath) return { top: 0, left: 0 }
+    return undefined
+  },
   routes: [
     { path: '/', name: 'home', component: HomePage },
     { path: '/explore', name: 'explore', component: () => import('../pages/ExplorePage.vue') },

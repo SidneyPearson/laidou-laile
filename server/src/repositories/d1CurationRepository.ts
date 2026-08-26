@@ -61,6 +61,7 @@ export class D1CurationRepository implements CurationRepository {
     const clauses:string[]=[]; const binds:unknown[]=[]
     for (const [column,value] of [['city_adcode',q.cityAdcode],['category',q.category],['tier',q.tier],['verification_status',q.verificationStatus],['publication_status',q.publicationStatus]] as const) if(value){clauses.push(`${column}=?`);binds.push(value)}
     if(q.keyword){clauses.push('(name LIKE ? OR search_name LIKE ? OR address LIKE ?)');binds.push(`%${q.keyword}%`,`%${q.keyword}%`,`%${q.keyword}%`)}
+    if(q.persona){clauses.push(`EXISTS (SELECT 1 FROM json_each(personas_json) WHERE json_each.value = ?)`);binds.push(q.persona)}
     const where=clauses.length?`WHERE ${clauses.join(' AND ')}`:''
     const count=await this.db.prepare(`SELECT COUNT(*) total FROM spots ${where}`).bind(...binds).first<{total:number}>()
     const rows=await this.db.prepare(`SELECT * FROM spots ${where} ORDER BY CASE tier WHEN 'S' THEN 0 WHEN 'A' THEN 1 WHEN 'B' THEN 2 ELSE 3 END,priority DESC,name LIMIT ? OFFSET ?`).bind(...binds,q.pageSize,(q.page-1)*q.pageSize).all()

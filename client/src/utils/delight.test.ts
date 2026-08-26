@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { pickCopy, prefersReducedMotion, timeGreeting } from './delight'
+import { pickCopy, playfulPlanLimitMessage, prefersReducedMotion, timeGreeting } from './delight'
 
 describe('timeGreeting', () => {
   beforeEach(() => {
@@ -35,6 +35,15 @@ describe('pickCopy', () => {
 
   it('returns an empty string for an empty pool', () => {
     expect(pickCopy([], 0)).toBe('')
+  })
+})
+
+describe('playfulPlanLimitMessage', () => {
+  it('always returns a non-empty playful line and rotates between calls', () => {
+    const first = playfulPlanLimitMessage()
+    expect(first.length).toBeGreaterThan(0)
+    const seen = new Set([first, playfulPlanLimitMessage(), playfulPlanLimitMessage()])
+    expect(seen.size).toBeGreaterThan(1)
   })
 })
 

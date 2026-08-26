@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CityPicker from '../components/CityPicker.vue'
-import MobileBottomNav, { type BottomTab } from '../components/home/MobileBottomNav.vue'
 import ExploreSpotMap from '../components/explore/ExploreSpotMap.vue'
 import SpotCover from '../components/explore/SpotCover.vue'
 import SpotDetailSheet from '../components/explore/SpotDetailSheet.vue'
@@ -17,8 +16,8 @@ import {
 } from '../repositories/cityRecommendations'
 import { fetchCityContext, fetchExploreRecommendations } from '../services/exploreApi'
 import { openAmapNavigation } from '../utils/amapNavigation'
-import { pickCopy } from '../utils/delight'
 import type { ExploreCategory, InspirationSpot } from '../types/explore'
+import { TODAY_PLAN_LIMIT } from '../types/todayPlan'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,6 +34,18 @@ const viewMode = ref<'list' | 'map'>('list')
 const loading = ref(false)
 const error = ref('')
 const showPicker = ref(false)
+const pendingCity = ref<RecommendationCity | null>(null)
+/** 分类横滑条：右侧渐变提示只在还有更多分类可滑时显示，滚到末尾隐藏。 */
+const categoryRail = ref<HTMLElement | null>(null)
+const categoryAtEnd = ref(false)
+function updateCategoryFade() {
+  const el = categoryRail.value
+  if (!el) return
+  categoryAtEnd.value = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4
+}
+function onCategoryScroll() {
+  updateCategoryFade()
+}
 const toast = ref('')
 const isRainy = ref(false)
 let loadController: AbortController | null = null
@@ -191,14 +202,12 @@ async function loadAllSpots() {
   }
 }
 
-async function selectCity(next: RecommendationCity) {
+async function applyCity(next: RecommendationCity) {
   const switchedCity = city.value?.adcode !== next.adcode
-  if (switchedCity && todayPlan.spots.value.length > 0) {
-    todayPlan.clear()
-    todayJourney.reset()
-    showToast(`已切换到${next.name.replace(/市$/, '')}，今日计划已清空`)
-  } else if (switchedCity) {
-    // 即使当前没有地点，也清掉上一次未完成的行程进度。
+  if (switchedCity) {
+    // 按城市分别保存今日计划：切到目标城市的计划桶（没有则从空开始），
+    // 原城市的计划保留在本地，切回时恢复。同时重置上一城市的行程进度。
+    todayPlan.setActiveCity({ adcode: next.adcode, cityName: next.name })
     todayJourney.reset()
   }
   setExploreCity(next)
@@ -208,33 +217,42 @@ async function selectCity(next: RecommendationCity) {
   await loadAllSpots()
 }
 
+function selectCity(next: RecommendationCity) {
+  const switchedCity = city.value?.adcode !== next.adcode
+  // 当前城市有计划或进行中的行程时，先弹二次确认（取消则保留原城市与计划）。
+  if (switchedCity && (todayPlan.spots.value.length > 0 || todayJourney.status.value !== 'idle')) {
+    pendingCity.value = next
+    showPicker.value = false
+    return
+  }
+  void applyCity(next)
+}
+
+function confirmCitySwitch() {
+  const next = pendingCity.value
+  pendingCity.value = null
+  if (next) void applyCity(next)
+}
+
+function cancelCitySwitch() {
+  pendingCity.value = null
+}
+
 function toggleToday(spot: InspirationSpot) {
   if (!actionReady(spot)) {
-    showToast('这个地点暂时不能加入今天')
+    showToast('这个地点暂时不能加入今日计划')
     return
   }
   if (todayPlan.hasSpot(spot.id)) {
     todayPlan.removeSpot(spot.id)
-    showToast(`已将“${spot.name}”移出今天`)
+    showToast(`已将“${spot.name}”移出今日计划`)
     return
   }
   const result = todayPlan.addSpot(spot)
-  if (result.status === 'limit') showToast('今天先选 6 个，避免行程过满')
-  else if (result.status === 'added') showToast(addToTodayMessage(spot.name))
+  if (result.status === 'limit') showToast(`今天先选 ${TODAY_PLAN_LIMIT} 个，避免行程过满`)
+  else if (result.status === 'added') showToast('已加入今日计划')
   else if (result.status === 'duplicate') showToast('这个地点已经在今日计划里')
-  else showToast('这个地点暂时不能加入今天')
-}
-
-/** 加入今日的文案池：轮换使用，避免每次都是同一句干巴巴的通知。 */
-const ADD_TO_TODAY_COPY = [
-  '已加入「{name}」',
-  '「{name}」已入袋，今天有盼头了',
-  '好眼光！「{name}」收进今天了',
-  '「{name}」进今天了，记得给它留点时间',
-] as const
-function addToTodayMessage(name: string): string {
-  const salt = todayPlan.count.value + name.length
-  return pickCopy(ADD_TO_TODAY_COPY, salt).replace('{name}', name)
+  else showToast('这个地点暂时不能加入今日计划')
 }
 
 function toggleSelectedSpot() {
@@ -246,14 +264,6 @@ function navigateToSelected() {
   const spot = selectedSpot.value
   if (!spot || !actionReady(spot)) return
   openAmapNavigation(spot.amapName || spot.name, spot.lng as number, spot.lat as number)
-}
-
-function handleBottomNav(tab: BottomTab) {
-  if (tab === 'home') router.push({ name: 'home' })
-  else if (tab === 'explore') window.scrollTo({ top: 0, behavior: 'smooth' })
-  else if (tab === 'plan') router.push({ name: 'today-plan' })
-  else if (tab === 'favorites') showToast('收藏功能建设中')
-  else showToast('个人中心建设中')
 }
 
 async function restoreLegacyRecentCity() {
@@ -278,10 +288,15 @@ onMounted(async () => {
   startLoadingCopy()
   await restoreLegacyRecentCity()
   if (city.value) {
+    // 直接进入探索页（如刷新 #/explore）时，按记住的城市激活对应计划桶，
+    // 让今日计划与当前城市一致。
+    todayPlan.setActiveCity({ adcode: city.value.adcode, cityName: city.value.name })
     // 天气先于列表加载，保证雨天排序在首帧就生效。
     await loadWeatherOnce()
     await loadAllSpots()
   }
+  // 等分类按钮渲染完成后判断是否需要右侧渐变提示。
+  void nextTick(updateCategoryFade)
 })
 
 onBeforeUnmount(() => {
@@ -312,16 +327,18 @@ onBeforeUnmount(() => {
           <button v-if="query" type="button" aria-label="清空搜索" @click="query = ''">×</button>
         </label>
 
-        <div class="category-rail">
-          <button
-            v-for="item in EXPLORE_CATEGORIES"
-            :key="item.id"
-            type="button"
-            :class="{ active: category === item.id }"
-            @click="category = item.id"
-          >
-            {{ item.name }}
-          </button>
+        <div class="category-rail-wrap" :class="{ 'at-end': categoryAtEnd }">
+          <div ref="categoryRail" class="category-rail" aria-label="地点分类，可横向滑动" @scroll="onCategoryScroll">
+            <button
+              v-for="item in EXPLORE_CATEGORIES"
+              :key="item.id"
+              type="button"
+              :class="{ active: category === item.id }"
+              @click="category = item.id"
+            >
+              {{ item.name }}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -373,7 +390,7 @@ onBeforeUnmount(() => {
           <div class="featured-content">
             <div class="flex items-center gap-2">
               <span class="feature-badge">本周值得去</span>
-              <span v-if="todayPlan.hasSpot(featuredSpot.id)" class="selected-badge">✓ 已加入</span>
+              <span v-if="todayPlan.hasSpot(featuredSpot.id)" class="selected-badge">✓ 已加入今日计划</span>
             </div>
             <h2>{{ featuredSpot.name }}</h2>
             <p>{{ spotMeta(featuredSpot) }}</p>
@@ -381,8 +398,8 @@ onBeforeUnmount(() => {
               <div class="flex min-w-0 gap-1.5 overflow-hidden">
                 <span v-for="tag in featuredSpot.tags.slice(0, 3)" :key="tag">{{ tag }}</span>
               </div>
-              <button type="button" @click.stop="toggleToday(featuredSpot)">
-                {{ todayPlan.hasSpot(featuredSpot.id) ? '已加入' : '+ 加入今天' }}
+              <button type="button" class="featured-add" :class="{ added: todayPlan.hasSpot(featuredSpot.id) }" @click.stop="toggleToday(featuredSpot)">
+                {{ todayPlan.hasSpot(featuredSpot.id) ? '已加入今日计划' : '加入今日计划' }}
               </button>
             </div>
           </div>
@@ -429,6 +446,20 @@ onBeforeUnmount(() => {
     </Transition>
 
     <Transition name="sheet">
+      <div v-if="pendingCity" class="sheet-mask city-confirm-mask" @click.self="cancelCitySwitch">
+        <section class="city-confirm" role="alertdialog" aria-modal="true" aria-labelledby="city-confirm-title">
+          <p class="city-confirm-eyebrow">切换城市</p>
+          <h2 id="city-confirm-title">要切换到{{ pendingCity.name.replace(/市$/, '') }}吗？</h2>
+          <p>切换后，当前「{{ city?.name.replace(/市$/, '') }}」的今日计划会暂时收起，切回该城市时自动恢复。</p>
+          <div class="city-confirm-actions">
+            <button type="button" class="city-confirm-cancel" @click="cancelCitySwitch">取消</button>
+            <button type="button" class="city-confirm-submit" @click="confirmCitySwitch">继续切换</button>
+          </div>
+        </section>
+      </div>
+    </Transition>
+
+    <Transition name="sheet">
       <SpotDetailSheet
         v-if="selectedSpot"
         :spot="selectedSpot"
@@ -442,7 +473,6 @@ onBeforeUnmount(() => {
     </Transition>
 
     <Transition name="toast"><div v-if="toast" class="explore-toast">{{ toast }}</div></Transition>
-    <MobileBottomNav active="explore" @navigate="handleBottomNav" />
   </main>
 </template>
 
@@ -459,9 +489,13 @@ onBeforeUnmount(() => {
 .search-box input::-webkit-search-cancel-button { display:none; }
 .search-box input::placeholder { color:rgba(255,255,255,.36); }
 .search-box button { color:rgba(255,255,255,.5); font-size:20px; }
-.category-rail { display:flex; gap:8px; overflow-x:auto; padding:11px 16px 2px; scrollbar-width:none; }
+.category-rail-wrap { position:relative; overflow:hidden; }
+.category-rail-wrap::after { position:absolute; top:0; right:0; bottom:0; width:32px; pointer-events:none; content:""; background:linear-gradient(90deg,rgba(2,7,14,0),#02070e 86%); opacity:1; transition:opacity .18s ease; }
+/* 已滑到末尾时隐藏渐变提示，避免误导用户以为右侧还有分类。 */
+.category-rail-wrap.at-end::after { opacity:0; }
+.category-rail { display:flex; gap:8px; overflow-x:auto; padding:11px 40px 2px 16px; scrollbar-width:none; scroll-padding-right:40px; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
 .category-rail::-webkit-scrollbar { display:none; }
-.category-rail button { flex:none; padding:8px 13px; border:1px solid rgba(255,255,255,.11); border-radius:999px; background:rgba(255,255,255,.04); color:rgba(255,255,255,.58); font-size:11px; font-weight:700; }
+.category-rail button { flex:none; padding:8px 13px; border:1px solid rgba(255,255,255,.11); border-radius:999px; background:rgba(255,255,255,.04); color:rgba(255,255,255,.58); font-size:11px; font-weight:700; white-space:nowrap; }
 .category-rail button.active { border-color:#c7ff1f; background:#c7ff1f; color:#071007; }
 .view-heading { display:flex; align-items:end; justify-content:space-between; padding:13px 16px 12px; }
 .view-heading p { font-size:17px; font-weight:850; }
@@ -489,5 +523,14 @@ onBeforeUnmount(() => {
 .city-orbit { display:grid; width:84px; height:84px; margin-bottom:22px; place-items:center; border:1px solid rgba(199,255,31,.28); border-radius:999px; background:radial-gradient(circle,rgba(199,255,31,.16),transparent 68%); box-shadow:0 0 36px rgba(199,255,31,.1); }.city-orbit span { color:#c7ff1f; font-size:34px; }
 .sheet-mask { position:fixed; z-index:70; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.62); backdrop-filter:blur(5px); }.sheet-panel { width:100%; max-width:480px; max-height:84dvh; overflow-y:auto; padding:20px; border:1px solid rgba(255,255,255,.13); border-bottom:0; border-radius:28px 28px 0 0; background:linear-gradient(180deg,#181e28,#090e16); }
 .explore-toast { position:fixed; z-index:90; bottom:104px; left:50%; max-width:calc(100% - 40px); padding:10px 16px; transform:translateX(-50%); border:1px solid rgba(255,255,255,.12); border-radius:999px; background:rgba(18,24,33,.95); color:#fff; font-size:11px; font-weight:700; box-shadow:0 12px 30px rgba(0,0,0,.35); }
+.city-confirm-mask { z-index:100; }
+.city-confirm { width:calc(100% - 32px); max-width:420px; padding:22px 20px 20px; border:1px solid rgba(255,255,255,.12); border-radius:24px; background:#151c26; box-shadow:0 20px 60px rgba(0,0,0,.42); color:#fff; }
+.city-confirm-eyebrow { color:#c7ff1f; font-size:10px; font-weight:800; letter-spacing:.14em; }
+.city-confirm h2 { margin-top:8px; font-size:20px; font-weight:900; }
+.city-confirm>p:not(.city-confirm-eyebrow) { margin-top:8px; color:rgba(255,255,255,.62); font-size:12px; line-height:1.7; }
+.city-confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }
+.city-confirm-actions button { padding:12px 10px; border-radius:14px; font-size:12px; font-weight:800; }
+.city-confirm-cancel { border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:rgba(255,255,255,.8); }
+.city-confirm-submit { background:#c7ff1f; color:#071007; }
 .sheet-enter-active,.sheet-leave-active,.toast-enter-active,.toast-leave-active { transition:opacity .2s ease; }.sheet-enter-from,.sheet-leave-to,.toast-enter-from,.toast-leave-to { opacity:0; }
 </style>

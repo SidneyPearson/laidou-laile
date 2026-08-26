@@ -21,7 +21,8 @@ import { ApiRequestError } from '../services/api'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { usePersona } from '../composables/usePersona'
 import { fetchHomePersonas } from '../repositories/homePersonas'
-import { hapticSelect, hapticSuccess } from '../utils/haptics'
+import { hapticLight, hapticSelect, hapticSuccess } from '../utils/haptics'
+import { playfulPlanLimitMessage, prefersReducedMotion } from '../utils/delight'
 import type {
   ExploreCategory,
   InspirationSpot,
@@ -32,7 +33,7 @@ import { TODAY_PLAN_LIMIT } from '../types/todayPlan'
 const route = useRoute()
 const router = useRouter()
 const todayPlan = useTodayPlan()
-const { persona, setPersona } = usePersona()
+const { persona, hasChosenPersona, setPersona } = usePersona()
 
 /* -------------------- state -------------------- */
 
@@ -61,6 +62,18 @@ const finished = ref(false)
 const toast = ref('')
 const addError = ref('')
 let toastTimer: ReturnType<typeof setTimeout> | null = null
+/** 触顶时让底部「今日计划」小抖一下，提醒得更俏皮。 */
+const dockShake = ref(false)
+let dockShakeTimer: ReturnType<typeof setTimeout> | null = null
+function playLimitFeedback(): string {
+  if (!prefersReducedMotion()) {
+    dockShake.value = true
+    if (dockShakeTimer) clearTimeout(dockShakeTimer)
+    dockShakeTimer = setTimeout(() => { dockShake.value = false }, 420)
+  }
+  // 趣味文案（欢愉引擎）：反复触发时轮换，一天逛不完/体力不够的语气。
+  return playfulPlanLimitMessage()
+}
 
 /** Drag state for the front card (px / active flag). */
 const dragX = ref(0)
@@ -211,7 +224,8 @@ async function loadRecommendations() {
       const result = await fetchExploreRecommendations({
         city: normalizeCityName(cityName.value),
         adcode: adcode.value,
-        persona: persona.value,
+        // 与首页一致：用户选过画像才按画像过滤；未选择时返回全量（按天气/距离排序）。
+        ...(hasChosenPersona.value ? { persona: persona.value } : {}),
         category: 'all',
         cursor,
         limit: 60,
@@ -259,6 +273,8 @@ async function loadContext() {
     district.value = context.district
     adcode.value = context.adcode
     weather.value = context.weather
+    // 用真实城市级 adcode 校准今日计划桶（query 里可能是区级 adcode 或只有城市名）。
+    todayPlan.setActiveCity({ adcode: context.adcode, cityName: context.city })
   } catch (error) {
     const requestError = error instanceof ApiRequestError ? error : null
     if (requestError?.code !== 'CANCELLED') {
@@ -331,16 +347,16 @@ function swipe(type: 'add' | 'skip') {
       if (!selected.value.some(item => item.id === spot.id)) {
         selected.value = [...selected.value, spot]
       }
-      showToast(`✓ 已加入“${spot.name}”`)
+      showToast('已加入今日计划')
     } else if (result.status === 'limit') {
-      addError.value = `今日计划当前已有 ${todayPlan.count.value} 个地点，最多加入 6 个。`
-      showToast('今天先选 6 个，避免行程过满')
+      addError.value = ''
+      showToast(playLimitFeedback())
     } else if (result.status === 'duplicate') {
       addError.value = ''
       if (!selected.value.some(item => item.id === spot.id)) {
         selected.value = [...selected.value, spot]
       }
-      showToast(`✓ “${spot.name}”已在今天`)
+      showToast('这个地点已经在今日计划里')
     } else {
       const missing = [
         !spot.amapPoiId ? '高德 POI' : '',
@@ -390,6 +406,17 @@ function showToast(message: string) {
   }, 1400)
 }
 
+/** 反悔入口：点击底部 dock 里已选地点的缩略图，把它从今天的计划里剔除。 */
+function removeSelected(spotId: string) {
+  const spot = selected.value.find(item => item.id === spotId)
+  if (!spot) return
+  if (todayPlan.removeSpot(spotId)) {
+    selected.value = selected.value.filter(item => item.id !== spotId)
+    hapticLight()
+    showToast(`已把“${spot.name}”移出今天`)
+  }
+}
+
 function finishNow() {
   if (selected.value.length < 1) {
     showToast('先至少确认 1 个地点')
@@ -421,6 +448,12 @@ onMounted(() => {
   fetchHomePersonas().then((cards) => {
     personaDisplayNames.value = new Map(cards.map(card => [card.id, card.title]))
   }).catch(() => {})
+  // 进入城市探索页即激活该城市的今日计划桶（兼容直接打开/刷新）。
+  // 真实 adcode 在 loadContext 解析后会再校准一次。
+  todayPlan.setActiveCity({
+    adcode: typeof route.query.adcode === 'string' ? route.query.adcode : undefined,
+    cityName: typeof route.query.city === 'string' ? route.query.city : undefined,
+  })
   void loadContext()
 })
 
@@ -486,7 +519,7 @@ const routeList = computed(() =>
       <div class="confirm-head">
         <div>
           <h2>先确认今天想去的地方</h2>
-          <p>左右滑动卡片，喜欢就加入今天</p>
+          <p>左右滑动卡片，喜欢就加入今日计划</p>
         </div>
         <div class="progress"><b>{{ progressText }}</b></div>
       </div>
@@ -517,7 +550,7 @@ const routeList = computed(() =>
             :class="[item.layer, { dragging: dragActive && item.layer === 'front', flying: flying && item.layer === 'front' }]"
             :style="item.layer === 'front' ? frontStyle : undefined"
             :tabindex="item.layer === 'front' ? 0 : -1"
-            :aria-label="item.layer === 'front' ? `当前地点：${item.spot.name}。按 → 加入今天，按 ← 跳过` : undefined"
+            :aria-label="item.layer === 'front' ? `当前地点：${item.spot.name}。按 → 加入今日计划，按 ← 跳过` : undefined"
             @pointerdown="onCardDown($event, item)"
             @pointermove="onCardMove($event, item)"
             @pointerup="onCardUp($event, item)"
@@ -528,7 +561,7 @@ const routeList = computed(() =>
             <div class="card-image" :style="{ backgroundImage: cardBackground(item.spot) }" />
             <div class="card-shade" />
             <div class="badge"><span aria-hidden="true">⚡</span> {{ currentPersona.name }}推荐</div>
-            <div class="swipe-label right" :style="item.layer === 'front' ? { opacity: String(frontLabelRight) } : undefined">加入今天</div>
+            <div class="swipe-label right" :style="item.layer === 'front' ? { opacity: String(frontLabelRight) } : undefined">加入今日计划</div>
             <div class="swipe-label left" :style="item.layer === 'front' ? { opacity: String(frontLabelLeft) } : undefined">先跳过</div>
             <div class="card-body">
               <h3>{{ item.spot.name }}</h3>
@@ -570,26 +603,31 @@ const routeList = computed(() =>
         <div v-if="!finished && spots.length > 0" class="actions">
           <button class="action-round" type="button" aria-label="跳过" @click="swipe('skip')">×</button>
           <div class="action-center"><b>左右滑动选择</b><div class="chev">›››</div></div>
-          <button class="action-round add" type="button" aria-label="加入今天" @click="swipe('add')">✓</button>
+          <button class="action-round add" type="button" aria-label="加入今日计划" @click="swipe('add')">✓</button>
         </div>
         <p v-if="addError && !finished" class="add-error" role="alert">{{ addError }}</p>
       </template>
     </div>
 
-    <div class="toast" :class="{ show: !!toast }">{{ toast }}</div>
+    <div class="toast" role="status" aria-live="polite" :class="{ show: !!toast }">{{ toast }}</div>
 
-    <div v-if="!finished && spots.length > 0" class="dock">
+    <div v-if="!finished && spots.length > 0" class="dock" :class="{ shake: dockShake }">
       <div class="thumbs">
-        <div
-          v-for="(spot, index) in selected.slice(-2)"
+        <button
+          v-for="(spot, index) in selected.slice(-3)"
           :key="`${spot.id}-${index}`"
+          type="button"
           class="thumb"
           :style="{ backgroundImage: cardBackground(spot) }"
-        />
+          :aria-label="`把 ${spot.name} 移出今天`"
+          @click="removeSelected(spot.id)"
+        >
+          <span class="thumb-x" aria-hidden="true">×</span>
+        </button>
       </div>
       <div class="dock-copy">
-        <strong>今日计划 <span class="dock-count">{{ todayPlan.count.value }}</span> / {{ TODAY_PLAN_LIMIT }}</strong>
-        <span>{{ remainingPlanSlots > 0 ? `还可加入 ${remainingPlanSlots} 个 · ` : '已满 · ' }}{{ dockNames }}</span>
+        <strong>今日计划 <span class="dock-count">{{ todayPlan.count.value }}</span> / {{ Math.max(TODAY_PLAN_LIMIT, todayPlan.count.value) }}</strong>
+        <span>{{ remainingPlanSlots > 0 ? `还可加入 ${remainingPlanSlots} 个 · ` : '已满员 · ' }}{{ dockNames }}</span>
       </div>
       <button class="finish" :class="{ enabled: finishEnabled }" type="button" @click="finishNow">差不多了 →</button>
     </div>
@@ -1112,14 +1150,34 @@ const routeList = computed(() =>
   min-width: 64px;
 }
 .thumb {
+  position: relative;
   width: 44px;
   height: 44px;
+  padding: 0;
   border-radius: 50%;
   border: 2px solid #dbe0e6;
+  background-color: transparent;
   background-size: cover;
   background-position: center;
   margin-right: -13px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  font-size: 0;
+}
+.thumb-x {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(14, 19, 27, 0.94);
+  color: var(--lime);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
 }
 .dock-copy {
   min-width: 0;
@@ -1141,6 +1199,17 @@ const routeList = computed(() =>
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* 触顶提醒：今日计划小抖一下，俏皮不打扰（reduced-motion 时由 JS 直接跳过）。 */
+.dock.shake {
+  animation: dock-shake 0.42s ease-in-out;
+}
+@keyframes dock-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  45% { transform: translateX(6px); }
+  70% { transform: translateX(-3px); }
+  85% { transform: translateX(2px); }
 }
 .finish {
   height: 52px;

@@ -84,7 +84,8 @@ describe('recommendCitySpots', () => {
       spot({ id: 'mall', category: 'mall', personas: ['shopping'] }),
     ]
     const result = await recommendCitySpots(
-      { ...base, category: 'museum' },
+      // persona 留空：本用例只验证坐标/POI 缺失丢弃与分类过滤，不受画像筛选干扰。
+      { ...base, persona: undefined, category: 'museum' },
       { repository: fakeRepository(shanghai, spots) },
     )
     expect(result?.spots.map(s => s.id)).toEqual(['museum'])
@@ -96,7 +97,8 @@ describe('recommendCitySpots', () => {
       spot({ id: 'gallery', name: '城市美术馆', amapPoiId: 'B0GALLERY', category: 'museum_culture', personas: ['culture'] }),
     ]
     const result = await recommendCitySpots(
-      { ...base, isRainy: true },
+      // persona 留空：本用例只验证雨天室内/室外偏好，不受画像筛选干扰。
+      { ...base, persona: undefined, isRainy: true },
       { repository: fakeRepository(shanghai, spots) },
     )
     expect(result?.spots.map(s => s.id)[0]).toBe('gallery')
@@ -107,7 +109,8 @@ describe('recommendCitySpots', () => {
     const near = spot({ id: 'near', name: '近处地点', lng: 121.481, lat: 31.239, personas: ['first_visit'] })
     const far = spot({ id: 'far', name: '远处地点', lng: 121.495, lat: 31.245, amapPoiId: 'B0FAR', personas: ['first_visit'] })
     const result = await recommendCitySpots(
-      { ...base, lat: 31.24, lng: 121.48 },
+      // persona 留空：本用例只验证距离排序，不受画像筛选干扰。
+      { ...base, persona: undefined, lat: 31.24, lng: 121.48 },
       { repository: fakeRepository(shanghai, [far, near]) },
     )
 

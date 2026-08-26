@@ -62,11 +62,12 @@ describe('useTodayPlan', () => {
 
     expect(plan.clear()).toBe(true)
     expect(plan.count.value).toBe(0)
-    expect(localStorage.getItem('laidou-v03-today-plan')).toContain('"spots":[]')
+    // v3 按城市分桶持久化。
+    expect(localStorage.getItem('laidou-v03-today-plan')).toContain('"version":3')
     expect(plan.clear()).toBe(false)
   })
 
-  it('rejects demo places and limits today to six unique places', () => {
+  it('rejects demo places and limits today to three unique places', () => {
     const plan = useTodayPlan()
     expect(plan.addSpot({
       ...verifiedSpot(0),
@@ -75,16 +76,16 @@ describe('useTodayPlan', () => {
       mock: true,
     }).status).toBe('unverified')
 
-    for (let index = 1; index <= 6; index++) {
+    for (let index = 1; index <= 3; index++) {
       expect(plan.addSpot(verifiedSpot(index)).status).toBe('added')
     }
-    expect(plan.addSpot(verifiedSpot(7)).status).toBe('limit')
-    expect(plan.count.value).toBe(6)
+    expect(plan.addSpot(verifiedSpot(4)).status).toBe('limit')
+    expect(plan.count.value).toBe(3)
   })
 
-  it('reconciles a stale six-item memory state before enforcing the limit', () => {
+  it('reconciles a stale memory state before enforcing the limit', () => {
     const plan = useTodayPlan()
-    for (let index = 1; index <= 6; index++) {
+    for (let index = 1; index <= 3; index++) {
       expect(plan.addSpot(verifiedSpot(index)).status).toBe('added')
     }
 
@@ -94,8 +95,19 @@ describe('useTodayPlan', () => {
       spots: [onlySpot],
     }))
 
-    expect(plan.addSpot(verifiedSpot(7)).status).toBe('added')
-    expect(plan.spots.value.map(spot => spot.id)).toEqual(['spot-1', 'spot-7'])
+    expect(plan.addSpot(verifiedSpot(4)).status).toBe('added')
+    expect(plan.spots.value.map(spot => spot.id)).toEqual(['spot-1', 'spot-4'])
+  })
+
+  it('keeps an existing over-limit plan on load but blocks new additions', () => {
+    // 旧版本允许 6 个：已保存的计划不静默截断，只是不能再加入新地点。
+    const stored = Array.from({ length: 4 }, (_, index) => verifiedSpot(index + 1))
+    localStorage.setItem('laidou-v03-today-plan', JSON.stringify({ version: 2, spots: stored }))
+
+    const plan = useTodayPlan()
+    expect(plan.count.value).toBe(4)
+    expect(plan.addSpot(verifiedSpot(9)).status).toBe('limit')
+    expect(plan.count.value).toBe(4)
   })
 
   it('migrates legacy storage and collapses renamed copies of the same place', () => {
@@ -119,7 +131,8 @@ describe('useTodayPlan', () => {
 
     const plan = useTodayPlan()
     expect(plan.spots.value.map(spot => spot.id)).toEqual(['shanghai-disneyland'])
-    expect(localStorage.getItem('laidou-v03-today-plan')).toContain('"version":2')
+    // v1 旧存档迁移后写入 v3 分桶格式。
+    expect(localStorage.getItem('laidou-v03-today-plan')).toContain('"version":3')
     expect(plan.addSpot(park).status).toBe('duplicate')
   })
 
@@ -144,5 +157,49 @@ describe('useTodayPlan', () => {
     localStorage.setItem('laidou-v03-today-plan', '{bad')
     const plan = useTodayPlan()
     expect(plan.spots.value).toEqual([])
+  })
+
+  it('keeps separate plans per city and restores when switching back', () => {
+    const beijing = (index: number): InspirationSpot => ({
+      ...verifiedSpot(index),
+      city: '北京',
+      id: `bj-${index}`,
+      amapPoiId: `BJ-POI-${index}`,
+      lng: 116.4 + index / 100,
+      lat: 39.9 + index / 100,
+    })
+
+    const plan = useTodayPlan()
+    // 上海加入 1 个
+    plan.setActiveCity({ adcode: '310000', cityName: '上海' })
+    expect(plan.addSpot(verifiedSpot(1)).status).toBe('added')
+    expect(plan.count.value).toBe(1)
+
+    // 切到北京：从空开始，上海的计划不丢失
+    plan.setActiveCity({ adcode: '110000', cityName: '北京' })
+    expect(plan.count.value).toBe(0)
+    expect(plan.addSpot(beijing(1)).status).toBe('added')
+    expect(plan.spots.value.map(s => s.city)).toEqual(['北京'])
+
+    // 切回上海：原计划恢复
+    plan.setActiveCity({ adcode: '310000', cityName: '上海' })
+    expect(plan.count.value).toBe(1)
+    expect(plan.spots.value.map(s => s.id)).toEqual(['spot-1'])
+
+    // 持久化后重新 hydrate：两城计划都在，且激活城市是上海
+    resetTodayPlanForTests()
+    const restored = useTodayPlan()
+    expect(restored.count.value).toBe(1)
+    expect(restored.spots.value[0].city).toBe('上海')
+  })
+
+  it('falls back to city-name bucket key when no adcode is provided', () => {
+    const plan = useTodayPlan()
+    plan.setActiveCity({ cityName: '杭州' })
+    expect(plan.addSpot({ ...verifiedSpot(1), city: '杭州', id: 'hz-1' }).status).toBe('added')
+    plan.setActiveCity({ cityName: '成都市' }) // 去「市」后同 key
+    expect(plan.count.value).toBe(0)
+    plan.setActiveCity({ cityName: '杭州' })
+    expect(plan.count.value).toBe(1)
   })
 })

@@ -383,4 +383,18 @@ const weatherDesc = computed(() => {
     padding: 0 7px;
   }
 }
+
+/* 手机端的微信 WebView / Safari 会额外占用顶部浏览器栏，实际首屏可视高度
+   可能小于 CSS 布局视口。所有手机宽度统一缩短首屏图片区，避免人格选择和
+   滑动 CTA 落入固定底部导航；桌面布局保持原尺寸。 */
+@media (max-width: 767px) {
+  .home-hero {
+    min-height: 390px;
+  }
+
+  .hero-copy {
+    /* 给微信 WebView 顶部胶囊区留出更明确的呼吸空间。 */
+    bottom: 215px;
+  }
+}
 </style>

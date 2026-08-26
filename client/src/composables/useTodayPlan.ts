@@ -2,15 +2,27 @@ import { computed, ref } from 'vue'
 import type { InspirationSpot } from '../types/explore'
 import { haversineDist } from '../utils/geo'
 import {
+  TODAY_PLAN_LEGACY_LIMIT,
   TODAY_PLAN_LIMIT,
   type AddTodaySpotResult,
   type TodaySpot,
 } from '../types/todayPlan'
 
 const STORAGE_KEY = 'laidou-v03-today-plan'
-const STORAGE_VERSION = 2
+const STORAGE_VERSION = 3
 
+/** 按城市分桶的今日计划：key 优先用城市 6 位 adcode，没有 adcode 时用城市名。
+ *  切换城市时保留各城市各自的计划，切回原城市可恢复。 */
 interface StoredTodayPlan {
+  version: number
+  cities: Record<string, TodaySpot[]>
+  activeCityKey: string | null
+  /** 激活城市名称（去「市」），用于 adcode 与名称两种 key 之间的去重。 */
+  activeCityName?: string | null
+}
+
+/** 旧版（v1/v2）单城市计划结构，仅用于迁移读取。 */
+interface LegacyStoredTodayPlan {
   version: number
   spots: TodaySpot[]
 }
@@ -26,6 +38,13 @@ type VerifiedInspirationSpot = InspirationSpot & {
 }
 
 const spots = ref<TodaySpot[]>([])
+/** 当前激活城市的分桶 key；spots 始终对应该城市的计划。 */
+const activeCityKey = ref<string | null>(null)
+/** 激活城市的名称（去「市」归一化），用于判断地点是否属于当前桶——
+ *  因为同一个城市可能用 adcode(310000) 或名称(上海)两种 key 被设置。 */
+let activeCityName = ''
+/** 各城市的计划桶。只有激活城市的 spots 是响应式的，其余只在切换/持久化时读写。 */
+let cityBuckets: Record<string, TodaySpot[]> = {}
 const storageAvailable = ref(true)
 let loaded = false
 let storageNeedsMigration = false
@@ -40,6 +59,18 @@ function compactPlaceName(value: string): string {
     .trim()
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+/** 把城市名归一成与分桶 key 名称分支一致的形式（trim + 去「市」）。 */
+function normalizeCityName(value: string | null | undefined): string {
+  return (value ?? '').trim().replace(/市$/, '')
+}
+
+/** 把 adcode / 城市名归一成稳定的分桶 key：优先 6 位 adcode，否则用去「市」的城市名。 */
+function resolveCityKey(descriptor: { adcode?: string | null; cityName?: string | null }): string {
+  const adcode = (descriptor.adcode ?? '').trim()
+  if (/^\d{6}$/.test(adcode)) return adcode
+  return normalizeCityName(descriptor.cityName)
 }
 
 /** Stable identity across curation migrations where ids/POI ids may change. */
@@ -103,60 +134,113 @@ function sanitizeSpot(value: unknown): TodaySpot | null {
   } as TodaySpot
 }
 
-function readStoredSpots(): TodaySpot[] {
+/** 清洗并去重一桶地点，保留上限按 cap（迁移旧存档用 legacy 6，正常读取用当前 3）。 */
+function cleanBucket(raw: unknown[], cap: number, markMigration: () => void): TodaySpot[] {
+  const unique: TodaySpot[] = []
+  if (!Array.isArray(raw)) return unique
+  for (const value of raw) {
+    const spot = sanitizeSpot(value)
+    if (!spot) { markMigration(); continue }
+    const duplicateIndex = unique.findIndex(item => isSameTodayPlace(item, spot))
+    if (duplicateIndex >= 0) {
+      unique[duplicateIndex] = spot
+      markMigration()
+      continue
+    }
+    unique.push(spot)
+    if (unique.length === cap) break
+  }
+  if (unique.length !== raw.length) markMigration()
+  return unique
+}
+
+/** 把旧版单城市数组按城市名分桶，迁移到 v3。 */
+function migrateLegacySpots(rawSpots: unknown): { cities: Record<string, TodaySpot[]>; activeCityKey: string | null } {
+  const byCity = new Map<string, TodaySpot[]>()
+  if (!Array.isArray(rawSpots)) return { cities: {}, activeCityKey: null }
+  for (const value of rawSpots) {
+    const spot = sanitizeSpot(value)
+    if (!spot) continue
+    const key = resolveCityKey({ cityName: spot.city }) || '__legacy__'
+    if (!byCity.has(key)) byCity.set(key, [])
+    byCity.get(key)!.push(spot)
+  }
+  const cities: Record<string, TodaySpot[]> = {}
+  for (const [key, list] of byCity) {
+    cities[key] = cleanBucket(list, TODAY_PLAN_LEGACY_LIMIT, () => { storageNeedsMigration = true })
+  }
+  const firstKey = Object.keys(cities)[0] ?? null
+  return { cities, activeCityKey: firstKey }
+}
+
+function loadFromStorage(): { cities: Record<string, TodaySpot[]>; activeCityKey: string | null } {
   storageNeedsMigration = false
-  if (typeof localStorage === 'undefined') return []
+  if (typeof localStorage === 'undefined') return { cities: {}, activeCityKey: null }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as Partial<StoredTodayPlan>
-    if (![1, STORAGE_VERSION].includes(parsed.version as number) || !Array.isArray(parsed.spots)) return []
-    storageNeedsMigration = parsed.version !== STORAGE_VERSION
+    if (!raw) return { cities: {}, activeCityKey: null }
+    const parsed = JSON.parse(raw) as Partial<StoredTodayPlan & LegacyStoredTodayPlan>
 
-    const unique: TodaySpot[] = []
-    for (const value of parsed.spots) {
-      const spot = sanitizeSpot(value)
-      if (!spot) {
-        storageNeedsMigration = true
-        continue
+    // v3：按城市分桶。
+    if (parsed.version === STORAGE_VERSION && parsed.cities && typeof parsed.cities === 'object') {
+      const cities: Record<string, TodaySpot[]> = {}
+      const storedActive = typeof parsed.activeCityKey === 'string' ? parsed.activeCityKey : null
+      for (const [key, value] of Object.entries(parsed.cities)) {
+        // 读取时保留旧上限（legacy 6），只限制「新增」为当前上限 3，避免静默丢弃已保存的计划。
+        const clean = cleanBucket(value, TODAY_PLAN_LEGACY_LIMIT, () => { storageNeedsMigration = true })
+        // 非空桶都保留；激活城市即使计划为空也保留一个空桶，避免 active key 丢失。
+        if (clean.length > 0 || key === storedActive) cities[key] = clean
       }
-      const duplicateIndex = unique.findIndex(item => isSameTodayPlace(item, spot))
-      if (duplicateIndex >= 0) {
-        // Later snapshots normally come from the latest curation response.
-        unique[duplicateIndex] = spot
-        storageNeedsMigration = true
-        continue
-      }
-      unique.push(spot)
-      if (unique.length === TODAY_PLAN_LIMIT) break
+      const activeCityKey = storedActive && storedActive in cities
+        ? storedActive
+        : (Object.keys(cities)[0] ?? null)
+      return { cities, activeCityKey }
     }
-    if (unique.length !== parsed.spots.length) storageNeedsMigration = true
-    return unique
+
+    // v1/v2：单城市数组 → 按城市名分桶迁移。
+    if ([1, 2].includes(parsed.version as number) && Array.isArray(parsed.spots)) {
+      storageNeedsMigration = true
+      return migrateLegacySpots(parsed.spots)
+    }
+
+    return { cities: {}, activeCityKey: null }
   } catch {
-    return []
+    return { cities: {}, activeCityKey: null }
   }
 }
 
-function loadFromStorage() {
+function hydrate() {
   if (loaded) return
   loaded = true
-  spots.value = readStoredSpots()
+  const { cities, activeCityKey: key } = loadFromStorage()
+  cityBuckets = cities
+  activeCityKey.value = key
+  spots.value = key && cityBuckets[key] ? [...cityBuckets[key]] : []
   if (storageNeedsMigration) persist()
 }
 
 /** Reconcile state changed in another tab or before a hot reload. */
 function syncFromStorage() {
   if (typeof localStorage === 'undefined') return
-  spots.value = readStoredSpots()
+  const { cities, activeCityKey: key } = loadFromStorage()
+  cityBuckets = cities
+  activeCityKey.value = key
+  spots.value = key && cityBuckets[key] ? [...cityBuckets[key]] : []
   if (storageNeedsMigration) persist()
 }
 
 function persist() {
   if (typeof localStorage === 'undefined') return
+  if (activeCityKey.value) {
+    // 即使当前城市计划为空也写一个空桶，保证 activeCityKey 能被正确读回，
+    // 否则另一标签页/重复 hydrate 时会把激活城市误判为 null。
+    cityBuckets[activeCityKey.value] = [...spots.value]
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       version: STORAGE_VERSION,
-      spots: spots.value,
+      cities: cityBuckets,
+      activeCityKey: activeCityKey.value,
     } satisfies StoredTodayPlan))
     storageAvailable.value = true
   } catch {
@@ -208,13 +292,30 @@ export function durationMinutesOf(label: string): number {
 }
 
 export function useTodayPlan() {
-  loadFromStorage()
+  hydrate()
 
   const count = computed(() => spots.value.length)
   const totalStayMinutes = computed(() =>
     spots.value.reduce((sum, spot) => sum + durationMinutesOf(spot.suggestedDuration), 0),
   )
   const cities = computed(() => [...new Set(spots.value.map(spot => spot.city))])
+
+  /** 切换到某城市的计划桶。没有该城市的计划时从空计划开始；原城市的计划保留在本地，
+   *  切回原城市会自动恢复。传空 descriptor 时不切换。返回实际生效的分桶 key。 */
+  function setActiveCity(descriptor: { adcode?: string | null; cityName?: string | null }): string | null {
+    const key = resolveCityKey(descriptor)
+    if (!key) return activeCityKey.value
+    if (key === activeCityKey.value) {
+      if (descriptor.cityName) activeCityName = normalizeCityName(descriptor.cityName)
+      return key
+    }
+    if (activeCityKey.value) cityBuckets[activeCityKey.value] = [...spots.value]
+    activeCityKey.value = key
+    activeCityName = normalizeCityName(descriptor.cityName) || cityBuckets[key]?.[0]?.city?.replace(/市$/, '') || ''
+    spots.value = cityBuckets[key] ? [...cityBuckets[key]] : []
+    persist()
+    return key
+  }
 
   function hasSpot(id: string): boolean {
     return spots.value.some(spot => spot.id === id)
@@ -223,6 +324,16 @@ export function useTodayPlan() {
   function addSpot(spot: InspirationSpot): AddTodaySpotResult {
     syncFromStorage()
     if (!isVerifiedSpot(spot)) return { status: 'unverified' }
+    // v3 按城市分桶：若地点属于与当前桶不同的城市，切到该城市的桶，
+    // 避免把 A 城的地点存进 B 城的计划。按城市名比较，避免 adcode 与名称
+    // 两种 key 把同一城市拆成两个桶。
+    const spotCity = normalizeCityName(spot.city)
+    const spotCityKey = spotCity && spotCity !== activeCityName
+      ? resolveCityKey({ cityName: spot.city })
+      : null
+    if (spotCityKey && spotCityKey !== activeCityKey.value) {
+      setActiveCity({ cityName: spot.city })
+    }
     const snapshot = snapshotSpot(spot)
     const duplicateIndex = spots.value.findIndex(item => isSameTodayPlace(item, snapshot))
     if (duplicateIndex >= 0) {
@@ -299,7 +410,9 @@ export function useTodayPlan() {
     count,
     totalStayMinutes,
     cities,
+    cityKey: activeCityKey,
     storageAvailable,
+    setActiveCity,
     hasSpot,
     addSpot,
     removeSpot,
@@ -312,6 +425,9 @@ export function useTodayPlan() {
 
 export function resetTodayPlanForTests() {
   spots.value = []
+  cityBuckets = {}
+  activeCityKey.value = null
+  activeCityName = ''
   storageAvailable.value = true
   loaded = false
 }

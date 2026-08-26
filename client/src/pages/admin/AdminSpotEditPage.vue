@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createSpot, getSpot, listCities, updateSpot, verifySpot } from '../../admin/api'
 import { sanitizeCoverName } from '../../admin/localImageUpload'
@@ -18,6 +18,7 @@ import {
 import AdminBadge from '../../components/admin/AdminBadge.vue'
 import AdminFormSection from '../../components/admin/AdminFormSection.vue'
 import AdminPageHeader from '../../components/admin/AdminPageHeader.vue'
+import { fetchHomePersonas } from '../../repositories/homePersonas'
 
 // Dev-only local cover uploader (browser compression + write to
 // client/public/covers via the Vite middleware). Excluded from prod bundle.
@@ -49,7 +50,24 @@ const verifying = ref(false)
 const dirty = ref(false)
 const isNew = computed(() => !route.params.id)
 const form = reactive<any>({ id: '', cityAdcode: '310000', name: '', searchName: '', district: null, address: null, lng: null, lat: null, category: 'classic_landmark', tier: 'B', priority: 0, reason: '', tierReason: '', suggestedDuration: null, bestTime: null, indoorFriendly: false, reservationRequired: false, reservationNote: null, coverImageUrl: null, publicationStatus: 'draft', sourceKind: 'admin', version: 1, amapPoiId: null, verificationStatus: 'unverified', verifiedAt: null })
-const personasText = ref('')
+const personasOpen = ref(false)
+/** 适用画像：选项来自首页画像接口（/api/home/personas，与 H5 首页展示完全一致），
+ *  勾选 id 写入 suitablePersonas → 用户选画像后按同一 id 匹配推荐地点。 */
+const personaOptions = ref<{ id: string; title: string; tagline: string }[]>([])
+const selectedPersonas = ref<string[]>([])
+function togglePersona(id: string) {
+  selectedPersonas.value = selectedPersonas.value.includes(id)
+    ? selectedPersonas.value.filter(item => item !== id)
+    : [...selectedPersonas.value, id]
+}
+const personaNameOf = (id: string) =>
+  personaOptions.value.find(item => item.id === id)?.title ?? id
+function closePersonas() {
+  personasOpen.value = false
+}
+function onPersonaTriggerClick() {
+  personasOpen.value = !personasOpen.value
+}
 const tagsText = ref('')
 const sources = ref<SpotSource[]>([])
 const cities = ref<AdminCity[]>([])
@@ -66,7 +84,7 @@ function handleLocalCoverUploaded(path: string) {
 
 function fill(spot: AdminSpot) {
   Object.assign(form, spot)
-  personasText.value = spot.personas.join(',')
+  selectedPersonas.value = [...(spot.personas ?? [])]
   tagsText.value = spot.tags.join(',')
   sources.value = (spot.sources ?? []).map(source => ({ ...source }))
   void nextTick(() => { dirty.value = false })
@@ -99,7 +117,7 @@ function payload() {
     priority: form.priority,
     reason: form.reason,
     tierReason: form.tierReason,
-    personas: personasText.value.split(',').map(value => value.trim()).filter(Boolean),
+    personas: Array.from(new Set(selectedPersonas.value)),
     tags: tagsText.value.split(',').map(value => value.trim()).filter(Boolean),
     suggestedDuration: form.suggestedDuration || null,
     bestTime: form.bestTime || null,
@@ -164,8 +182,28 @@ function verificationTone(): 'success' | 'warning' | 'danger' | 'neutral' {
 }
 
 watch(() => route.params.id, load)
-watch([() => ({ ...form }), personasText, tagsText, sources], () => { dirty.value = true }, { deep: true })
-onMounted(() => { void Promise.all([load(), loadCities()]) })
+watch([() => ({ ...form }), selectedPersonas, tagsText, sources], () => { dirty.value = true }, { deep: true })
+onMounted(() => {
+  void Promise.all([load(), loadCities()])
+  // 画像选项与首页同源：后台显示的名字就是首页用户看到的名字。
+  void fetchHomePersonas().then(cards => {
+    personaOptions.value = cards.map(card => ({
+      id: card.id,
+      title: card.title,
+      tagline: card.tagline,
+    }))
+  })
+})
+
+/** 点击下拉外部时关闭画像多选。 */
+const personaWrapRef = ref<HTMLElement | null>(null)
+function onDocumentClick(event: MouseEvent) {
+  if (personaWrapRef.value && !personaWrapRef.value.contains(event.target as Node)) {
+    personasOpen.value = false
+  }
+}
+onMounted(() => document.addEventListener('click', onDocumentClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
 </script>
 
 <template>
@@ -218,7 +256,38 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
 
         <AdminFormSection title="到访信息" description="只填写有依据且能帮助路线匹配的信息，不推测价格、营业时间或客流。">
           <div class="grid gap-4 md:grid-cols-2">
-            <label>适用画像（逗号分隔）<input v-model="personasText" class="admin-input mt-1"></label>
+            <label>适用画像（可多选）
+              <span ref="personaWrapRef" class="persona-multi mt-1">
+                <button
+                  type="button"
+                  class="persona-trigger"
+                  :aria-expanded="personasOpen"
+                  @click="onPersonaTriggerClick"
+                >
+                  <span v-if="!selectedPersonas.length" class="persona-placeholder">从 H5 画像中选择…</span>
+                  <span v-else class="persona-chips">
+                    <span v-for="id in selectedPersonas" :key="id" class="persona-chip">
+                      {{ personaNameOf(id) }}
+                      <button type="button" class="persona-chip-x" aria-label="移除{{ personaNameOf(id) }}" @click.stop="togglePersona(id)">×</button>
+                    </span>
+                  </span>
+                  <span class="persona-caret" aria-hidden="true">▾</span>
+                </button>
+                <ul v-if="personasOpen" class="persona-popup" role="listbox" aria-multiselectable="true">
+                  <li v-for="item in personaOptions" :key="item.id">
+                    <label>
+                      <input
+                        type="checkbox"
+                        :checked="selectedPersonas.includes(item.id)"
+                        @change="togglePersona(item.id)"
+                      >
+                      <span>{{ item.title }}<em v-if="item.tagline">{{ item.tagline }}</em></span>
+                    </label>
+                  </li>
+                  <li v-if="!personaOptions.length" class="persona-popup-empty">画像加载中…</li>
+                </ul>
+              </span>
+            </label>
             <label>标签（逗号分隔）<input v-model="tagsText" class="admin-input mt-1"></label>
             <label>建议停留时间（发布必填）<input v-model="form.suggestedDuration" class="admin-input mt-1"></label>
             <label>推荐时段<input v-model="form.bestTime" class="admin-input mt-1"></label>
@@ -283,6 +352,77 @@ onMounted(() => { void Promise.all([load(), loadCities()]) })
 <style scoped>
 label { @apply text-sm font-semibold text-[var(--admin-ink)]; }
 .check-field { @apply flex min-h-11 items-center gap-2 rounded-lg border border-[var(--admin-line)] bg-[var(--admin-surface-muted)] px-3; }
+
+/* 适用画像多选下拉 */
+.persona-multi { position: relative; display: block; }
+.persona-trigger {
+  display: flex;
+  min-height: 44px;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--admin-line, rgba(120, 100, 80, 0.28));
+  border-radius: 10px;
+  background: #fbf8f2;
+  padding: 6px 10px;
+  color: var(--admin-ink, #2c2218);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.persona-trigger:hover { border-color: rgba(160, 90, 50, 0.45); }
+.persona-placeholder { color: rgba(60, 50, 40, 0.45); }
+.persona-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.persona-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: rgba(199, 255, 31, 0.24);
+  border: 1px solid rgba(120, 100, 40, 0.28);
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.persona-chip-x {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 1px;
+  cursor: pointer;
+}
+.persona-caret { margin-left: auto; color: rgba(60, 50, 40, 0.5); }
+.persona-popup {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--admin-line, rgba(120, 100, 80, 0.28));
+  border-radius: 12px;
+  background: #fbf8f2;
+  box-shadow: 0 18px 40px rgba(60, 45, 30, 0.16);
+}
+.persona-popup li { padding: 2px 0; }
+.persona-popup label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.persona-popup label:hover { background: rgba(120, 100, 60, 0.07); }
+.persona-popup input { accent-color: #d06b2e; }
+.persona-popup em { display: block; color: rgba(60, 50, 40, 0.5); font-size: 11px; font-style: normal; font-weight: 400; }
+.persona-popup-empty { padding: 10px 8px; color: rgba(60, 50, 40, 0.45); font-size: 12px; text-align: center; }
+
 .admin-save-progress { position: fixed; top: 0; right: 0; left: 0; z-index: 60; height: 3px; overflow: hidden; background: rgba(239, 187, 167, 0.35); }
 .admin-save-progress span { display: block; width: 38%; height: 100%; border-radius: 999px; background: var(--admin-accent); animation: admin-save-progress 1.1s ease-in-out infinite; }
 .admin-save-success-overlay { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; pointer-events: none; background: rgba(55, 42, 31, 0.06); }

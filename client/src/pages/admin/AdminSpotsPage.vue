@@ -21,6 +21,8 @@ import {
   VERIFICATION_STATUSES,
   VERIFICATION_STATUS_LABELS,
 } from '../../admin/types'
+import type { AdminHomePersona } from '../../admin/types'
+import { listHomePersonas } from '../../admin/api'
 import AdminBadge from '../../components/admin/AdminBadge.vue'
 import AdminPageHeader from '../../components/admin/AdminPageHeader.vue'
 
@@ -29,6 +31,7 @@ const router = useRouter()
 const queryValue = (key: string) => typeof route.query[key] === 'string' ? String(route.query[key]) : ''
 const spots = ref<AdminSpot[]>([])
 const cities = ref<AdminCity[]>([])
+const personaOptions = ref<AdminHomePersona[]>([])
 const total = ref(0)
 const totalPages = ref(0)
 const selected = ref<string[]>([])
@@ -47,9 +50,10 @@ const filters = reactive({
   tier: queryValue('tier'),
   verificationStatus: queryValue('verificationStatus'),
   publicationStatus: queryValue('publicationStatus'),
+  persona: queryValue('persona'),
 })
 const pageLabel = computed(() => totalPages.value === 0 ? '0 / 0' : `${filters.page} / ${totalPages.value}`)
-const hasFilters = computed(() => Boolean(filters.keyword || filters.cityAdcode || filters.category || filters.tier || filters.verificationStatus || filters.publicationStatus))
+const hasFilters = computed(() => Boolean(filters.keyword || filters.cityAdcode || filters.category || filters.tier || filters.verificationStatus || filters.publicationStatus || filters.persona))
 
 // The active filters as a route query object. Carried onto spot-edit links so
 // "返回" can restore the exact filtered list instead of resetting to all cities.
@@ -157,7 +161,7 @@ async function search() {
 }
 
 async function clearFilters() {
-  Object.assign(filters, { page: 1, keyword: '', cityAdcode: '', category: '', tier: '', verificationStatus: '', publicationStatus: '' })
+  Object.assign(filters, { page: 1, keyword: '', cityAdcode: '', category: '', tier: '', verificationStatus: '', publicationStatus: '', persona: '' })
   await syncQuery()
   await load()
 }
@@ -183,7 +187,7 @@ function publicationTone(status: PublicationStatus): 'success' | 'warning' | 'ne
 }
 
 watch(
-  () => [filters.cityAdcode, filters.category, filters.tier, filters.verificationStatus, filters.publicationStatus],
+  () => [filters.cityAdcode, filters.category, filters.tier, filters.verificationStatus, filters.publicationStatus, filters.persona],
   () => {
     filters.page = 1
     void syncQuery().then(load)
@@ -200,6 +204,7 @@ watch(
       tier: queryValue('tier'),
       verificationStatus: queryValue('verificationStatus'),
       publicationStatus: queryValue('publicationStatus'),
+      persona: queryValue('persona'),
     }
     const page = Math.max(1, Number(queryValue('page')) || 1)
     if (
@@ -209,6 +214,7 @@ watch(
       || next.tier !== filters.tier
       || next.verificationStatus !== filters.verificationStatus
       || next.publicationStatus !== filters.publicationStatus
+      || next.persona !== filters.persona
       || page !== filters.page
     ) {
       Object.assign(filters, next, { page })
@@ -222,6 +228,8 @@ watch(
 onMounted(async () => {
   try { cities.value = (await listCities({ page: 1, pageSize: 100 })).items }
   catch { /* The adcode from the URL remains usable when city options cannot load. */ }
+  try { personaOptions.value = await listHomePersonas() }
+  catch { /* Persona filter falls back to an empty list; all spots show when unset. */ }
   await load()
 })
 </script>
@@ -237,7 +245,7 @@ onMounted(async () => {
     </AdminPageHeader>
 
     <section class="admin-toolbar mt-6">
-      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-8">
         <div class="flex gap-2 md:col-span-2 xl:col-span-2">
           <input v-model="filters.keyword" placeholder="名称、搜索名或地址" class="admin-input min-w-0 flex-1" @keyup.enter="search">
           <button type="button" class="admin-button-secondary flex-none" @click="search">搜索</button>
@@ -251,6 +259,7 @@ onMounted(async () => {
         <select v-model="filters.tier" class="admin-input"><option value="">全部级别</option><option v-for="value in SPOT_TIERS" :key="value" :value="value">{{ SPOT_TIER_LABELS[value] }}</option></select>
         <select v-model="filters.verificationStatus" class="admin-input"><option value="">全部验证</option><option v-for="value in VERIFICATION_STATUSES" :key="value" :value="value">{{ VERIFICATION_STATUS_LABELS[value] }}</option></select>
         <select v-model="filters.publicationStatus" class="admin-input"><option value="">全部发布</option><option v-for="value in PUBLICATION_STATUSES" :key="value" :value="value">{{ PUBLICATION_STATUS_LABELS[value] }}</option></select>
+        <select v-model="filters.persona" class="admin-input"><option value="">全部画像</option><option v-for="persona in personaOptions" :key="persona.id" :value="persona.id">{{ persona.title }}</option></select>
       </div>
       <div v-if="hasFilters" class="mt-3 flex items-center justify-between border-t border-[var(--admin-line)] pt-3 text-xs text-[var(--admin-muted)]"><span>筛选条件已同步到当前页面地址</span><button type="button" class="font-semibold text-[var(--admin-accent)]" @click="clearFilters">清除筛选</button></div>
     </section>

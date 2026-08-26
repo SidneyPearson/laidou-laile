@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { InspirationSpot } from '../types/explore'
-import { departureReminder, whySpotFitsPersona } from './exploreDetails'
+import { OFFICIAL_NOTICE, departureReminder, departureReminders, whySpotFitsPersona } from './exploreDetails'
 
 const spot: InspirationSpot = {
   id: 'beijing-palace-museum',
@@ -38,5 +38,43 @@ describe('explore detail copy', () => {
       verificationStatus: 'demo',
       reservationNote: undefined,
     })).toContain('演示内容')
+  })
+
+  it('collapses two near-duplicate "see official notice" reminders into one', () => {
+    // 后台录了两条只差几个字的“以官方公告为准”，前端应只渲染一条统一文案。
+    const list = departureReminders({
+      ...spot,
+      theme: 'city',
+      category: 'landmark',
+      reservationNote: '预约、票务与开放时间请以运营方最新公告为准',
+    })
+    expect(list).toHaveLength(1)
+    expect(list[0]).toBe(OFFICIAL_NOTICE)
+  })
+
+  it('deduplicates a generic reservationNote against the fallback official notice', () => {
+    const list = departureReminders({
+      ...spot,
+      theme: 'city',
+      category: 'landmark',
+      reservationNote: '预约、票务与营业信息以当天官方公告为准。',
+    })
+    expect(list).toEqual([OFFICIAL_NOTICE])
+  })
+
+  it('keeps a specific reservation note distinct from the category reminder', () => {
+    const list = departureReminders(spot) // 实名预约 + 博物馆闭馆提醒
+    expect(list).toHaveLength(2)
+    expect(list[0]).toBe('需要提前实名预约。')
+    expect(list[1]).toContain('闭馆')
+  })
+
+  it('always returns at least one reminder and filters empty strings', () => {
+    expect(departureReminders({
+      ...spot,
+      theme: 'city',
+      category: 'landmark',
+      reservationNote: '   ',
+    })).toEqual([OFFICIAL_NOTICE])
   })
 })

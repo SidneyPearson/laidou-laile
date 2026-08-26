@@ -3,13 +3,14 @@ import explorePage from './ExplorePage.vue?raw'
 import exploreMap from '../components/explore/ExploreSpotMap.vue?raw'
 import router from '../router/index.ts?raw'
 import homePage from './HomePage.vue?raw'
+import app from '../App.vue?raw'
 
 describe('ExplorePage browse experience contracts', () => {
   it('uses a dedicated explore route without replacing the swipe flow', () => {
     expect(router).toContain("path: '/explore'")
     expect(router).toContain("path: '/city', name: 'city-explore'")
     expect(router).toContain("import('../pages/CityExplorePage.vue')")
-    expect(homePage).toContain("router.push({ name: 'explore' })")
+    expect(app).toContain("router.push({ name: 'explore' })")
     expect(homePage).toContain("name: 'city-explore'")
   })
 
@@ -33,12 +34,15 @@ describe('ExplorePage browse experience contracts', () => {
     expect(explorePage).toContain('<SpotDetailSheet')
     expect(explorePage).toContain('todayPlan.addSpot')
     expect(explorePage).toContain('todayPlan.removeSpot')
-    expect(explorePage).toContain('+ 加入今天')
+    expect(explorePage).toContain('加入今日计划')
   })
 
-  it('clears today plan and journey progress when switching cities', () => {
+  it('confirms before switching today plan and journey progress when switching cities', () => {
     expect(explorePage).toContain('useTodayJourney')
-    expect(explorePage).toContain('todayPlan.clear()')
+    expect(explorePage).toContain('pendingCity')
+    expect(explorePage).toContain('继续切换')
+    // 各城市计划按分桶保留：切换城市是切桶而不是清空。
+    expect(explorePage).toContain('todayPlan.setActiveCity(')
     expect(explorePage).toContain('todayJourney.reset()')
   })
 })

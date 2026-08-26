@@ -62,6 +62,6 @@ describe('V0.4 city swipe-confirmation UI contracts', () => {
     expect(cityExplorePage).toContain('差不多了')
     expect(cityExplorePage).toContain('finishNow')
     // Unverified places cannot be accepted into the real plan.
-    expect(spotDetailSheet).toContain('暂不能导航或加入今天')
+    expect(spotDetailSheet).toContain('暂不能导航或加入今日计划')
   })
 })

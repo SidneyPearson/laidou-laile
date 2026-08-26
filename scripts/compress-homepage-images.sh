@@ -12,7 +12,7 @@
 #      支持 .png/.jpg/.jpeg/.webp（sips 能读的都行）。
 #   2. 运行：npm run img:compress
 #
-# 脚本会自动转成 JPG（质量 72）、按目标尺寸缩小、替换 assets/homepage 里的正式图，
+# 脚本会自动转成 JPG（质量 82）、按目标尺寸缩小、替换 assets/homepage 里的正式图，
 # 并在替换前把旧文件备份到 /tmp。替换完记得重新 build + 部署。
 
 set -euo pipefail
@@ -20,9 +20,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC_DIR="$ROOT/raw-images/homepage"
 DST_DIR="$ROOT/client/src/assets/homepage"
-QUALITY=72
-HERO_MAX=1400   # hero 最长边上限（足够手机清晰）
-CARD_MAX=540    # 画像卡最长边上限（约 3 倍屏清晰）
+QUALITY=82
+HERO_MAX=2160  # hero 最长边上限（3x 屏满屏清晰）
+CARD_MAX=1080  # 画像卡最长边上限（3 倍屏清晰）
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="/tmp/homepage-img-backup-$STAMP"
 

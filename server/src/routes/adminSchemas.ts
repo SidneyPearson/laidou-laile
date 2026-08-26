@@ -32,7 +32,7 @@ export const spotWriteSchema = z.object({
 }).strict()
 export const spotCreateSchema = spotWriteSchema
 export const spotUpdateSchema = spotWriteSchema.omit({ id: true }).partial().extend({ expectedVersion: z.number().int().min(1) }).strict()
-export const spotListSchema = paginationSchema.extend({ keyword: z.string().trim().max(80).optional(), cityAdcode: z.string().regex(/^\d{6}$/).optional(), category: spotCategorySchema.optional(), tier: spotTierSchema.optional(), verificationStatus: verificationStatusSchema.optional(), publicationStatus: publicationStatusSchema.optional() }).strict()
+export const spotListSchema = paginationSchema.extend({ keyword: z.string().trim().max(80).optional(), cityAdcode: z.string().regex(/^\d{6}$/).optional(), category: spotCategorySchema.optional(), tier: spotTierSchema.optional(), verificationStatus: verificationStatusSchema.optional(), publicationStatus: publicationStatusSchema.optional(), persona: z.string().trim().min(1).max(40).optional() }).strict()
 export const versionSchema = z.object({ expectedVersion: z.number().int().min(1) }).strict()
 export const batchPublishSchema = z.object({ spots: z.array(z.object({ id: z.string().min(1).max(100), expectedVersion: z.number().int().min(1) }).strict()).min(1).max(50) }).strict()
 export const loginSchema = z.object({ password: z.string().min(1).max(1024) }).strict()

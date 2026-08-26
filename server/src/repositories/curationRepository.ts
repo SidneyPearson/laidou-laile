@@ -2,7 +2,7 @@ import type { CityRecord, CityStatus, PublicationStatus, SpotCategory, SpotRecor
 
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number; totalPages: number }
 export interface CityListQuery { page: number; pageSize: number; keyword?: string }
-export interface SpotListQuery { page: number; pageSize: number; keyword?: string; cityAdcode?: string; category?: SpotCategory; tier?: SpotTier; verificationStatus?: VerificationStatus; publicationStatus?: PublicationStatus }
+export interface SpotListQuery { page: number; pageSize: number; keyword?: string; cityAdcode?: string; category?: SpotCategory; tier?: SpotTier; verificationStatus?: VerificationStatus; publicationStatus?: PublicationStatus; persona?: string }
 export interface CityWrite { adcode: string; provinceName: string; name: string; slug: string; intro?: string | null; coverImageUrl?: string | null; status: CityStatus; priority: number; reviewIntervalDays?: 7 | 14 | 30 }
 export interface SpotWrite {
   id: string; cityAdcode: string; name: string; searchName: string; district?: string | null; address?: string | null; lng?: number | null; lat?: number | null

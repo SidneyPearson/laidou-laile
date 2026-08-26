@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import homePage from './HomePage.vue?raw'
+import app from '../App.vue?raw'
 import homeHero from '../components/home/HomeHero.vue?raw'
 import personaSelector from '../components/home/PersonaSelector.vue?raw'
 import inspirationCarousel from '../components/home/InspirationCarousel.vue?raw'
@@ -14,6 +15,7 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homePage).toContain('showPicker')
     // Hero uses a fixed min-height (not 100vh) so it doesn't dominate small screens.
     expect(homeHero).toContain('min-height: 480px')
+    expect(homeHero).toContain('min-height: 390px')
     // Hero uses the registered cover asset, not a hard-coded /home-bg.jpg.
     expect(homeHero).toContain('homepageAssets.hero')
   })
@@ -34,8 +36,8 @@ describe('HomePage immersive redesign contracts', () => {
     // coverImageUrl / distanceMeters), not from hard-coded seed cards.
     expect(homePage).toContain('spot.coverImageUrl')
     expect(homePage).toContain('distanceMeters')
-    // CTA uses existing city route.
-    expect(homePage).toContain("name: 'explore'")
+    // The persistent app shell owns the public bottom navigation routes.
+    expect(app).toContain("router.push({ name: 'explore' })")
     // Browser geolocation keeps the user's actual position; manual city
     // selection falls back to the curated city's representative center.
     expect(homePage).toContain('const center = coords.value && !isMock.value')
@@ -44,9 +46,9 @@ describe('HomePage immersive redesign contracts', () => {
   })
 
   it('keeps the mobile bottom nav with a highlighted plan FAB', () => {
-    expect(homePage).toContain('<MobileBottomNav')
-    expect(homePage).toContain('active="home"')
-    expect(homePage).toContain("name: 'today-plan'")
+    expect(homePage).not.toContain('<MobileBottomNav')
+    expect(app).toContain('<MobileBottomNav')
+    expect(app).toContain("router.push({ name: 'today-plan' })")
   })
 
   it('uses the dark immersive palette scoped to the page (no global dark mode)', () => {

@@ -1,6 +1,9 @@
 import type { InspirationSpot } from './explore'
 
-export const TODAY_PLAN_LIMIT = 6
+/** 默认每日计划上限：一天最多认真逛 3 个地方，避免行程过满、体力透支。 */
+export const TODAY_PLAN_LIMIT = 3
+/** 历史版本曾允许 6 个；读取旧存档时保留该上限，避免静默丢弃已保存的计划。 */
+export const TODAY_PLAN_LEGACY_LIMIT = 6
 
 export interface TodaySpot extends InspirationSpot {
   amapPoiId: string

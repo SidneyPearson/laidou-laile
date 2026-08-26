@@ -7,13 +7,13 @@ import spotDetailSheet from '../explore/SpotDetailSheet.vue?raw'
 describe('user-curated today plan UI contracts', () => {
   it('uses explicit navigation and local-list actions in place details', () => {
     expect(spotDetailSheet).toContain('就去这里')
-    expect(spotDetailSheet).toContain('加入今天')
-    expect(spotDetailSheet).toContain('已加入今天')
+    expect(spotDetailSheet).toContain('加入今日计划')
+    expect(spotDetailSheet).toContain('已加入今日计划')
     expect(spotDetailSheet).toContain(':disabled="!actionReady || inToday"')
-    expect(spotDetailSheet).not.toContain('再次点击“已加入今天”')
+    expect(spotDetailSheet).not.toContain('再次点击“已加入今日计划”')
     expect(spotDetailSheet).not.toContain('围绕这里生成路线')
     expect(spotDetailSheet).not.toContain('2小时')
-    expect(spotDetailSheet).toContain('暂不能导航或加入今天')
+    expect(spotDetailSheet).toContain('暂不能导航或加入今日计划')
   })
 
   it('only maps user-selected places and gates dashed reference connections', () => {

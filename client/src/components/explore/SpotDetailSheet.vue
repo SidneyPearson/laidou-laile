@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { InspirationSpot, PersonaOption } from '../../types/explore'
-import { departureReminder, whySpotFitsPersona } from '../../utils/exploreDetails'
+import { departureReminders, whySpotFitsPersona } from '../../utils/exploreDetails'
 import SpotCover from './SpotCover.vue'
 
 const props = defineProps<{
@@ -19,8 +19,9 @@ const emit = defineEmits<{
 
 const whyForYou = computed(() => props.persona
   ? whySpotFitsPersona(props.spot, props.persona.id)
-  : '从已验证的城市地点中精选，适合加入今天的探索清单。')
-const reminder = computed(() => departureReminder(props.spot))
+  : '从已验证的城市地点中精选，适合加入今日计划的探索清单。')
+// 出发前提醒：做空值过滤与语义去重，避免后台重复录入时渲染两条几乎一样的提醒。
+const reminders = computed(() => departureReminders(props.spot))
 </script>
 
 <template>
@@ -84,12 +85,20 @@ const reminder = computed(() => departureReminder(props.spot))
 
         <section class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <h3 class="text-xs font-bold text-amber-900">出发前提醒</h3>
-          <p class="mt-1.5 text-[11px] leading-5 text-amber-800">{{ reminder }}</p>
-          <p class="mt-1 text-[10px] text-amber-600">预约、票务与营业信息以当天官方公告为准。</p>
+          <ul class="mt-1.5 space-y-1">
+            <li
+              v-for="(text, index) in reminders"
+              :key="index"
+              class="flex gap-1.5 text-[11px] leading-5 text-amber-800"
+            >
+              <span class="mt-1.5 h-1 w-1 flex-none rounded-full bg-amber-500" />
+              <span>{{ text }}</span>
+            </li>
+          </ul>
         </section>
 
         <p v-if="!actionReady" class="text-center text-[10px] leading-4 text-amber-700">
-          这是演示地点，缺少可重新校验的真实 POI 或坐标，暂不能导航或加入今天。
+          这是演示地点，缺少可重新校验的真实 POI 或坐标，暂不能导航或加入今日计划。
         </p>
       </div>
 
@@ -108,7 +117,7 @@ const reminder = computed(() => departureReminder(props.spot))
             :disabled="!actionReady || inToday"
             @click="emit('toggle-today')"
           >
-            {{ inToday ? '已加入今天' : '加入今天' }}
+            {{ inToday ? '已加入今日计划' : '加入今日计划' }}
           </button>
         </div>
       </div>

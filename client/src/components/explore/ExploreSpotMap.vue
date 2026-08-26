@@ -92,7 +92,7 @@ onUnmounted(() => {
       <div>
         <p class="text-3xl">🗺️</p>
         <p class="mt-3 text-sm font-bold text-white">地图暂时不可用</p>
-        <p class="mt-1 text-xs leading-5 text-white/45">地点列表仍可正常浏览和加入今天</p>
+        <p class="mt-1 text-xs leading-5 text-white/45">地点列表仍可正常浏览和加入今日计划</p>
       </div>
     </div>
     <div v-else class="pointer-events-none absolute left-3 top-3 rounded-full bg-[#0b1119]/85 px-3 py-2 text-[10px] font-semibold text-white/75 shadow-lg backdrop-blur">
