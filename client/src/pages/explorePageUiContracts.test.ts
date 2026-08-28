@@ -10,7 +10,7 @@ describe('ExplorePage browse experience contracts', () => {
     expect(router).toContain("path: '/explore'")
     expect(router).toContain("path: '/city', name: 'city-explore'")
     expect(router).toContain("import('../pages/CityExplorePage.vue')")
-    expect(app).toContain("router.push({ name: 'explore' })")
+    expect(app).toContain("router.replace({ name: 'explore' })")
     expect(homePage).toContain("name: 'city-explore'")
   })
 

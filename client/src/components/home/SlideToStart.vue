@@ -29,7 +29,9 @@ let startX = 0
 let pointerId: number | null = null
 const thresholdReached = ref(false) // fires the threshold haptic once per drag
 
-const TRIGGER_RATIO = 0.72
+// 微信 Pointer Events 偶尔会在手指离开前发出 pointercancel；阈值略低于旧版 72%，
+// 让用户明显滑过中段后即可稳定解锁，同时仍保留足够距离避免普通点击误触。
+const TRIGGER_RATIO = 0.64
 
 function recomputeMax() {
   if (!track.value) return
@@ -134,10 +136,21 @@ function onPointerUp(e: PointerEvent) {
 }
 function onPointerCancel(e: PointerEvent) {
   if (e.pointerId !== pointerId) return
+  // 微信里手势已越过阈值但收尾被系统取消时，也应视作一次完整滑动，
+  // 否则用户看到滑块到位却必须再滑一次。
+  if (dragging.value && pastThreshold()) {
+    completeUnlock()
+    return
+  }
   dragging.value = false
   pointerId = null
   thresholdReached.value = false
   offset.value = 0
+}
+
+function onLostPointerCapture(e: PointerEvent) {
+  if (!dragging.value || e.pointerId !== pointerId) return
+  finishDrag()
 }
 
 onMounted(() => {
@@ -166,6 +179,7 @@ const hintText = () => {
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
+    @lostpointercapture="onLostPointerCapture"
   >
     <span class="slide-fill" :style="{ width: `${offset + 52}px` }" aria-hidden="true" />
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onErrorCaptured, ref } from 'vue'
+import { computed, onErrorCaptured, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MobileBottomNav, { type BottomTab } from './components/home/MobileBottomNav.vue'
 
@@ -8,34 +8,43 @@ const hasError = ref(false)
 const routeLoading = ref(false)
 const router = useRouter()
 const route = useRoute()
-const navToast = ref('')
-let navToastTimer: ReturnType<typeof setTimeout> | null = null
-
 const isPublicRoute = computed(() => !route.path.startsWith('/admin'))
 const isDarkPublicRoute = computed(() =>
-  route.name === 'home' || route.name === 'explore' || route.name === 'city-explore',
+  route.name === 'home'
+  || route.name === 'explore'
+  || route.name === 'city-explore'
+  || route.name === 'favorites'
+  || route.name === 'me',
 )
+const publicScrollContainer = ref<HTMLElement | null>(null)
 const activeBottomTab = computed<BottomTab>(() => {
   if (route.name === 'today-plan') return 'plan'
   if (route.name === 'explore' || route.name === 'city-explore') return 'explore'
+  if (route.name === 'favorites') return 'favorites'
+  if (route.name === 'me') return 'me'
   return 'home'
 })
 
-function showNavToast(message: string) {
-  navToast.value = message
-  if (navToastTimer) clearTimeout(navToastTimer)
-  navToastTimer = setTimeout(() => {
-    navToast.value = ''
-    navToastTimer = null
-  }, 1800)
-}
+// iOS 微信橡皮筋回弹会露出 body；让页面底色跟随持久化 App Shell，
+// 深色公开页不闪暖白，今日计划和后台仍保持原来的浅色背景。
+watchEffect((onCleanup) => {
+  if (typeof document === 'undefined') return
+  document.body.classList.toggle('public-dark', isDarkPublicRoute.value)
+  document.body.classList.toggle('public-shell-locked', isPublicRoute.value)
+  onCleanup(() => {
+    document.body.classList.remove('public-dark')
+    document.body.classList.remove('public-shell-locked')
+  })
+})
 
 function handleBottomNav(tab: BottomTab) {
-  if (tab === 'home' && route.name !== 'home') router.push({ name: 'home' })
-  else if (tab === 'explore' && route.name !== 'explore') router.push({ name: 'explore' })
-  else if (tab === 'plan' && route.name !== 'today-plan') router.push({ name: 'today-plan' })
-  else if (tab === 'favorites') showNavToast('收藏功能建设中')
-  else if (tab === 'me') showNavToast('个人中心建设中')
+  // 微信 WebView 在 hash history 出现可后退记录后会显示白色原生导航工具栏。
+  // App Shell 的 Tab 属于同级页面切换，用 replace 保持单条历史记录。
+  if (tab === 'home' && route.name !== 'home') router.replace({ name: 'home' })
+  else if (tab === 'explore' && route.name !== 'explore') router.replace({ name: 'explore' })
+  else if (tab === 'plan' && route.name !== 'today-plan') router.replace({ name: 'today-plan' })
+  else if (tab === 'favorites' && route.name !== 'favorites') router.replace({ name: 'favorites' })
+  else if (tab === 'me' && route.name !== 'me') router.replace({ name: 'me' })
 }
 
 router.beforeEach(() => {
@@ -43,6 +52,9 @@ router.beforeEach(() => {
 })
 router.afterEach(() => {
   window.setTimeout(() => { routeLoading.value = false }, 240)
+  window.requestAnimationFrame(() => {
+    publicScrollContainer.value?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  })
 })
 router.onError(() => {
   routeLoading.value = false
@@ -58,9 +70,6 @@ onErrorCaptured((err) => {
   return false // prevent propagation
 })
 
-onBeforeUnmount(() => {
-  if (navToastTimer) clearTimeout(navToastTimer)
-})
 </script>
 
 <template>
@@ -77,15 +86,20 @@ onBeforeUnmount(() => {
     </div>
   </div>
   <template v-else>
-    <div class="app-shell" :class="{ 'app-shell--dark': isDarkPublicRoute }">
+    <div
+      class="app-shell"
+      :class="{
+        'app-shell--public': isPublicRoute,
+        'app-shell--dark': isDarkPublicRoute,
+      }"
+    >
       <div v-if="routeLoading" class="route-bar" aria-hidden="true" />
-      <router-view v-slot="{ Component }">
-        <!-- 轻量 H5 采用即时换页，避免 out-in 先卸载旧页再挂载新页造成空白闪烁。 -->
-        <component :is="Component" />
-      </router-view>
-      <Transition name="nav-toast">
-        <div v-if="navToast" class="app-nav-toast" role="status">{{ navToast }}</div>
-      </Transition>
+      <div ref="publicScrollContainer" :class="{ 'app-shell-content': isPublicRoute }">
+        <router-view v-slot="{ Component }">
+          <!-- 轻量 H5 采用即时换页，避免 out-in 先卸载旧页再挂载新页造成空白闪烁。 -->
+          <component :is="Component" />
+        </router-view>
+      </div>
       <MobileBottomNav
         v-if="isPublicRoute"
         :active="activeBottomTab"
@@ -99,6 +113,26 @@ onBeforeUnmount(() => {
 .app-shell {
   min-height: 100%;
   min-height: 100dvh;
+}
+.app-shell--public {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+.app-shell-content {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.app-shell-content::-webkit-scrollbar {
+  display: none;
 }
 .app-shell--dark {
   background: #02070e;
@@ -118,26 +152,6 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.app-nav-toast {
-  position: fixed;
-  z-index: 200;
-  left: 50%;
-  bottom: calc(108px + env(safe-area-inset-bottom));
-  max-width: calc(100vw - 40px);
-  padding: 10px 18px;
-  transform: translateX(-50%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(13, 18, 24, 0.95);
-  color: #fff;
-  font-size: 13px;
-  text-align: center;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-}
-.nav-toast-enter-active,
-.nav-toast-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
-.nav-toast-enter-from,
-.nav-toast-leave-to { opacity: 0; transform: translate(-50%, 8px); }
 @keyframes route-flow {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }

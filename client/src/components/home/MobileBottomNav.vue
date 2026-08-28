@@ -71,6 +71,20 @@ const items: Item[] = [
   align-items: center;
 }
 
+/* iOS 微信在地址栏伸缩/橡皮筋回弹时，fixed 元素可能短暂跟随布局视口上移。
+   向视口外延伸同色背景，避免底栏下方露出页面内容或白缝。 */
+.bottom-nav::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: max(120px, env(safe-area-inset-bottom));
+  background: #080c12;
+  pointer-events: none;
+}
+
 .nav-item {
   position: relative;
   display: flex;
@@ -89,6 +103,15 @@ const items: Item[] = [
 
 .nav-item:active {
   transform: scale(0.92);
+}
+
+.nav-item:focus {
+  outline: none;
+}
+
+.nav-item:focus-visible {
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px rgba(199, 255, 31, 0.72);
 }
 
 .nav-item--active:not(.nav-item--center) {

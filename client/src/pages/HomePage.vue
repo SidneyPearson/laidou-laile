@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import HomeHero from '../components/home/HomeHero.vue'
 import PersonaSelector from '../components/home/PersonaSelector.vue'
@@ -21,25 +21,30 @@ import {
   type CityContextResponse,
 } from '../services/exploreApi'
 import { ApiRequestError } from '../services/api'
-import { PERSONAS, EXPLORE_CATEGORIES, getExploreSpots, filterAndRankSpots } from '../data/mockExploreSpots'
+import { PERSONAS, EXPLORE_CATEGORIES, getExploreSpots } from '../data/mockExploreSpots'
 import { usePersona } from '../composables/usePersona'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { useTodayJourney } from '../composables/useTodayJourney'
 import { matchRememberedCity, useExploreCity } from '../composables/useExploreCity'
 import { useGeolocation } from '../composables/useGeolocation'
+import { useFavorites } from '../composables/useFavorites'
 import { openAmapNavigation } from '../utils/amapNavigation'
-import { floatEmojis, playfulPlanLimitMessage, timeGreeting } from '../utils/delight'
+import { haversineDist } from '../utils/geo'
+import { floatEmojis, timeGreeting } from '../utils/delight'
+import { haptic } from '../utils/haptics'
 import {
   defaultHomePersonaCards,
   fetchHomePersonas,
   type HomePersonaCard,
 } from '../repositories/homePersonas'
 import type { InspirationSpot, Persona } from '../types/explore'
+import { isFullDaySuggestedDuration, TODAY_PLAN_LIMIT } from '../types/todayPlan'
 
 const router = useRouter()
 const { persona, hasChosenPersona, setPersona } = usePersona()
 const todayPlan = useTodayPlan()
 const todayJourney = useTodayJourney()
+const favorites = useFavorites()
 const { city: exploreCity, setExploreCity } = useExploreCity()
 const { coords, isMock, error: locError, requestLocation, setManualLocation } = useGeolocation()
 
@@ -160,6 +165,8 @@ const cardSpotByKey = computed(() => {
   return map
 })
 
+const favoriteIds = computed(() => favorites.spots.value.map(spot => spot.id))
+
 function handleCardSelect(card: InspirationCard) {
   const spot = cardSpotByKey.value.get(card.key)
   if (spot && card.verified) {
@@ -168,6 +175,22 @@ function handleCardSelect(card: InspirationCard) {
   }
   // Demo / unverified card → jump into the city exploration page.
   handleStart()
+}
+
+function toggleFavorite(spot: InspirationSpot) {
+  const result = favorites.toggle(spot, selectedCity.value)
+  if (result.status === 'unverified') {
+    showToast('演示地点暂时不能收藏')
+    return
+  }
+  haptic(16)
+  const suffix = favorites.storageAvailable.value ? '' : '，仅在本次打开期间保留'
+  showToast(result.status === 'added' ? `已收藏“${spot.name}”${suffix}` : `已取消收藏“${spot.name}”`)
+}
+
+function toggleCardFavorite(card: InspirationCard) {
+  const spot = cardSpotByKey.value.get(card.key)
+  if (spot) toggleFavorite(spot)
 }
 
 const selectedActionReady = (spot: InspirationSpot | null) =>
@@ -194,11 +217,9 @@ function showToast(message: string) {
 
 function localFallback(cityName: string): InspirationSpot[] {
   const normalized = cityName.trim().replace(/市$/, '')
-  return filterAndRankSpots(
-    getExploreSpots(normalized),
-    persona.value,
-    'all',
-  ).map(spot => ({ ...spot, verificationStatus: 'demo', source: 'local_demo' }))
+  // 本地示例也保持策展时的固定顺序，不跟随画像重新排序。
+  return getExploreSpots(normalized)
+    .map(spot => ({ ...spot, verificationStatus: 'demo' as const, source: 'local_demo' as const }))
 }
 
 async function loadWeatherAndSpots() {
@@ -234,9 +255,9 @@ async function loadWeatherAndSpots() {
   await loadSpots()
 }
 
-/** Fetch recommendations for the current city + persona. Weather is independent
- *  of persona, so switching persona only calls this — it must not touch the
- *  weather pill (which would flash "加载中" and shift the top bar). */
+/** 首页灵感采用编辑排序：先按后台推荐级别，再按同级 priority。
+ *  不传画像、天气或坐标给推荐接口，避免实时条件改变策展顺序；
+ *  用户已授权定位时，仅在客户端补算距离文案，不参与排序。 */
 async function loadSpots() {
   const city = selectedCity.value
   if (!city?.center) {
@@ -251,23 +272,29 @@ async function loadSpots() {
   spotsLoading.value = true
   demoFallback.value = null
   try {
-    // Send the user's real coordinates only after they authorized geolocation.
-    // Mock/manually-picked coords are omitted: they'd just measure distance
-    // from the city center, which adds nothing and skews ranking.
-    const realLocation = coords.value && !isMock.value
-      ? { lat: coords.value.lat, lng: coords.value.lng }
-      : {}
     const result = await fetchExploreRecommendations({
       city: city.name.replace(/市$/, ''),
       adcode: city.adcode,
-      ...(hasChosenPersona.value ? { persona: persona.value } : {}),
       category: 'all',
       limit: 6,
-      isRainy: weather.value?.isRainy ?? false,
-      ...realLocation,
+      isRainy: false,
     }, spotsController.signal)
     if (requestId !== spotsRequestId) return
-    spots.value = result.spots
+    const realLocation = coords.value && !isMock.value ? coords.value : null
+    spots.value = realLocation
+      ? result.spots.map((spot) => {
+          if (!Number.isFinite(spot.lat) || !Number.isFinite(spot.lng)) return spot
+          return {
+            ...spot,
+            distanceMeters: Math.round(haversineDist(
+              realLocation.lat,
+              realLocation.lng,
+              spot.lat as number,
+              spot.lng as number,
+            )),
+          }
+        })
+      : result.spots
   } catch (err) {
     if (requestId !== spotsRequestId) return
     const reqErr = err instanceof ApiRequestError ? err : null
@@ -466,7 +493,7 @@ function handleStart() {
   const center = coords.value && !isMock.value
     ? coords.value
     : city.center
-  router.push({
+  router.replace({
     name: 'city-explore',
     query: {
       city: city.name,
@@ -496,11 +523,25 @@ function proceedFreshStart() {
   handleStart()
 }
 
+/** 微信里弹层仍在位移动画时可能吞掉合成 click；touchend 直接执行并阻止
+ *  随后的幽灵点击。鼠标和键盘仍走模板上的 click。 */
+function proceedFreshStartOnTouch(event: TouchEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  proceedFreshStart()
+}
+
 /** 取消"重新开始"：关闭确认层，并把滑动解锁滑块复位回锁定态，
  *  否则滑块会卡在"已解锁"终态无法再拖（表现为页面交互消失）。 */
 function cancelFreshStart() {
   confirmReset.value = false
   slideToStartRef.value?.reset()
+}
+
+function cancelFreshStartOnTouch(event: TouchEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  cancelFreshStart()
 }
 
 function handleSpotSelect(spot: InspirationSpot) {
@@ -523,7 +564,7 @@ function toggleTodaySpot() {
   }
   const result = todayPlan.addSpot(spot)
   if (result.status === 'limit') {
-    showToast(playfulPlanLimitMessage())
+    showToast(`今日计划最多 ${TODAY_PLAN_LIMIT} 个地点，请先移除一个再加入`)
     return
   }
   if (result.status !== 'added') {
@@ -531,7 +572,12 @@ function toggleTodaySpot() {
     return
   }
   selectedSpot.value = null
-  showToast('已加入今日计划')
+  if (isFullDaySuggestedDuration(spot.suggestedDuration)) {
+    haptic([28, 50, 28])
+    showToast('已加入；这个地点建议游玩一整天')
+  } else {
+    showToast('已加入今日计划')
+  }
 }
 
 /* -------------------- scroll reveal -------------------- */
@@ -590,12 +636,6 @@ onBeforeUnmount(() => {
   revealObserver = null
 })
 
-// Switching persona refreshes recommendations only — weather depends on the
-// city, not the persona, so it must not reload (that flashed "加载中" and
-// shifted the weather pill on the top bar).
-watch(persona, () => {
-  void loadSpots()
-})
 </script>
 
 <template>
@@ -639,88 +679,96 @@ watch(persona, () => {
           <span>暂时展示示例地点，请稍后重试。</span>
         </template>
       </div>
-      <!-- 雨天人格化：不扫兴，把坏天气变成推荐理由 -->
+      <!-- 天气提示独立于编辑排序，不暗示下方地点经过雨天重排。 -->
       <div v-if="weather?.isRainy && spots.length > 0 && !demoFallback" class="rainy-note" data-reveal>
-        ☔ 下雨天不扫兴，下面这些地方有屋檐
+        ☔ 今天可能有雨，出门记得带伞
       </div>
       <div data-reveal>
         <InspirationCarousel
           :cards="inspirationCards"
           :loading="spotsLoading"
+          :favorite-ids="favoriteIds"
           @select="handleCardSelect"
+          @toggle-favorite="toggleCardFavorite"
         />
       </div>
 
       <div class="mt-5" data-reveal>
         <RoutePlannerCard
           :count="todayPlan.count.value"
-          @open="router.push({ name: 'today-plan' })"
+          @open="router.replace({ name: 'today-plan' })"
         />
       </div>
 
       <p class="home-footer" @click="tapFooter">{{ footerCopy }}</p>
     </div>
 
-    <Transition name="sheet" :duration="220">
-      <div v-if="showPicker" class="sheet-mask" @click.self="showPicker = false">
-        <div class="sheet-panel sheet-panel--dark">
-          <CityPicker
-            @select="handleCitySelect"
-            @cancel="showPicker = false"
-          />
+    <!-- 固定弹层传送到 body，避免 iOS 独立滚动层形成层叠上下文后被 App Shell 底栏盖住。 -->
+    <Teleport to="body">
+      <Transition name="sheet" :duration="220">
+        <div v-if="showPicker" class="sheet-mask" @click.self="showPicker = false">
+          <div class="sheet-panel sheet-panel--dark">
+            <CityPicker
+              @select="handleCitySelect"
+              @cancel="showPicker = false"
+            />
+          </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
 
-    <Transition name="sheet" :duration="220">
-      <SpotDetailSheet
-        v-if="selectedSpot"
-        :spot="selectedSpot"
-        :persona="hasChosenPersona ? currentPersonaOption() : null"
-        :action-ready="selectedActionReady(selectedSpot)"
-        :in-today="todayPlan.hasSpot(selectedSpot.id)"
-        @close="selectedSpot = null"
-        @navigate="navigateToSpot"
-        @toggle-today="toggleTodaySpot"
+      <Transition name="sheet" :duration="220">
+        <SpotDetailSheet
+          v-if="selectedSpot"
+          :spot="selectedSpot"
+          :persona="hasChosenPersona ? currentPersonaOption() : null"
+          :action-ready="selectedActionReady(selectedSpot)"
+          :in-today="todayPlan.hasSpot(selectedSpot.id)"
+          :favorite-ready="selectedActionReady(selectedSpot)"
+          :in-favorites="favorites.hasSpot(selectedSpot)"
+          @close="selectedSpot = null"
+          @navigate="navigateToSpot"
+          @toggle-today="toggleTodaySpot"
+          @toggle-favorite="toggleFavorite(selectedSpot)"
+        />
+      </Transition>
+
+      <Transition name="sheet" :duration="220">
+        <div v-if="confirmReset" class="sheet-mask" @click.self="cancelFreshStart">
+          <div class="sheet-panel sheet-panel--dark confirm-sheet">
+            <h3>重新开始一轮推荐？</h3>
+            <p>你已选了 {{ todayPlan.count.value }} 个地点，开始新推荐会<strong>清空今天的安排</strong>。</p>
+            <div class="confirm-actions">
+              <button class="btn-ghost" type="button" @touchend="cancelFreshStartOnTouch" @click="cancelFreshStart">取消</button>
+              <button class="btn-danger" type="button" @touchend="proceedFreshStartOnTouch" @click="proceedFreshStart">清空并开始</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <Transition name="sheet" :duration="220">
+        <div v-if="showCityConfirm" class="sheet-mask" @click.self="cancelCitySwitch">
+          <div class="sheet-panel sheet-panel--dark confirm-sheet">
+            <h3>切换到{{ pendingCity?.name.replace(/市$/, '') }}？</h3>
+            <p>切换后，当前「<strong>{{ currentCityLabel }}</strong>」的今日计划会暂时收起，切回该城市时自动恢复。</p>
+            <div class="confirm-actions">
+              <button class="btn-ghost" type="button" @click="cancelCitySwitch">取消</button>
+              <button class="btn-danger" type="button" @click="confirmCitySwitch">切换城市</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <Transition name="toast">
+        <div v-if="toast" class="home-toast">{{ toast }}</div>
+      </Transition>
+
+      <LocationSheet
+        :visible="showLocationSheet"
+        @use-location="handleUseLocation"
+        @manual="handleManualCity"
+        @dismiss="dismissLocationSheet"
       />
-    </Transition>
-
-    <Transition name="sheet" :duration="220">
-      <div v-if="confirmReset" class="sheet-mask" @click.self="cancelFreshStart">
-        <div class="sheet-panel sheet-panel--dark confirm-sheet">
-          <h3>重新开始一轮推荐？</h3>
-          <p>你已选了 {{ todayPlan.count.value }} 个地点，开始新推荐会<strong>清空今天的安排</strong>。</p>
-          <div class="confirm-actions">
-            <button class="btn-ghost" type="button" @click="cancelFreshStart">取消</button>
-            <button class="btn-danger" type="button" @click="proceedFreshStart">清空并开始</button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <Transition name="sheet" :duration="220">
-      <div v-if="showCityConfirm" class="sheet-mask" @click.self="cancelCitySwitch">
-        <div class="sheet-panel sheet-panel--dark confirm-sheet">
-          <h3>切换到{{ pendingCity?.name.replace(/市$/, '') }}？</h3>
-          <p>切换后，当前「<strong>{{ currentCityLabel }}</strong>」的今日计划会暂时收起，切回该城市时自动恢复。</p>
-          <div class="confirm-actions">
-            <button class="btn-ghost" type="button" @click="cancelCitySwitch">取消</button>
-            <button class="btn-danger" type="button" @click="confirmCitySwitch">切换城市</button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <Transition name="toast">
-      <div v-if="toast" class="home-toast">{{ toast }}</div>
-    </Transition>
-
-    <LocationSheet
-      :visible="showLocationSheet"
-      @use-location="handleUseLocation"
-      @manual="handleManualCity"
-      @dismiss="dismissLocationSheet"
-    />
+    </Teleport>
 
   </main>
 </template>
@@ -893,7 +941,9 @@ watch(persona, () => {
 
 .sheet-enter-active .sheet-panel,
 .sheet-leave-active .sheet-panel {
-  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* 必须短于 Transition 的 220ms 显式时长；旧版 280ms 会在 Vue
+     提前移除过渡 class 时产生一次位置跳变，微信可能因此取消 click。 */
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .sheet-enter-from,
@@ -957,6 +1007,8 @@ watch(persona, () => {
   border-radius: 14px;
   font-size: 14px;
   font-weight: 800;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .confirm-actions .btn-ghost {

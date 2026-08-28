@@ -57,6 +57,13 @@ const FALLBACK_CARDS: HomePersonaCard[] = [
     imageUrl: homepageAssets.personas.lazy,
     sortOrder: 40,
   },
+  {
+    id: 'urban',
+    title: personaCardCopy.urban!.title,
+    tagline: personaCardCopy.urban!.tagline,
+    imageUrl: homepageAssets.personas.urban,
+    sortOrder: 50,
+  },
 ]
 
 /** The fallback cards (also the initial render state before the API resolves). */

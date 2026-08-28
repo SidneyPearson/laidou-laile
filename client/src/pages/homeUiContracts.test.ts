@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import homePage from './HomePage.vue?raw'
 import app from '../App.vue?raw'
 import homeHero from '../components/home/HomeHero.vue?raw'
+import cityLocationButton from '../components/home/CityLocationButton.vue?raw'
 import personaSelector from '../components/home/PersonaSelector.vue?raw'
+import slideToStart from '../components/home/SlideToStart.vue?raw'
 import inspirationCarousel from '../components/home/InspirationCarousel.vue?raw'
+import mobileBottomNav from '../components/home/MobileBottomNav.vue?raw'
 import homepageAssets from '../assets/homepage/index.ts?raw'
 
 describe('HomePage immersive redesign contracts', () => {
@@ -18,6 +21,37 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homeHero).toContain('min-height: 390px')
     // Hero uses the registered cover asset, not a hard-coded /home-bg.jpg.
     expect(homeHero).toContain('homepageAssets.hero')
+    // Keep the cover at its natural cover scale; only a very subtle zoom is
+    // allowed so narrow WeChat viewports retain more of the skyline.
+    expect(homeHero).toContain('from { transform: scale(1); }')
+    expect(homeHero).toContain('to { transform: scale(1.025); }')
+  })
+
+  it('keeps the three top controls dimensionally stable while async weather loads', () => {
+    expect(homeHero).toContain('grid-template-columns: 78px 96px')
+    expect(homeHero).toContain('width: 180px')
+    expect(homeHero).toContain('<CityLocationButton')
+    expect(cityLocationButton).toContain('text-overflow:ellipsis')
+    expect(cityLocationButton).toContain('box-sizing:border-box')
+  })
+
+  it('keeps three- and four-character city names readable without resizing the top bar', () => {
+    expect(cityLocationButton).toContain('max-width:4em')
+    expect(cityLocationButton).toContain('font-size:11px')
+    expect(homeHero).toContain('grid-template-columns: 72px 90px')
+  })
+
+  it('keeps a symmetric end gap after the last persona card', () => {
+    expect(personaSelector).toContain('scroll-padding-inline: 14px')
+    expect(personaSelector).toContain('.persona-track::after')
+    expect(personaSelector).toContain('flex: 0 0 14px')
+  })
+
+  it('automatically reveals the selected persona without changing editorial order', () => {
+    expect(personaSelector).toContain('ref="scrollViewport"')
+    expect(personaSelector).toContain('alignSelectedCard')
+    expect(personaSelector).toContain('viewport.scrollTo')
+    expect(personaSelector).toContain("hasAlignedSelection ? 'smooth' : 'auto'")
   })
 
   it('wires persona selection through the shared composable', () => {
@@ -37,7 +71,7 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homePage).toContain('spot.coverImageUrl')
     expect(homePage).toContain('distanceMeters')
     // The persistent app shell owns the public bottom navigation routes.
-    expect(app).toContain("router.push({ name: 'explore' })")
+    expect(app).toContain("router.replace({ name: 'explore' })")
     // Browser geolocation keeps the user's actual position; manual city
     // selection falls back to the curated city's representative center.
     expect(homePage).toContain('const center = coords.value && !isMock.value')
@@ -45,10 +79,44 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homePage).toContain('lng: String(center.lng)')
   })
 
+  it('keeps homepage inspiration in editorial priority order instead of persona order', () => {
+    expect(homePage).not.toContain('filterAndRankSpots')
+    expect(homePage).not.toContain("{ persona: persona.value }")
+    expect(homePage).not.toContain('watch(persona')
+    expect(homePage).toContain('isRainy: false')
+    expect(homePage).toContain('haversineDist')
+  })
+
   it('keeps the mobile bottom nav with a highlighted plan FAB', () => {
     expect(homePage).not.toContain('<MobileBottomNav')
     expect(app).toContain('<MobileBottomNav')
-    expect(app).toContain("router.push({ name: 'today-plan' })")
+    expect(app).toContain("router.replace({ name: 'today-plan' })")
+  })
+
+  it('portals fixed overlays above the persistent App Shell navigation', () => {
+    expect(homePage).toContain('<Teleport to="body">')
+    expect(homePage).toContain('v-if="confirmReset"')
+    expect(homePage).toContain('v-if="showCityConfirm"')
+    expect(homePage).toContain('<LocationSheet')
+  })
+
+  it('allows one deliberate WeChat swipe to trigger a fresh recommendation', () => {
+    expect(slideToStart).toContain('const TRIGGER_RATIO = 0.64')
+    expect(slideToStart).toContain('dragging.value && pastThreshold()')
+    expect(slideToStart).toContain('@lostpointercapture="onLostPointerCapture"')
+  })
+
+  it('does not lose the first touch on fresh-start confirmation actions', () => {
+    expect(homePage).toContain('@touchend="cancelFreshStartOnTouch"')
+    expect(homePage).toContain('@touchend="proceedFreshStartOnTouch"')
+    expect(homePage).toContain('event.preventDefault()')
+    expect(homePage).toContain('transition: transform 0.18s')
+    expect(homePage).toContain('touch-action: manipulation')
+  })
+
+  it('prevents the persistent nav from exposing a bottom gap during WeChat overscroll', () => {
+    expect(mobileBottomNav).toContain('.bottom-nav::after')
+    expect(mobileBottomNav).toContain('height: max(120px, env(safe-area-inset-bottom))')
   })
 
   it('uses the dark immersive palette scoped to the page (no global dark mode)', () => {

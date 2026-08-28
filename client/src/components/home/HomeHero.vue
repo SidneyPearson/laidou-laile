@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { CityContextResponse } from '../../services/exploreApi'
 import type { RecommendationCity } from '../../repositories/cityRecommendations'
 import { homepageAssets } from '../../assets/homepage'
+import CityLocationButton from './CityLocationButton.vue'
 
 const props = defineProps<{
   city: RecommendationCity | null
@@ -75,13 +76,11 @@ const weatherDesc = computed(() => {
         <div class="topbar-pills">
           <!-- Location pill is the button: tapping it opens the same location
                sheet as the first-visit popup (use my location / pick city). -->
-          <button class="top-pill top-pill--loc" aria-label="当前定位城市，点击更换" @click="emit('use-location')">
-            <svg class="top-pill-ico top-pill-ico--accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 21s6-4.4 6-11a6 6 0 1 0-12 0c0 6.6 6 11 6 11Z" />
-              <circle cx="12" cy="10" r="2" />
-            </svg>
-            <span class="top-pill-cityname">{{ cityName }}</span>
-          </button>
+          <CityLocationButton
+            :city-name="cityName"
+            aria-label="当前定位城市，点击更换"
+            @click="emit('use-location')"
+          />
 
           <!-- Weather pill is a static display, not a button. -->
           <div class="top-pill top-pill--weather">
@@ -128,17 +127,17 @@ const weatherDesc = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Raised: a larger vertical % crops more sky off the top and lifts the
-     Lujiazui skyline closer to the top bar. */
+  /* Keep the Lujiazui focal point while avoiding extra zoom, so more of the
+     original skyline remains visible on narrow WeChat viewports. */
   object-position: 59% 53%;
   z-index: -2;
-  transform: scale(1.04);
+  transform: scale(1);
   animation: hero-zoom 18s ease-out forwards;
 }
 
 @keyframes hero-zoom {
-  from { transform: scale(1.04); }
-  to { transform: scale(1.10); }
+  from { transform: scale(1); }
+  to { transform: scale(1.025); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -200,6 +199,8 @@ const weatherDesc = computed(() => {
 /* The middle control is now a "hot city" pill: tapping it jumps straight into
    the city explore page (replacing the old placeholder search bar). */
 .hot-city {
+  box-sizing: border-box;
+  width: 100%;
   height: 38px;
   min-width: 0;
   max-width: 100%;
@@ -210,11 +211,13 @@ const weatherDesc = computed(() => {
   -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px 0 13px;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 6px;
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  overflow: hidden;
   transition: background 0.2s ease, transform 0.15s ease;
 }
 
@@ -244,13 +247,18 @@ const weatherDesc = computed(() => {
 /* Two compact pills to the right of the search bar, vertically centered with
    it (city switcher + weather/location), replacing the old side column. */
 .topbar-pills {
-  display: flex;
+  display: grid;
+  grid-template-columns: 78px 96px;
   align-items: center;
   gap: 6px;
+  width: 180px;
   flex-shrink: 0;
 }
 
 .top-pill {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   height: 38px;
   display: inline-flex;
   align-items: center;
@@ -264,6 +272,7 @@ const weatherDesc = computed(() => {
   color: #fff;
   font-size: 12px;
   font-weight: 600;
+  overflow: hidden;
   transition: transform 0.15s ease, background 0.2s ease;
 }
 
@@ -273,10 +282,9 @@ const weatherDesc = computed(() => {
 }
 
 .top-pill--weather {
-  padding: 0 10px;
-  /* Fixed min width so the pill doesn't shift when the text changes between
-     "定位" / "加载中" / "33° 大雨". */
-  min-width: 86px;
+  padding: 0 7px;
+  /* Column width is fixed by .topbar-pills, so async weather copy can only
+     truncate inside the pill and never squeeze the neighbouring controls. */
   justify-content: center;
 }
 
@@ -297,17 +305,6 @@ const weatherDesc = computed(() => {
   color: rgba(255, 255, 255, 0.92);
 }
 
-.top-pill-ico--accent {
-  color: var(--accent);
-}
-
-.top-pill-cityname {
-  max-width: 3.2em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .top-pill-chev {
   width: 10px;
   height: 10px;
@@ -315,14 +312,19 @@ const weatherDesc = computed(() => {
 }
 
 .top-pill-temp {
+  flex-shrink: 0;
   line-height: 1;
 }
 
 .top-pill-desc {
+  min-width: 0;
   margin-left: 2px;
   color: rgba(255, 255, 255, 0.68);
   font-size: 10px;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ===== Hero copy ===== */
@@ -373,14 +375,24 @@ const weatherDesc = computed(() => {
   .brand strong {
     font-size: 17px;
   }
+  .brand em {
+    font-size: 9px;
+    letter-spacing: 0;
+  }
   .hot-city {
-    padding: 0 8px 0 9px;
+    gap: 4px;
+    padding: 0 5px;
+    font-size: 11px;
   }
   .hot-city-label strong {
     font-size: 12px;
   }
   .top-pill {
     padding: 0 7px;
+  }
+  .topbar-pills {
+    grid-template-columns: 72px 90px;
+    width: 168px;
   }
 }
 

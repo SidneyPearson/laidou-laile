@@ -4,6 +4,7 @@ import inspirationCard from './InspirationCard.vue?raw'
 import spotCover from './SpotCover.vue?raw'
 import spotDetailSheet from './SpotDetailSheet.vue?raw'
 import homePage from '../../pages/HomePage.vue?raw'
+import app from '../../App.vue?raw'
 
 describe('V0.4 city swipe-confirmation UI contracts', () => {
   it('resolves city context and recommendations through the real APIs', () => {
@@ -25,13 +26,17 @@ describe('V0.4 city swipe-confirmation UI contracts', () => {
     expect(homePage).toContain('const center = coords.value && !isMock.value')
     expect(homePage).toContain("lat: String(center.lat)")
     expect(homePage).toContain("lng: String(center.lng)")
-    expect(homePage).toContain("name: 'explore'")
+    // Public route navigation belongs to the persistent app shell, not the
+    // page component that supplies the current location coordinates.
+    expect(app).toContain("router.replace({ name: 'explore' })")
   })
 
   it('lets users accept or skip places via the swipe deck, adding accepted ones to today plan', () => {
     expect(cityExplorePage).toContain('todayPlan.addSpot')
-    expect(cityExplorePage).toContain("swipe('add')")
-    expect(cityExplorePage).toContain("swipe('skip')")
+    // Card actions are intentionally gesture/keyboard driven; there is no
+    // longer a separate click-action footer inside or outside the card.
+    expect(cityExplorePage).toContain('onCardKeydown')
+    expect(cityExplorePage).toContain('swipe(type)')
     expect(cityExplorePage).toContain('先确认今天想去的地方')
     expect(cityExplorePage).toContain('左右滑动卡片')
     expect(cityExplorePage).toContain('(cardIndex.value + 1) % spots.value.length')
@@ -42,9 +47,19 @@ describe('V0.4 city swipe-confirmation UI contracts', () => {
     expect(cityExplorePage).not.toContain('<SpotDetailSheet')
   })
 
+  it('returns a rejected swipe to the center when the daily plan is full', () => {
+    expect(cityExplorePage).toContain('function resetRejectedSwipe()')
+    expect(cityExplorePage).toContain('dragX.value = 0')
+    expect(cityExplorePage).toMatch(/result\.status === 'limit'[\s\S]*resetRejectedSwipe\(\)[\s\S]*return/)
+  })
+
   it('keeps the plan dock in document flow so it cannot cover swipe hints', () => {
     expect(cityExplorePage).toContain('position: relative')
     expect(cityExplorePage).not.toContain('position: fixed;\n  z-index: 12;\n  left: 50%')
+    expect(cityExplorePage).toContain('<div class="dock"')
+    expect(cityExplorePage).not.toContain('v-if="selected.length > 0" class="dock"')
+    expect(cityExplorePage).toContain('overflow-y: hidden')
+    expect(cityExplorePage).toContain('@media (max-width: 430px)')
   })
 
   it('shows card imagery with a gradient fallback and persona-matched reasons', () => {

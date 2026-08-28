@@ -4,17 +4,23 @@ import type { InspirationSpot, PersonaOption } from '../../types/explore'
 import { departureReminders, whySpotFitsPersona } from '../../utils/exploreDetails'
 import SpotCover from './SpotCover.vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   spot: InspirationSpot
   persona: PersonaOption | null
   actionReady: boolean
   inToday: boolean
-}>()
+  favoriteReady?: boolean
+  inFavorites?: boolean
+}>(), {
+  favoriteReady: false,
+  inFavorites: false,
+})
 
 const emit = defineEmits<{
   close: []
   navigate: []
   'toggle-today': []
+  'toggle-favorite': []
 }>()
 
 const whyForYou = computed(() => props.persona
@@ -33,6 +39,18 @@ const reminders = computed(() => departureReminders(props.spot))
           eager
         />
         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
+        <button
+          v-if="favoriteReady"
+          class="absolute right-[60px] top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur transition active:scale-90"
+          :class="inFavorites ? 'text-rose-300' : 'text-white'"
+          :aria-label="inFavorites ? '取消收藏' : '收藏地点'"
+          :aria-pressed="inFavorites"
+          @click="emit('toggle-favorite')"
+        >
+          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" :fill="inFavorites ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" />
+          </svg>
+        </button>
         <button
           class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur"
           aria-label="关闭地点详情"

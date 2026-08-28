@@ -173,59 +173,133 @@ function migrateLegacySpots(rawSpots: unknown): { cities: Record<string, TodaySp
   return { cities, activeCityKey: firstKey }
 }
 
-function loadFromStorage(): { cities: Record<string, TodaySpot[]>; activeCityKey: string | null } {
+/** 把同一城市因 adcode/名称两种 key 产生的碎片桶合并成一个：
+ *  例如 310000（空，当前激活）与「上海」（有地点）合并为 310000 一个桶。
+ *  以 activeKey 作为该城市的规范 key（优先 adcode），其余按城市名归并。 */
+function coalesceCityBuckets(
+  buckets: Record<string, TodaySpot[]>,
+  activeKey: string | null,
+  activeNameHint: string,
+): { cities: Record<string, TodaySpot[]>; activeCityKey: string | null; activeCityName: string } {
+  // 先确定每个非空桶的城市名。
+  const entries = Object.entries(buckets).map(([key, list]) => ({
+    key,
+    list,
+    name: list.length > 0 ? normalizeCityName(list[0].city) : '',
+  }))
+
+  // 找到激活城市名：优先 hint，其次从与 activeKey 同城市名的非空桶里取。
+  let activeName = normalizeCityName(activeNameHint)
+  if (!activeName) {
+    const activeNonEmpty = entries.find(e => e.key === activeKey && e.name)
+    if (activeNonEmpty) activeName = activeNonEmpty.name
+  }
+
+  // 按城市名归并；若该城市名对应 activeKey，则规范 key 用 activeKey。
+  const byName = new Map<string, { key: string; spots: TodaySpot[] }>()
+  const orphans: { key: string; list: TodaySpot[] }[] = []
+  for (const e of entries) {
+    if (!e.name) { orphans.push(e); continue }
+    if (activeName && e.name === activeName && activeKey) {
+      // 归到激活 key
+      const existing = byName.get(activeName)
+      const target = existing ?? { key: activeKey, spots: [] }
+      for (const spot of e.list) {
+        const dup = target.spots.findIndex(item => isSameTodayPlace(item, spot))
+        if (dup >= 0) target.spots[dup] = spot
+        else target.spots.push(spot)
+      }
+      byName.set(activeName, target)
+      if (e.key !== activeKey) storageNeedsMigration = true
+    } else {
+      const existing = byName.get(e.name)
+      if (!existing) byName.set(e.name, { key: e.key, spots: [...e.list] })
+      else {
+        storageNeedsMigration = true
+        for (const spot of e.list) {
+          const dup = existing.spots.findIndex(item => isSameTodayPlace(item, spot))
+          if (dup >= 0) existing.spots[dup] = spot
+          else existing.spots.push(spot)
+        }
+      }
+    }
+  }
+
+  const cities: Record<string, TodaySpot[]> = {}
+  let resolvedActiveKey = activeKey
+  for (const [name, { key, spots: list }] of byName) {
+    cities[key] = list.slice(0, TODAY_PLAN_LEGACY_LIMIT)
+    if (name === activeName) resolvedActiveKey = key
+  }
+  // 激活城市当前没有任何地点时，保留一个空桶（key 用 activeKey 或名称）。
+  if (resolvedActiveKey && !(resolvedActiveKey in cities)) {
+    cities[resolvedActiveKey] = []
+  }
+  if (!resolvedActiveKey) {
+    resolvedActiveKey = Object.keys(cities)[0] ?? null
+  }
+  return { cities, activeCityKey: resolvedActiveKey, activeCityName: activeName }
+}
+
+interface LoadedPlan {
+  cities: Record<string, TodaySpot[]>
+  activeCityKey: string | null
+  activeCityName: string
+}
+
+function loadFromStorage(): LoadedPlan {
   storageNeedsMigration = false
-  if (typeof localStorage === 'undefined') return { cities: {}, activeCityKey: null }
+  if (typeof localStorage === 'undefined') return { cities: {}, activeCityKey: null, activeCityName: '' }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { cities: {}, activeCityKey: null }
+    if (!raw) return { cities: {}, activeCityKey: null, activeCityName: '' }
     const parsed = JSON.parse(raw) as Partial<StoredTodayPlan & LegacyStoredTodayPlan>
 
     // v3：按城市分桶。
     if (parsed.version === STORAGE_VERSION && parsed.cities && typeof parsed.cities === 'object') {
-      const cities: Record<string, TodaySpot[]> = {}
+      const rawBuckets: Record<string, TodaySpot[]> = {}
       const storedActive = typeof parsed.activeCityKey === 'string' ? parsed.activeCityKey : null
+      const storedName = typeof parsed.activeCityName === 'string' ? normalizeCityName(parsed.activeCityName) : ''
       for (const [key, value] of Object.entries(parsed.cities)) {
-        // 读取时保留旧上限（legacy 6），只限制「新增」为当前上限 3，避免静默丢弃已保存的计划。
         const clean = cleanBucket(value, TODAY_PLAN_LEGACY_LIMIT, () => { storageNeedsMigration = true })
-        // 非空桶都保留；激活城市即使计划为空也保留一个空桶，避免 active key 丢失。
-        if (clean.length > 0 || key === storedActive) cities[key] = clean
+        if (clean.length > 0) rawBuckets[key] = clean
       }
-      const activeCityKey = storedActive && storedActive in cities
-        ? storedActive
-        : (Object.keys(cities)[0] ?? null)
-      return { cities, activeCityKey }
+      return coalesceCityBuckets(rawBuckets, storedActive, storedName)
     }
 
     // v1/v2：单城市数组 → 按城市名分桶迁移。
     if ([1, 2].includes(parsed.version as number) && Array.isArray(parsed.spots)) {
       storageNeedsMigration = true
-      return migrateLegacySpots(parsed.spots)
+      const migrated = migrateLegacySpots(parsed.spots)
+      return coalesceCityBuckets(migrated.cities, migrated.activeCityKey, '')
     }
 
-    return { cities: {}, activeCityKey: null }
+    return { cities: {}, activeCityKey: null, activeCityName: '' }
   } catch {
-    return { cities: {}, activeCityKey: null }
+    return { cities: {}, activeCityKey: null, activeCityName: '' }
   }
+}
+
+function applyLoaded(loaded: LoadedPlan) {
+  cityBuckets = loaded.cities
+  activeCityKey.value = loaded.activeCityKey
+  activeCityName = loaded.activeCityName
+  spots.value = loaded.activeCityKey && cityBuckets[loaded.activeCityKey]
+    ? [...cityBuckets[loaded.activeCityKey]]
+    : []
 }
 
 function hydrate() {
   if (loaded) return
   loaded = true
-  const { cities, activeCityKey: key } = loadFromStorage()
-  cityBuckets = cities
-  activeCityKey.value = key
-  spots.value = key && cityBuckets[key] ? [...cityBuckets[key]] : []
+  applyLoaded(loadFromStorage())
   if (storageNeedsMigration) persist()
 }
 
 /** Reconcile state changed in another tab or before a hot reload. */
 function syncFromStorage() {
   if (typeof localStorage === 'undefined') return
-  const { cities, activeCityKey: key } = loadFromStorage()
-  cityBuckets = cities
-  activeCityKey.value = key
-  spots.value = key && cityBuckets[key] ? [...cityBuckets[key]] : []
+  applyLoaded(loadFromStorage())
   if (storageNeedsMigration) persist()
 }
 
@@ -241,6 +315,7 @@ function persist() {
       version: STORAGE_VERSION,
       cities: cityBuckets,
       activeCityKey: activeCityKey.value,
+      activeCityName,
     } satisfies StoredTodayPlan))
     storageAvailable.value = true
   } catch {

@@ -375,8 +375,11 @@ async function shareTicket() {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm" @click.self="emit('close')">
-    <section class="max-h-[calc(100dvh-24px)] w-full max-w-md overflow-y-auto rounded-[30px] bg-[#f7f6f2] p-4 shadow-2xl">
+  <div
+    class="fixed inset-0 z-[70] flex items-end justify-center bg-black/55 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 backdrop-blur-sm"
+    @click.self="emit('close')"
+  >
+    <section class="max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-[30px] bg-[#f7f6f2] p-4 shadow-2xl">
       <div class="mb-3 flex items-center justify-between px-1">
         <div>
           <p class="text-sm font-bold text-stone-900">今日城市票根</p>

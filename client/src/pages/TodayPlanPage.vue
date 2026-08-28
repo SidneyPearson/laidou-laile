@@ -8,11 +8,12 @@ import CityTicketSheet from '../components/today/CityTicketSheet.vue'
 import { PERSONAS } from '../data/mockExploreSpots'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { useTodayJourney } from '../composables/useTodayJourney'
+import { useFavorites } from '../composables/useFavorites'
 import { suggestTodayOrder, ApiRequestError } from '../services/api'
 import { fetchExploreRecommendations } from '../services/exploreApi'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import { haversineDist } from '../utils/geo'
-import { hapticSelect, hapticSuccess } from '../utils/haptics'
+import { haptic, hapticSelect, hapticSuccess } from '../utils/haptics'
 import { burstConfetti } from '../utils/delight'
 import type { Persona, InspirationSpot } from '../types/explore'
 import type { TodaySpot } from '../types/todayPlan'
@@ -21,6 +22,7 @@ import { TODAY_PLAN_LIMIT } from '../types/todayPlan'
 const router = useRouter()
 const plan = useTodayPlan()
 const journey = useTodayJourney()
+const favorites = useFavorites()
 const selectedSpot = ref<TodaySpot | null>(null)
 const suggesting = ref(false)
 const suggestionError = ref('')
@@ -140,7 +142,12 @@ function removeSpot(id: string) {
  *  页面顶部摘要和「下一站」首屏截掉。nextTick 等新内容布局完成再滚。 */
 function scrollToTop() {
   void nextTick(() => {
-    if (typeof window === 'undefined') return
+    if (typeof document === 'undefined') return
+    const shellScroller = document.querySelector<HTMLElement>('.app-shell-content')
+    if (shellScroller) {
+      shellScroller.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      return
+    }
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   })
 }
@@ -254,6 +261,18 @@ function moveSpot(id: string, direction: -1 | 1) {
 
 function navigate(spot: TodaySpot) {
   openAmapNavigation(spot.amapName || spot.name, spot.lng, spot.lat)
+}
+
+function toggleFavorite(spot: TodaySpot) {
+  const result = favorites.toggle(spot, { name: spot.city })
+  if (result.status === 'unverified') return
+  haptic(16)
+  clearNotice.value = result.status === 'added' ? `已收藏“${spot.name}”` : `已取消收藏“${spot.name}”`
+  if (clearNoticeTimer) clearTimeout(clearNoticeTimer)
+  clearNoticeTimer = setTimeout(() => {
+    clearNotice.value = ''
+    clearNoticeTimer = null
+  }, 1800)
 }
 
 function validSuggestedOrder(
@@ -413,7 +432,7 @@ onBeforeUnmount(() => {
         <button
           class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-stone-600 shadow-sm"
           aria-label="返回"
-          @click="router.back()"
+          @click="router.replace({ name: 'explore' })"
         >
           ←
         </button>
@@ -441,12 +460,11 @@ onBeforeUnmount(() => {
             清空计划
           </button>
         </div>
-        <div class="mt-2 flex items-end justify-between">
+        <div class="mt-2">
           <div>
             <p class="text-2xl font-bold">{{ plan.count.value }} 个地点</p>
             <p class="mt-1 text-xs text-white/60">{{ durationSummary }}</p>
           </div>
-          <span class="rounded-full bg-white/10 px-3 py-1.5 text-[10px] text-white/65">本机保存</span>
         </div>
         <p class="mt-4 rounded-2xl bg-white/10 px-3 py-2.5 text-[10px] leading-4 text-white/75">
           {{ pressureNote }}
@@ -613,58 +631,64 @@ onBeforeUnmount(() => {
         <div class="text-4xl">🧺</div>
         <h1 class="mt-4 text-lg font-bold text-stone-900">今天还没有想去的地方</h1>
         <p class="mt-2 text-xs leading-5 text-stone-500">回到城市灵感页，自由挑选真正想去的地点。</p>
-        <button class="btn-primary mt-5 px-6 py-3 text-sm font-bold" @click="router.push({ name: 'explore' })">
+        <button class="btn-primary mt-5 px-6 py-3 text-sm font-bold" @click="router.replace({ name: 'explore' })">
           去看看城市灵感
         </button>
       </div>
     </div>
 
-    <Transition name="slide-up">
-      <SpotDetailSheet
-        v-if="selectedSpot"
-        :spot="selectedSpot"
-        :persona="currentPersona"
-        action-ready
-        :in-today="plan.hasSpot(selectedSpot.id)"
-        @close="selectedSpot = null"
-        @navigate="navigate(selectedSpot)"
-        @toggle-today="removeSpot(selectedSpot.id)"
-      />
-    </Transition>
+    <!-- 固定弹层挂到 body，避免被 App Shell 的内部滚动层和持久底栏截断。 -->
+    <Teleport to="body">
+      <Transition name="slide-up">
+        <SpotDetailSheet
+          v-if="selectedSpot"
+          :spot="selectedSpot"
+          :persona="currentPersona"
+          action-ready
+          :in-today="plan.hasSpot(selectedSpot.id)"
+          favorite-ready
+          :in-favorites="favorites.hasSpot(selectedSpot)"
+          @close="selectedSpot = null"
+          @navigate="navigate(selectedSpot)"
+          @toggle-today="removeSpot(selectedSpot.id)"
+          @toggle-favorite="toggleFavorite(selectedSpot)"
+        />
+      </Transition>
 
-    <Transition name="slide-up">
-      <CityTicketSheet
-        v-if="showTicket"
-        :city="cityLabel"
-        :persona="currentPersona.name"
-        :spots="completedSpots"
-        :duration="durationLabel"
-        @close="showTicket = false"
-        @saved="onTicketSaved"
-      />
-    </Transition>
+      <Transition name="slide-up">
+        <CityTicketSheet
+          v-if="showTicket"
+          :city="cityLabel"
+          :persona="currentPersona.name"
+          :spots="completedSpots"
+          :duration="durationLabel"
+          @close="showTicket = false"
+          @saved="onTicketSaved"
+        />
+      </Transition>
 
-    <Transition name="slide-up">
-      <div v-if="showClearConfirm" class="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 backdrop-blur-sm" @click.self="showClearConfirm = false">
-        <div class="w-full max-w-md rounded-t-[28px] bg-white p-6 pb-[max(24px,env(safe-area-inset-bottom))] shadow-[0_-16px_40px_rgba(0,0,0,0.18)]">
-          <h3 class="text-lg font-black text-stone-900">清空今天的计划？</h3>
-          <p class="mt-2 text-xs leading-5 text-stone-500">路线进度和城市票根也会一起重置，清空后无法恢复。</p>
-          <div class="mt-6 grid grid-cols-2 gap-3">
-            <button
-              class="rounded-2xl bg-stone-100 py-3 text-sm font-bold text-stone-600 active:scale-[0.99]"
-              @click="showClearConfirm = false"
-            >
-              取消
-            </button>
-            <button
-              class="rounded-2xl bg-red-500 py-3 text-sm font-black text-white active:scale-[0.99]"
-              @click="confirmClearTodayPlan"
-            >
-              清空计划
-            </button>
+      <Transition name="slide-up">
+        <div v-if="showClearConfirm" class="fixed inset-0 z-[70] flex items-end justify-center bg-stone-900/40 backdrop-blur-sm" @click.self="showClearConfirm = false">
+          <div class="w-full max-w-md rounded-t-[28px] bg-white p-6 pb-[max(24px,env(safe-area-inset-bottom))] shadow-[0_-16px_40px_rgba(0,0,0,0.18)]">
+            <h3 class="text-lg font-black text-stone-900">清空今天的计划？</h3>
+            <p class="mt-2 text-xs leading-5 text-stone-500">路线进度和城市票根也会一起重置，清空后无法恢复。</p>
+            <div class="mt-6 grid grid-cols-2 gap-3">
+              <button
+                class="rounded-2xl bg-stone-100 py-3 text-sm font-bold text-stone-600 active:scale-[0.99]"
+                @click="showClearConfirm = false"
+              >
+                取消
+              </button>
+              <button
+                class="rounded-2xl bg-red-500 py-3 text-sm font-black text-white active:scale-[0.99]"
+                @click="confirmClearTodayPlan"
+              >
+                清空计划
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </main>
 </template>

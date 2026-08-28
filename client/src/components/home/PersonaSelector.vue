@@ -14,6 +14,8 @@ const emit = defineEmits<{
 }>()
 
 const track = ref<HTMLElement | null>(null)
+const scrollViewport = ref<HTMLElement | null>(null)
+let hasAlignedSelection = false
 
 // 每个画像一张专属渐变，图片缺失/加载失败时兜底，避免串图（原先统一回退到
 // 「情侣」图，亲子/懒人卡片会显示错配封面）。
@@ -53,19 +55,38 @@ function select(card: HomePersonaCard) {
   emit('update:modelValue', card.id)
 }
 
-// Keep the selected card in view (e.g. when the 5th "都市丽人" is enabled and
-// chosen, or when persona is restored from storage and sits off-screen).
-function scrollSelectedIntoView(behavior: ScrollBehavior = 'smooth') {
+// 直接滚动画像横向容器，不使用 scrollIntoView：后者在 iOS WebKit 中可能
+// 同时牵动 App Shell 的纵向滚动层，并在首页入场动画期间忽略横向对齐。
+function alignSelectedCard(behavior: ScrollBehavior = 'auto'): boolean {
+  const viewport = scrollViewport.value
   const el = track.value?.querySelector<HTMLElement>('.persona-card--selected')
-  el?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior })
+  if (!viewport || !el) return false
+  const centeredLeft = el.offsetLeft - (viewport.clientWidth - el.offsetWidth) / 2
+  const maxLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth)
+  viewport.scrollTo({
+    top: 0,
+    left: Math.max(0, Math.min(maxLeft, centeredLeft)),
+    behavior,
+  })
+  return true
 }
 
-watch(() => props.modelValue, () => nextTick(scrollSelectedIntoView))
-watch(() => props.cards.length, () => nextTick(() => scrollSelectedIntoView('instant' as ScrollBehavior)), { immediate: true })
+watch(
+  [() => props.modelValue, () => props.cards.map(card => card.id).join(',')],
+  async () => {
+    await nextTick()
+    const run = () => {
+      if (alignSelectedCard(hasAlignedSelection ? 'smooth' : 'auto')) hasAlignedSelection = true
+    }
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run)
+    else run()
+  },
+  { immediate: true, flush: 'post' },
+)
 </script>
 
 <template>
-  <div class="persona-scroll">
+  <div ref="scrollViewport" class="persona-scroll">
     <div ref="track" class="persona-track">
     <button
       v-for="card in cards"
@@ -114,7 +135,7 @@ watch(() => props.cards.length, () => nextTick(() => scrollSelectedIntoView('ins
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
-  scroll-padding-left: 14px;
+  scroll-padding-inline: 14px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -123,7 +144,15 @@ watch(() => props.cards.length, () => nextTick(() => scrollSelectedIntoView('ins
 .persona-track {
   display: flex;
   gap: 8px;
-  padding: 4px 14px;
+  padding: 4px 0 4px 14px;
+}
+
+/* WebKit 的横向 overflow + flex 会偶尔忽略末端 padding，把最后一张卡片
+   吸到容器边缘。使用真实 flex 占位保证首尾始终都有相同的 14px 留白。 */
+.persona-track::after {
+  content: '';
+  flex: 0 0 14px;
+  width: 14px;
 }
 
 .persona-card {

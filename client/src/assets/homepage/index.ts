@@ -44,4 +44,5 @@ export const personaCardCopy: Partial<Record<Persona, { title: string; tagline: 
   family: { title: '亲子玩乐', tagline: '互动 · 成长 · 有趣' },
   fast: { title: '特种兵式', tagline: '高效 · 打卡 · 省时' },
   lazy: { title: '懒人躺平', tagline: '放松 · 慢游 · 舒适' },
+  urban: { title: '精致', tagline: '街区 · 展览 · 小酒馆' },
 }

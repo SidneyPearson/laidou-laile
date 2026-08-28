@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { InspirationSpot } from '../types/explore'
+import { isFullDaySuggestedDuration } from '../types/todayPlan'
 import { durationMinutesOf, resetTodayPlanForTests, useTodayPlan } from './useTodayPlan'
 
 class MemoryStorage {
@@ -81,6 +82,11 @@ describe('useTodayPlan', () => {
     }
     expect(plan.addSpot(verifiedSpot(4)).status).toBe('limit')
     expect(plan.count.value).toBe(3)
+  })
+
+  it('recognizes a curated full-day duration for enhanced feedback', () => {
+    expect(isFullDaySuggestedDuration('建议一整天')).toBe(true)
+    expect(isFullDaySuggestedDuration('建议 2–3 小时')).toBe(false)
   })
 
   it('reconciles a stale memory state before enforcing the limit', () => {

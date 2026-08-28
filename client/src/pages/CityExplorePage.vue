@@ -3,11 +3,11 @@
  * 来都来了 · 城市探索（特种兵 swipe 确认流）
  *
  * 按 docs/design/laidou_special_forces_swipe_prototype.html 重做：
- * 深色荧光绿主题，卡片堆叠左右滑动——右滑「加入今天」、左滑「先跳过」。
- * 全部看完后：选中 ≥1 展示智能路线规划（生成今天路线），一个没选展示空态。
+ * 深色荧光绿主题，卡片堆叠左右滑动——右滑「加入今日计划」、左滑「先跳过」。
+ * 全部看完后：选中 ≥1 展示智能路线规划（生成今日路线），一个没选展示空态。
  *
  * 数据全部来自真实链路：城市/天气上下文 + explore 推荐接口（仅返回
- * verified+published 地点，都可加入今天计划），身份与首页共享 usePersona()。
+ * verified+published 地点，都可加入今日计划），身份与首页共享 usePersona()。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -21,14 +21,14 @@ import { ApiRequestError } from '../services/api'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { usePersona } from '../composables/usePersona'
 import { fetchHomePersonas } from '../repositories/homePersonas'
-import { hapticLight, hapticSelect, hapticSuccess } from '../utils/haptics'
-import { playfulPlanLimitMessage, prefersReducedMotion } from '../utils/delight'
+import { haptic, hapticLight, hapticSelect, hapticSuccess } from '../utils/haptics'
+import { prefersReducedMotion } from '../utils/delight'
 import type {
   ExploreCategory,
   InspirationSpot,
   Persona,
 } from '../types/explore'
-import { TODAY_PLAN_LIMIT } from '../types/todayPlan'
+import { isFullDaySuggestedDuration, TODAY_PLAN_LIMIT } from '../types/todayPlan'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,21 +58,37 @@ const personaDisplayNames = ref(new Map<string, string>())
 const selected = ref<InspirationSpot[]>([])
 const cardIndex = ref(0)
 const reviewedCount = ref(0)
-const finished = ref(false)
 const toast = ref('')
 const addError = ref('')
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 /** 触顶时让底部「今日计划」小抖一下，提醒得更俏皮。 */
 const dockShake = ref(false)
 let dockShakeTimer: ReturnType<typeof setTimeout> | null = null
-function playLimitFeedback(): string {
+function shakePlanDock() {
   if (!prefersReducedMotion()) {
     dockShake.value = true
     if (dockShakeTimer) clearTimeout(dockShakeTimer)
     dockShakeTimer = setTimeout(() => { dockShake.value = false }, 420)
   }
-  // 趣味文案（欢愉引擎）：反复触发时轮换，一天逛不完/体力不够的语气。
-  return playfulPlanLimitMessage()
+}
+function playLimitFeedback(): string {
+  shakePlanDock()
+  haptic([32, 46, 32])
+  return `今日计划最多 ${TODAY_PLAN_LIMIT} 个地点，请先移除一个再加入。`
+}
+
+/** 加入被拦截时把手势完整回滚，避免卡片停在释放位置“卡住”。 */
+function resetRejectedSwipe() {
+  flying.value = false
+  dragActive.value = false
+  session = null
+  dragX.value = 0
+}
+
+function playFullDayFeedback() {
+  shakePlanDock()
+  haptic([28, 50, 28])
+  showToast('这个地点建议游玩一整天，今天不建议再安排太多地点')
 }
 
 /** Drag state for the front card (px / active flag). */
@@ -195,7 +211,6 @@ function localFallback(): InspirationSpot[] {
 function resetSwipe() {
   cardIndex.value = 0
   reviewedCount.value = 0
-  finished.value = false
   // Keep the confirmation count aligned with the persisted Today Plan. The
   // previous empty reset made the header show a per-session count (for
   // example 1/6) while the dock showed the real accumulated plan (6/6).
@@ -297,7 +312,7 @@ interface DragSession {
 let session: DragSession | null = null
 
 function onCardDown(event: PointerEvent, item: DeckItem) {
-  if (item.layer !== 'front' || finished.value) return
+  if (item.layer !== 'front') return
   dragActive.value = true
   dragX.value = 0
   session = { startX: event.clientX, pointerId: event.pointerId }
@@ -331,14 +346,14 @@ function onCardCancel(event: PointerEvent) {
 
 /** 键盘可达（P1-6）：front 卡片聚焦后，← 跳过 / → 加入，按住的连发忽略。 */
 function onCardKeydown(event: KeyboardEvent, type: 'add' | 'skip') {
-  if (event.repeat || finished.value || flying.value) return
+  if (event.repeat || flying.value) return
   event.preventDefault()
   swipe(type)
 }
 
 function swipe(type: 'add' | 'skip') {
   const spot = spots.value[cardIndex.value % spots.value.length]
-  if (!spot || finished.value || flying.value) return
+  if (!spot || flying.value) return
 
   if (type === 'add') {
     const result = todayPlan.addSpot(spot)
@@ -347,10 +362,13 @@ function swipe(type: 'add' | 'skip') {
       if (!selected.value.some(item => item.id === spot.id)) {
         selected.value = [...selected.value, spot]
       }
-      showToast('已加入今日计划')
+      if (isFullDaySuggestedDuration(spot.suggestedDuration)) playFullDayFeedback()
+      else showToast('已加入今日计划')
     } else if (result.status === 'limit') {
-      addError.value = ''
-      showToast(playLimitFeedback())
+      const message = playLimitFeedback()
+      addError.value = message
+      resetRejectedSwipe()
+      return
     } else if (result.status === 'duplicate') {
       addError.value = ''
       if (!selected.value.some(item => item.id === spot.id)) {
@@ -372,6 +390,7 @@ function swipe(type: 'add' | 'skip') {
       // Do not discard a card that failed to join. The previous behavior
       // advanced the deck anyway, making the failed confirmation look like a
       // successful swipe and hiding the reason from the user.
+      resetRejectedSwipe()
       return
     }
   } else {
@@ -406,14 +425,14 @@ function showToast(message: string) {
   }, 1400)
 }
 
-/** 反悔入口：点击底部 dock 里已选地点的缩略图，把它从今天的计划里剔除。 */
+/** 反悔入口：点击底部 dock 里已选地点的缩略图，把它从今日计划里剔除。 */
 function removeSelected(spotId: string) {
   const spot = selected.value.find(item => item.id === spotId)
   if (!spot) return
   if (todayPlan.removeSpot(spotId)) {
     selected.value = selected.value.filter(item => item.id !== spotId)
     hapticLight()
-    showToast(`已把“${spot.name}”移出今天`)
+    showToast(`已把“${spot.name}”移出今日计划`)
   }
 }
 
@@ -423,8 +442,7 @@ function finishNow() {
     return
   }
   hapticSuccess()
-  finished.value = true
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  router.replace({ name: 'today-plan' })
 }
 
 function reloadBatch() {
@@ -462,24 +480,12 @@ onBeforeUnmount(() => {
   feedController?.abort()
   if (toastTimer) clearTimeout(toastTimer)
   if (flyTimer) clearTimeout(flyTimer)
+  if (dockShakeTimer) clearTimeout(dockShakeTimer)
 })
 
 /* -------------------- template helpers -------------------- */
 
-const dockNames = computed(() =>
-  todayPlan.spots.value.length > 0
-    ? todayPlan.spots.value.map(spot => spot.name).join(' · ')
-    : '还没有加入地点',
-)
-const remainingPlanSlots = computed(() => Math.max(0, TODAY_PLAN_LIMIT - todayPlan.count.value))
 const finishEnabled = computed(() => selected.value.length >= 1)
-const routeList = computed(() =>
-  selected.value.map((spot, index) => ({
-    index: index + 1,
-    name: spot.name,
-    stay: spot.suggestedDuration ? spot.suggestedDuration.replace(/^建议\s*/, '') : '待补充',
-  })),
-)
 </script>
 
 <template>
@@ -488,7 +494,7 @@ const routeList = computed(() =>
 
     <div class="content">
       <div class="top-row">
-        <button class="back" aria-label="返回" @click="router.push({ name: 'home' })">‹</button>
+        <button class="back" aria-label="返回" @click="router.replace({ name: 'home' })">‹</button>
         <div class="location">
           <div class="pin" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -539,10 +545,10 @@ const routeList = computed(() =>
         <div v-if="spots.length === 0" class="empty show">
           <h3>还没有可推荐的地点</h3>
           <p>这个城市的地点库还是空的，换个城市试试。</p>
-          <button type="button" @click="router.push({ name: 'home' })">返回首页</button>
+          <button type="button" @click="router.replace({ name: 'home' })">返回首页</button>
         </div>
 
-        <div v-else-if="!finished" class="stack-wrap swipe-deck">
+        <div v-else class="stack-wrap swipe-deck">
           <article
             v-for="item in deck"
             :key="`${reviewedCount}-${item.layer}-${item.spot.id}`"
@@ -579,58 +585,33 @@ const routeList = computed(() =>
           </article>
         </div>
 
-        <section v-else-if="selected.length > 0" class="route-panel show">
-          <h3>✦ 智能路线规划</h3>
-          <p>今天想去的地方已经确认好了。我会根据地点顺序、距离和你的「{{ currentPersona.name }}」身份，生成更紧凑的游玩安排。</p>
-          <div class="route-list">
-            <div v-for="item in routeList" :key="item.index" class="route-item">
-              <b>{{ item.index }}</b>
-              <span>{{ item.name }} · 建议停留 {{ item.stay }}</span>
-            </div>
-          </div>
-          <button class="route-cta" type="button" @click="router.push({ name: 'today-plan' })">生成今天路线 →</button>
-        </section>
+        <p v-if="addError" class="add-error" role="alert">{{ addError }}</p>
 
-        <section v-else class="empty show">
-          <h3>这批都不太对？</h3>
-          <p>你可以再换一批符合{{ currentPersona.name }}标签的地点，或者换个身份重新推荐。</p>
-          <div class="empty-actions">
-            <button type="button" @click="reloadBatch">换一批</button>
-            <button class="empty-ghost" type="button" @click="switchPersona">换个身份</button>
+        <div class="dock" :class="{ shake: dockShake, 'is-empty': selected.length === 0 }">
+          <div class="thumbs">
+            <span v-if="selected.length === 0" class="thumb-placeholder" aria-hidden="true">+</span>
+            <button
+              v-for="(spot, index) in selected.slice(-3)"
+              :key="`${spot.id}-${index}`"
+              type="button"
+              class="thumb"
+              :style="{ backgroundImage: cardBackground(spot) }"
+              :aria-label="`把 ${spot.name} 移出今日计划`"
+              @click="removeSelected(spot.id)"
+            >
+              <span class="thumb-x" aria-hidden="true">×</span>
+            </button>
           </div>
-        </section>
-
-        <div v-if="!finished && spots.length > 0" class="actions">
-          <button class="action-round" type="button" aria-label="跳过" @click="swipe('skip')">×</button>
-          <div class="action-center"><b>左右滑动选择</b><div class="chev">›››</div></div>
-          <button class="action-round add" type="button" aria-label="加入今日计划" @click="swipe('add')">✓</button>
+          <div class="dock-copy">
+            <strong>今日计划 <span class="dock-count">{{ todayPlan.count.value }}</span>/{{ Math.max(TODAY_PLAN_LIMIT, todayPlan.count.value) }}</strong>
+          </div>
+          <button class="finish" :class="{ enabled: finishEnabled }" type="button" @click="finishNow">差不多了 →</button>
         </div>
-        <p v-if="addError && !finished" class="add-error" role="alert">{{ addError }}</p>
+
       </template>
     </div>
 
     <div class="toast" role="status" aria-live="polite" :class="{ show: !!toast }">{{ toast }}</div>
-
-    <div v-if="!finished && spots.length > 0" class="dock" :class="{ shake: dockShake }">
-      <div class="thumbs">
-        <button
-          v-for="(spot, index) in selected.slice(-3)"
-          :key="`${spot.id}-${index}`"
-          type="button"
-          class="thumb"
-          :style="{ backgroundImage: cardBackground(spot) }"
-          :aria-label="`把 ${spot.name} 移出今天`"
-          @click="removeSelected(spot.id)"
-        >
-          <span class="thumb-x" aria-hidden="true">×</span>
-        </button>
-      </div>
-      <div class="dock-copy">
-        <strong>今日计划 <span class="dock-count">{{ todayPlan.count.value }}</span> / {{ Math.max(TODAY_PLAN_LIMIT, todayPlan.count.value) }}</strong>
-        <span>{{ remainingPlanSlots > 0 ? `还可加入 ${remainingPlanSlots} 个 · ` : '已满员 · ' }}{{ dockNames }}</span>
-      </div>
-      <button class="finish" :class="{ enabled: finishEnabled }" type="button" @click="finishNow">差不多了 →</button>
-    </div>
   </main>
 </template>
 
@@ -653,14 +634,15 @@ const routeList = computed(() =>
   --r-lg: 30px;
 
   position: relative;
-  min-height: 100%;
+  height: 100svh;
+  min-height: 100svh;
   max-width: 480px;
   margin: 0 auto;
   overflow-x: hidden;
-  background: linear-gradient(to bottom, rgba(3, 7, 12, 0.08), #05080d 32%), #05080d;
+  overflow-y: hidden;
+  overscroll-behavior: none;
+  background: linear-gradient(180deg, #07101a 0, #05080d 30%, #05080d 100%);
   color: var(--text);
-  /* 给常驻底部导航和已选地点栏留出滚动安全区。 */
-  padding-bottom: calc(112px + env(safe-area-inset-bottom));
 }
 
 .hero-bg {
@@ -668,32 +650,37 @@ const routeList = computed(() =>
   top: 0;
   left: 0;
   right: 0;
-  height: 300px;
+  height: 230px;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(2, 6, 12, 0.18), rgba(2, 6, 12, 0.42) 42%, #05080d 96%);
+  background: linear-gradient(to bottom, rgba(2, 6, 12, 0.12), rgba(2, 6, 12, 0.54) 68%, #05080d 100%);
 }
 
 .content {
   position: relative;
   z-index: 2;
-  padding: calc(22px + env(safe-area-inset-top)) 18px 20px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 60px - env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: calc(14px + env(safe-area-inset-top)) 14px 12px;
 }
 
 /* ---------- top row ---------- */
 .top-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
 }
 .back {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(8, 13, 20, 0.58);
   color: #fff;
-  font-size: 26px;
+  font-size: 24px;
   display: grid;
   place-items: center;
   backdrop-filter: blur(14px);
@@ -701,7 +688,7 @@ const routeList = computed(() =>
 }
 .location {
   flex: 1;
-  height: 48px;
+  height: 42px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(18, 25, 35, 0.72);
@@ -709,15 +696,15 @@ const routeList = computed(() =>
   -webkit-backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
-  padding: 0 14px;
-  gap: 10px;
+  padding: 0 12px;
+  gap: 8px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   min-width: 0;
 }
 .pin {
   color: var(--lime);
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 .pin svg {
@@ -735,7 +722,7 @@ const routeList = computed(() =>
 }
 .location-copy strong {
   min-width: 0;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -743,27 +730,27 @@ const routeList = computed(() =>
 }
 .location-copy span {
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
 }
 
 /* ---------- mode card ---------- */
 .mode {
-  margin-top: 14px;
-  padding: 13px 16px 15px;
+  margin-top: 10px;
+  padding: 9px 12px 10px;
   border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 22px;
+  border-radius: 15px;
   background: linear-gradient(135deg, rgba(5, 10, 17, 0.78), rgba(12, 18, 28, 0.70));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: var(--shadow);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
   position: relative;
   overflow: hidden;
 }
 .mode-top {
   position: relative;
   z-index: 2;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -773,12 +760,12 @@ const routeList = computed(() =>
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: 1px solid rgba(201, 255, 31, 0.38);
   border-radius: 999px;
   background: rgba(201, 255, 31, 0.06);
   color: var(--lime);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 .mode-switch {
@@ -809,9 +796,13 @@ const routeList = computed(() =>
   z-index: 2;
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
-  line-height: 1.55;
+  font-size: 10px;
+  line-height: 1.45;
   max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .mode-count {
   color: var(--lime);
@@ -831,22 +822,22 @@ const routeList = computed(() =>
 
 /* ---------- confirm head ---------- */
 .confirm-head {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 4px 14px;
+  gap: 3px 10px;
 }
 .confirm-head h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: clamp(19px, 5.2vw, 23px);
   color: var(--text);
   /* 标题独占一行不换行：右侧进度让位给标题，避免“先确认…的 / 地方”这种断行 */
   flex: 1 1 100%;
   white-space: nowrap;
 }
 .confirm-head p {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: var(--muted);
   font-size: 10px;
 }
@@ -857,14 +848,16 @@ const routeList = computed(() =>
 }
 .progress b {
   color: var(--lime);
-  font-size: 17px;
+  font-size: clamp(15px, 4.2vw, 18px);
 }
 
 /* ---------- swipe deck ---------- */
 .stack-wrap {
   position: relative;
-  height: 332px;
-  margin-top: 8px;
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  margin-top: 10px;
   perspective: 1200px;
 }
 .card {
@@ -873,8 +866,8 @@ const routeList = computed(() =>
   right: 0;
   margin: auto;
   width: 100%;
-  height: 312px;
-  border-radius: 26px;
+  height: calc(100% - 18px);
+  border-radius: 22px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: #0a1018;
@@ -973,14 +966,14 @@ const routeList = computed(() =>
 }
 .card-body {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 13px;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
   z-index: 4;
 }
 .card-body h3 {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(25px, 7.6vw, 32px);
   line-height: 1;
   color: var(--text);
   overflow: hidden;
@@ -988,7 +981,7 @@ const routeList = computed(() =>
   white-space: nowrap;
 }
 .card-body .meta {
-  margin: 8px 0 10px;
+  margin: 6px 0 8px;
   color: var(--muted);
   font-size: 12px;
   overflow: hidden;
@@ -1009,8 +1002,8 @@ const routeList = computed(() =>
   color: #e9edf2;
 }
 .reason-box {
-  margin-top: 13px;
-  padding: 11px 12px;
+  margin-top: 10px;
+  padding: 9px 10px;
   border-radius: 16px;
   border: 1px solid rgba(201, 255, 31, 0.18);
   background: rgba(201, 255, 31, 0.045);
@@ -1030,7 +1023,7 @@ const routeList = computed(() =>
   margin: 0;
 }
 .reason-box li {
-  font-size: 10px;
+  font-size: 9px;
   color: rgba(255, 255, 255, 0.72);
   line-height: 1.6;
 }
@@ -1043,51 +1036,6 @@ const routeList = computed(() =>
 /* ---------- swipe labels opacity driven by drag ---------- */
 .swipe-deck .card:not(.front) .swipe-label {
   opacity: 0;
-}
-
-/* ---------- actions ---------- */
-.actions {
-  display: grid;
-  grid-template-columns: 72px 1fr 72px;
-  align-items: center;
-  gap: 14px;
-  margin: 4px 0 12px;
-}
-.action-round {
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  background: rgba(10, 15, 23, 0.86);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 27px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32);
-}
-.action-round.add {
-  justify-self: end;
-  background: var(--lime);
-  color: #081005;
-  border: 0;
-  box-shadow: 0 0 30px rgba(201, 255, 31, 0.38);
-}
-.action-center {
-  text-align: center;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.4;
-}
-.action-center b {
-  display: block;
-  color: #fff;
-  font-size: 11px;
-  margin-bottom: 4px;
-}
-.action-center .chev {
-  color: var(--lime);
-  letter-spacing: 4px;
-  font-size: 19px;
 }
 
 /* ---------- toast ---------- */
@@ -1116,12 +1064,15 @@ const routeList = computed(() =>
   transform: translateX(-50%) translateY(0);
 }
 .add-error {
-  margin: -4px auto 0;
+  margin: 1px auto 0;
   max-width: min(100%, 360px);
-  color: #ffb4a8;
-  font-size: 11px;
-  line-height: 1.5;
+  color: #ffc2b8;
+  font-size: 10px;
+  line-height: 1.35;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ---------- dock ---------- */
@@ -1131,20 +1082,23 @@ const routeList = computed(() =>
   left: auto;
   bottom: auto;
   transform: none;
-  width: min(calc(100% - 28px), 362px);
-  margin: 8px auto calc(14px + env(safe-area-inset-bottom));
-  min-height: 86px;
-  padding: 12px 12px 12px 14px;
-  border-radius: 28px;
+  width: 100%;
+  flex: 0 0 auto;
+  margin: 10px 0 0;
+  min-height: 0;
+  height: 58px;
+  box-sizing: border-box;
+  padding: 4px 8px 4px 10px;
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(14, 19, 27, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: max-content minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .thumbs {
   display: flex;
@@ -1158,9 +1112,9 @@ const routeList = computed(() =>
 }
 .thumb {
   position: relative;
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border-radius: 50%;
   border: 2px solid #dbe0e6;
@@ -1172,28 +1126,45 @@ const routeList = computed(() =>
   cursor: pointer;
   font-size: 0;
 }
+.thumb-placeholder {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  flex: 0 0 40px;
+  border: 1px dashed rgba(201, 255, 31, 0.42);
+  border-radius: 50%;
+  color: var(--lime);
+  font-size: 20px;
+  line-height: 1;
+  background: rgba(201, 255, 31, 0.05);
+}
 .thumb-x {
   position: absolute;
   top: -4px;
   right: -4px;
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(14, 19, 27, 0.94);
   color: var(--lime);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 17px;
   text-align: center;
   pointer-events: none;
 }
 .dock-copy {
-  min-width: 0;
+  min-width: 78px;
+  overflow: hidden;
 }
 .dock-copy strong {
   display: block;
-  font-size: 13px;
+  font-size: 10px;
+  white-space: nowrap;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 .dock-count {
@@ -1201,10 +1172,10 @@ const routeList = computed(() =>
 }
 .dock-copy span {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--muted);
-  font-size: 10px;
-  max-width: 130px;
+  font-size: 8px;
+  max-width: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1221,14 +1192,14 @@ const routeList = computed(() =>
   85% { transform: translateX(2px); }
 }
 .finish {
-  height: 52px;
-  padding: 0 18px;
+  height: 40px;
+  padding: 0 13px;
   border: 0;
   border-radius: 999px;
   background: linear-gradient(90deg, #d6ff2c, #b7ff13);
   color: #111;
   font-weight: 900;
-  font-size: 15px;
+  font-size: 13px;
   box-shadow: 0 0 30px rgba(201, 255, 31, 0.28);
   opacity: 0.55;
 }
@@ -1236,68 +1207,9 @@ const routeList = computed(() =>
   opacity: 1;
 }
 
-/* ---------- route panel ---------- */
-.route-panel {
-  margin-top: 22px;
-  padding: 18px;
-  border: 1px solid rgba(201, 255, 31, 0.30);
-  border-radius: 24px;
-  background: linear-gradient(145deg, rgba(18, 26, 21, 0.82), rgba(8, 13, 18, 0.92));
-}
-.route-panel h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
-  color: var(--text);
-}
-.route-panel p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.6;
-}
-.route-list {
-  margin: 14px 0;
-  display: grid;
-  gap: 9px;
-}
-.route-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.05);
-}
-.route-item b {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--lime);
-  color: #071007;
-  font-size: 11px;
-  flex-shrink: 0;
-}
-.route-item span {
-  font-size: 12px;
-  color: #e9edf2;
-}
-.route-cta {
-  width: 100%;
-  height: 50px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--lime);
-  font-weight: 900;
-  font-size: 15px;
-  color: #071007;
-}
-
 /* ---------- empty ---------- */
-/* 数据到达后的内容入场：骨架 → 卡组/路线/空态 平滑淡入，避免硬切。 */
+/* 数据到达后的内容入场：骨架 → 卡组/空态 平滑淡入，避免硬切。 */
 .swipe-deck,
-.route-panel,
 .empty.show {
   animation: deck-in 0.3s ease both;
 }
@@ -1306,8 +1218,7 @@ const routeList = computed(() =>
   to { opacity: 1; transform: translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .swipe-deck,
-  .route-panel,
+.swipe-deck,
   .empty.show {
     animation: none;
   }
@@ -1393,33 +1304,79 @@ const routeList = computed(() =>
   margin-top: 18px;
 }
 
-@media (max-width: 360px) {
+/* 微信手机视口（包含 393px 宽的 iPhone）：卡组作为弹性区吸收剩余高度，
+   常驻计划条保持在固定导航上方，不制造大块底部空白。 */
+@media (max-width: 430px) {
   .content {
     padding-left: 14px;
     padding-right: 14px;
   }
-  .mode h1 {
-    font-size: 25px;
+  .card-body {
+    left: 12px;
+    right: 12px;
+    bottom: 9px;
   }
-  .stack-wrap {
-    height: 312px;
+  .card-body h3 {
+    font-size: 24px;
   }
-  .card {
-    height: 292px;
+  .card-body .meta {
+    margin: 5px 0 6px;
+    font-size: 10px;
   }
-  .swipe-app {
-    gap: 8px;
-    padding-left: 10px;
-    padding-right: 10px;
+  .tags {
+    gap: 4px;
+  }
+  .tag {
+    padding: 4px 7px;
+    font-size: 9px;
+  }
+  .reason-box {
+    margin-top: 7px;
+    padding: 7px 8px;
+  }
+  .reason-title {
+    font-size: 9px;
+    margin-bottom: 3px;
+  }
+  .reason-box li {
+    font-size: 8px;
+    line-height: 1.35;
+  }
+  .dock {
+    height: 56px;
+    padding: 4px 6px 4px 8px;
+    gap: 5px;
   }
   .thumb {
-    flex-basis: 34px;
-    width: 34px;
-    height: 34px;
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
   }
   .thumbs {
     gap: 3px;
-    min-width: 40px;
+    min-width: 30px;
+  }
+  .dock-copy strong {
+    font-size: 10px;
+  }
+  .finish {
+    height: 38px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+
+/* 375px 窄屏仅收紧计划条间距；高度继续由弹性卡组自动分配。 */
+@media (max-width: 375px) {
+  .dock {
+    margin-top: 8px;
+  }
+}
+
+/* 375×667 等短屏进一步压缩卡片和计划条之间的间距。 */
+@media (max-width: 375px) and (max-height: 700px) {
+  .dock {
+    margin-top: 6px;
   }
 }
 </style>

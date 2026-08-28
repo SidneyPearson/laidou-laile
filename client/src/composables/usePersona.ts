@@ -3,7 +3,7 @@ import { PERSONAS } from '../data/mockExploreSpots'
 import type { Persona } from '../types/explore'
 
 const STORAGE_KEY = 'laidou-v03-persona'
-const DEFAULT_PERSONA: Persona = 'couple'
+const DEFAULT_PERSONA: Persona = 'urban'
 
 /** Module-singleton persona state shared across home / city / today pages.
  *  Persists to localStorage under the existing v03 key so all consumers stay
@@ -36,9 +36,26 @@ export function usePersona() {
     persist()
   }
 
+  function resetPersona() {
+    persona.value = DEFAULT_PERSONA
+    hasChosenPersona.value = false
+    if (typeof localStorage === 'undefined') return
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      /* in-memory reset still applies */
+    }
+  }
+
   return {
     persona,
     hasChosenPersona,
     setPersona,
+    resetPersona,
   }
+}
+
+export function resetPersonaForTests() {
+  persona.value = loadPersona()
+  hasChosenPersona.value = typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) !== null
 }

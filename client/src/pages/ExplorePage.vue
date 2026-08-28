@@ -9,6 +9,7 @@ import { useExploreCity } from '../composables/useExploreCity'
 import { usePersona } from '../composables/usePersona'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { useTodayJourney } from '../composables/useTodayJourney'
+import { useFavorites } from '../composables/useFavorites'
 import { EXPLORE_CATEGORIES, PERSONAS } from '../data/mockExploreSpots'
 import {
   loadCityRecommendations,
@@ -16,13 +17,15 @@ import {
 } from '../repositories/cityRecommendations'
 import { fetchCityContext, fetchExploreRecommendations } from '../services/exploreApi'
 import { openAmapNavigation } from '../utils/amapNavigation'
+import { haptic } from '../utils/haptics'
 import type { ExploreCategory, InspirationSpot } from '../types/explore'
-import { TODAY_PLAN_LIMIT } from '../types/todayPlan'
+import { isFullDaySuggestedDuration, TODAY_PLAN_LIMIT } from '../types/todayPlan'
 
 const route = useRoute()
 const router = useRouter()
 const todayPlan = useTodayPlan()
 const todayJourney = useTodayJourney()
+const favorites = useFavorites()
 const { city, setExploreCity } = useExploreCity()
 const { persona, hasChosenPersona } = usePersona()
 
@@ -249,10 +252,30 @@ function toggleToday(spot: InspirationSpot) {
     return
   }
   const result = todayPlan.addSpot(spot)
-  if (result.status === 'limit') showToast(`今天先选 ${TODAY_PLAN_LIMIT} 个，避免行程过满`)
-  else if (result.status === 'added') showToast('已加入今日计划')
+  if (result.status === 'limit') showToast(`今日计划最多 ${TODAY_PLAN_LIMIT} 个地点，请先移除一个再加入`)
+  else if (result.status === 'added') {
+    if (isFullDaySuggestedDuration(spot.suggestedDuration)) {
+      haptic([28, 50, 28])
+      showToast('已加入；这个地点建议游玩一整天')
+    } else showToast('已加入今日计划')
+  }
   else if (result.status === 'duplicate') showToast('这个地点已经在今日计划里')
   else showToast('这个地点暂时不能加入今日计划')
+}
+
+function toggleFavorite(spot: InspirationSpot) {
+  if (!actionReady(spot)) {
+    showToast('演示地点暂时不能收藏')
+    return
+  }
+  const result = favorites.toggle(spot, city.value)
+  if (result.status === 'unverified') {
+    showToast('这个地点暂时不能收藏')
+    return
+  }
+  haptic(16)
+  const suffix = favorites.storageAvailable.value ? '' : '，仅在本次打开期间保留'
+  showToast(result.status === 'added' ? `已收藏“${spot.name}”${suffix}` : `已取消收藏“${spot.name}”`)
 }
 
 function toggleSelectedSpot() {
@@ -387,6 +410,16 @@ onBeforeUnmount(() => {
         <article v-if="featuredSpot" class="featured-card" @click="selectedSpot = featuredSpot">
           <SpotCover :spot="featuredSpot" eager />
           <div class="featured-shade" />
+          <button
+            type="button"
+            class="featured-favorite"
+            :class="{ active: favorites.hasSpot(featuredSpot) }"
+            :aria-label="favorites.hasSpot(featuredSpot) ? `取消收藏${featuredSpot.name}` : `收藏${featuredSpot.name}`"
+            :aria-pressed="favorites.hasSpot(featuredSpot)"
+            @click.stop="toggleFavorite(featuredSpot)"
+          >
+            <svg viewBox="0 0 24 24" :fill="favorites.hasSpot(featuredSpot) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" /></svg>
+          </button>
           <div class="featured-content">
             <div class="flex items-center gap-2">
               <span class="feature-badge">本周值得去</span>
@@ -411,14 +444,26 @@ onBeforeUnmount(() => {
           <div class="spot-row-copy">
             <div class="flex items-start justify-between gap-2">
               <h2>{{ spot.name }}</h2>
-              <button
-                type="button"
-                :class="{ selected: todayPlan.hasSpot(spot.id) }"
-                :aria-label="todayPlan.hasSpot(spot.id) ? '移出今日计划' : '加入今日计划'"
-                @click.stop="toggleToday(spot)"
-              >
-                {{ todayPlan.hasSpot(spot.id) ? '✓' : '+' }}
-              </button>
+              <div class="spot-row-actions">
+                <button
+                  type="button"
+                  class="spot-favorite"
+                  :class="{ active: favorites.hasSpot(spot) }"
+                  :aria-label="favorites.hasSpot(spot) ? '取消收藏' : '收藏地点'"
+                  :aria-pressed="favorites.hasSpot(spot)"
+                  @click.stop="toggleFavorite(spot)"
+                >
+                  <svg viewBox="0 0 24 24" :fill="favorites.hasSpot(spot) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" /></svg>
+                </button>
+                <button
+                  type="button"
+                  :class="{ selected: todayPlan.hasSpot(spot.id) }"
+                  :aria-label="todayPlan.hasSpot(spot.id) ? '移出今日计划' : '加入今日计划'"
+                  @click.stop="toggleToday(spot)"
+                >
+                  {{ todayPlan.hasSpot(spot.id) ? '✓' : '+' }}
+                </button>
+              </div>
             </div>
             <p class="spot-row-meta">{{ spotMeta(spot) }}</p>
             <p class="spot-row-reason">{{ spot.reason }}</p>
@@ -466,9 +511,12 @@ onBeforeUnmount(() => {
         :persona="currentPersona"
         :action-ready="actionReady(selectedSpot)"
         :in-today="todayPlan.hasSpot(selectedSpot.id)"
+        :favorite-ready="actionReady(selectedSpot)"
+        :in-favorites="favorites.hasSpot(selectedSpot)"
         @close="selectedSpot = null"
         @navigate="navigateToSelected"
         @toggle-today="toggleSelectedSpot"
+        @toggle-favorite="toggleFavorite(selectedSpot)"
       />
     </Transition>
 
@@ -505,6 +553,7 @@ onBeforeUnmount(() => {
 .view-switch button.active { background:rgba(255,255,255,.12); color:#c7ff1f; }
 .spot-feed { padding:0 16px 32px; }
 .featured-card { position:relative; height:290px; overflow:hidden; border:1px solid rgba(255,255,255,.13); border-radius:26px; background:#101720; box-shadow:0 18px 40px rgba(0,0,0,.32); }
+.featured-favorite { position:absolute; z-index:4; top:14px; right:14px; display:grid; width:38px; height:38px; place-items:center; border:1px solid rgba(255,255,255,.24); border-radius:50%; background:rgba(2,7,14,.48); color:#fff; backdrop-filter:blur(8px); }.featured-favorite svg { width:18px; height:18px; }.featured-favorite.active { color:#fda4af; background:rgba(40,12,20,.72); }
 .featured-shade { position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.04) 28%,rgba(2,7,14,.3) 50%,rgba(2,7,14,.98) 100%); }
 .featured-content { position:absolute; right:18px; bottom:17px; left:18px; }
 .feature-badge,.selected-badge { display:inline-flex; padding:5px 9px; border-radius:999px; font-size:9px; font-weight:800; }
@@ -517,6 +566,7 @@ onBeforeUnmount(() => {
 .spot-row-cover { width:112px; min-height:112px; flex:none; overflow:hidden; border-radius:16px; }.spot-row-copy { min-width:0; flex:1; padding:4px 2px 2px 0; }
 .spot-row-copy h2 { overflow:hidden; color:#fff; font-size:15px; font-weight:850; text-overflow:ellipsis; white-space:nowrap; }
 .spot-row-copy button { display:grid; width:28px; height:28px; flex:none; place-items:center; border:1px solid rgba(199,255,31,.34); border-radius:999px; color:#c7ff1f; font-size:18px; }.spot-row-copy button.selected { background:#c7ff1f; color:#071007; }
+.spot-row-actions { display:flex; flex:none; gap:6px; }.spot-row-copy .spot-favorite { border-color:rgba(255,255,255,.2); color:rgba(255,255,255,.68); }.spot-row-copy .spot-favorite svg { width:14px; height:14px; }.spot-row-copy .spot-favorite.active { border-color:rgba(253,164,175,.4); background:rgba(253,164,175,.12); color:#fda4af; }
 .spot-row-meta { margin-top:2px; overflow:hidden; color:rgba(255,255,255,.4); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }.spot-row-reason { display:-webkit-box; margin-top:8px; overflow:hidden; color:rgba(255,255,255,.65); font-size:10px; line-height:1.5; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; }
 .spot-row-tags { display:flex; gap:5px; margin-top:8px; overflow:hidden; }
 .explore-empty,.city-empty { display:flex; min-height:54dvh; flex-direction:column; align-items:center; justify-content:center; padding:36px; text-align:center; }.explore-empty>span { color:#c7ff1f; font-size:34px; }.explore-empty h2,.city-empty h2 { margin-top:12px; font-size:20px; font-weight:900; }.explore-empty p,.city-empty>p:not(.explore-eyebrow) { margin-top:8px; color:rgba(255,255,255,.46); font-size:12px; line-height:1.8; }.explore-empty button,.city-empty button { margin-top:20px; padding:11px 18px; border-radius:999px; background:#c7ff1f; color:#071007; font-size:12px; font-weight:900; }

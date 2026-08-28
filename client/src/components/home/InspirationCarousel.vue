@@ -23,10 +23,12 @@ export interface InspirationCard {
 defineProps<{
   cards: InspirationCard[]
   loading: boolean
+  favoriteIds?: string[]
 }>()
 
 const emit = defineEmits<{
   select: [card: InspirationCard]
+  'toggle-favorite': [card: InspirationCard]
 }>()
 
 // If a cover URL fails to load, hide the <img> so the theme-gradient backdrop
@@ -58,46 +60,59 @@ function onImgError(e: Event) {
     </div>
 
     <div v-else class="rail scroll-smooth-ios">
-      <button
+      <article
         v-for="card in cards"
         :key="card.key"
         class="rec-card"
         :class="`rec-card--${card.theme ?? 'city'}`"
-        :aria-label="`查看${card.title}的详情`"
-        @click="emit('select', card)"
       >
-        <img
-          v-if="card.image"
-          :src="card.image"
-          :alt="card.title"
-          class="rec-img"
-          loading="lazy"
-          decoding="async"
-          @error="onImgError"
+        <button class="rec-open" type="button" :aria-label="`查看${card.title}的详情`" @click="emit('select', card)">
+          <img
+            v-if="card.image"
+            :src="card.image"
+            :alt="card.title"
+            class="rec-img"
+            loading="lazy"
+            decoding="async"
+            @error="onImgError"
+          >
+          <span class="rec-gradient" aria-hidden="true" />
+
+          <span class="rec-tag" :class="`rec-tag--${card.tone ?? 'lime'}`">
+            {{ card.tag }}
+          </span>
+
+          <span v-if="!card.verified" class="rec-demo">示例</span>
+
+          <span class="rec-info">
+            <strong>{{ card.title }}</strong>
+            <p>{{ card.tagline }}</p>
+            <small>
+              <template v-if="card.distanceLabel">
+                <svg class="inline h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 21s6-4.4 6-11a6 6 0 1 0-12 0c0 6.6 6 11 6 11Z" />
+                  <circle cx="12" cy="10" r="2" />
+                </svg>
+                {{ card.distanceLabel }} · {{ card.district }}
+              </template>
+              <template v-else>{{ card.district }}</template>
+            </small>
+          </span>
+        </button>
+        <button
+          v-if="card.verified"
+          type="button"
+          class="rec-favorite"
+          :class="{ active: favoriteIds?.includes(card.key) }"
+          :aria-label="favoriteIds?.includes(card.key) ? `取消收藏${card.title}` : `收藏${card.title}`"
+          :aria-pressed="favoriteIds?.includes(card.key)"
+          @click="emit('toggle-favorite', card)"
         >
-        <span class="rec-gradient" aria-hidden="true" />
-
-        <span class="rec-tag" :class="`rec-tag--${card.tone ?? 'lime'}`">
-          {{ card.tag }}
-        </span>
-
-        <span v-if="!card.verified" class="rec-demo">示例</span>
-
-        <span class="rec-info">
-          <strong>{{ card.title }}</strong>
-          <p>{{ card.tagline }}</p>
-          <small>
-            <template v-if="card.distanceLabel">
-              <svg class="inline h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 21s6-4.4 6-11a6 6 0 1 0-12 0c0 6.6 6 11 6 11Z" />
-                <circle cx="12" cy="10" r="2" />
-              </svg>
-              {{ card.distanceLabel }} · {{ card.district }}
-            </template>
-            <template v-else>{{ card.district }}</template>
-          </small>
-        </span>
-      </button>
+          <svg viewBox="0 0 24 24" :fill="favoriteIds?.includes(card.key) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" />
+          </svg>
+        </button>
+      </article>
     </div>
   </section>
 </template>
@@ -157,6 +172,37 @@ function onImgError(e: Event) {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
   transition: transform 0.15s ease;
 }
+
+.rec-open {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.rec-favorite {
+  position: absolute;
+  z-index: 4;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  background: rgba(2, 7, 14, 0.46);
+  color: #fff;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+.rec-favorite svg { width: 17px; height: 17px; }
+.rec-favorite.active { color: #fda4af; background: rgba(40, 12, 20, 0.72); }
 
 .rec-card:active {
   transform: scale(0.98);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import todayPlanPage from '../../pages/TodayPlanPage.vue?raw'
 import todayPlanMap from './TodayPlanMap.vue?raw'
 import todaySpotCard from './TodaySpotCard.vue?raw'
+import cityTicketSheet from './CityTicketSheet.vue?raw'
 import spotDetailSheet from '../explore/SpotDetailSheet.vue?raw'
 
 describe('user-curated today plan UI contracts', () => {
@@ -42,7 +43,20 @@ describe('user-curated today plan UI contracts', () => {
   })
 
   it('returns to the current explore page when the plan is empty', () => {
-    expect(todayPlanPage).toContain("router.push({ name: 'explore' })")
+    expect(todayPlanPage).toContain("router.replace({ name: 'explore' })")
     expect(todayPlanPage).not.toContain("router.push({ name: 'city' })")
+  })
+
+  it('avoids button-like storage badges and scrolls inside the persistent shell', () => {
+    expect(todayPlanPage).not.toContain('本机保存')
+    expect(todayPlanPage).toContain("document.querySelector<HTMLElement>('.app-shell-content')")
+  })
+
+  it('keeps ticket actions above the persistent nav and inside the safe area', () => {
+    expect(todayPlanPage).toContain('<Teleport to="body">')
+    expect(cityTicketSheet).toContain('z-[70]')
+    expect(cityTicketSheet).toContain('pb-[max(16px,env(safe-area-inset-bottom))]')
+    expect(cityTicketSheet).toContain('max-h-full')
+    expect(cityTicketSheet).toContain('overscroll-contain')
   })
 })
