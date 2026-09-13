@@ -29,7 +29,7 @@ async function submit() {
 </script>
 
 <template>
-  <main class="admin-shell grid min-h-full place-items-center p-4 md:p-8">
+  <main class="admin-shell grid min-h-screen min-h-[100dvh] place-items-center p-4 md:p-8">
     <div class="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-[var(--admin-line)] bg-[var(--admin-surface)] shadow-[0_24px_70px_rgba(55,42,31,0.12)] md:grid-cols-[1.05fr_0.95fr]">
       <section class="relative hidden min-h-[520px] overflow-hidden border-r border-[var(--admin-line)] bg-[var(--admin-ink)] p-10 text-white md:flex md:flex-col">
         <div class="absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/10"></div>

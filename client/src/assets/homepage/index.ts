@@ -1,14 +1,13 @@
 /**
  * Central registry of homepage imagery.
  *
- * The hero cover and all five homepage persona cards are bundled locally —
+ * City heroes live in cityHeroes.ts; five homepage persona cards are bundled locally —
  * replace the JPG in this folder and rebuild to swap the artwork (no image
  * host needed). Inspiration/recommendation cards pull their cover directly
  * from the admin spot library (`coverImageUrl`), with a theme-gradient
  * fallback in the card component.
  */
 import type { Persona } from '../../types/explore'
-import heroCover from './01-hero-shanghai-cover.jpg'
 import personaCouple from './02-persona-couple.jpg'
 import personaFamily from './03-persona-family.jpg'
 import personaSoldier from './04-persona-soldier.jpg'
@@ -16,7 +15,6 @@ import personaLazy from './05-persona-lazy.jpg'
 import personaUrban from './06-persona-urban.jpg'
 
 export const homepageAssets = {
-  hero: heroCover,
   personas: {
     couple: personaCouple,
     family: personaFamily,
@@ -43,6 +41,6 @@ export const personaCardCopy: Partial<Record<Persona, { title: string; tagline: 
   couple: { title: '情侣约会', tagline: '浪漫 · 夜景 · 出片' },
   family: { title: '亲子玩乐', tagline: '互动 · 成长 · 有趣' },
   fast: { title: '特种兵式', tagline: '高效 · 打卡 · 省时' },
-  lazy: { title: '懒人躺平', tagline: '放松 · 慢游 · 舒适' },
+  lazy: { title: '自由', tagline: '放松 · 慢游 · 舒适' },
   urban: { title: '精致', tagline: '街区 · 展览 · 小酒馆' },
 }

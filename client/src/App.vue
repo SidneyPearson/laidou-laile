@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onErrorCaptured, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AmapNavigationSheet from './components/AmapNavigationSheet.vue'
 import MobileBottomNav, { type BottomTab } from './components/home/MobileBottomNav.vue'
 
 const hasError = ref(false)
@@ -14,14 +15,16 @@ const isDarkPublicRoute = computed(() =>
   || route.name === 'explore'
   || route.name === 'city-explore'
   || route.name === 'favorites'
-  || route.name === 'me',
+  || route.name === 'me'
+  || route.name === 'visited-cities'
+  || route.name === 'my-tickets',
 )
 const publicScrollContainer = ref<HTMLElement | null>(null)
 const activeBottomTab = computed<BottomTab>(() => {
   if (route.name === 'today-plan') return 'plan'
   if (route.name === 'explore' || route.name === 'city-explore') return 'explore'
   if (route.name === 'favorites') return 'favorites'
-  if (route.name === 'me') return 'me'
+  if (route.name === 'me' || route.name === 'visited-cities' || route.name === 'my-tickets') return 'me'
   return 'home'
 })
 
@@ -105,6 +108,7 @@ onErrorCaptured((err) => {
         :active="activeBottomTab"
         @navigate="handleBottomNav"
       />
+      <AmapNavigationSheet v-if="isPublicRoute" />
     </div>
   </template>
 </template>

@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { pickCopy, playfulPlanLimitMessage, prefersReducedMotion, timeGreeting } from './delight'
+import {
+  FIRST_SPOT_TOAST,
+  PLAN_FULL_TOAST,
+  celebratePlanAdded,
+  pickCopy,
+  playfulPlanLimitMessage,
+  prefersReducedMotion,
+  timeGreeting,
+} from './delight'
 
 describe('timeGreeting', () => {
   beforeEach(() => {
@@ -50,5 +58,20 @@ describe('playfulPlanLimitMessage', () => {
 describe('prefersReducedMotion', () => {
   it('is false in non-DOM environments (safe no-op)', () => {
     expect(prefersReducedMotion()).toBe(false)
+  })
+})
+
+describe('celebratePlanAdded', () => {
+  it('warms up the copy for the very first spot', () => {
+    expect(celebratePlanAdded(1, 3, null)).toBe(FIRST_SPOT_TOAST)
+  })
+
+  it('keeps the neutral copy for middle spots', () => {
+    expect(celebratePlanAdded(2, 3, null)).toBe('已加入今日计划')
+  })
+
+  it('celebrates with the full-plan copy once the limit is reached', () => {
+    expect(celebratePlanAdded(3, 3, null)).toBe(PLAN_FULL_TOAST)
+    expect(celebratePlanAdded(4, 3, null)).toBe(PLAN_FULL_TOAST)
   })
 })

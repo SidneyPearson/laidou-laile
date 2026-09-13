@@ -199,6 +199,26 @@ describe('useTodayPlan', () => {
     expect(restored.spots.value[0].city).toBe('上海')
   })
 
+  it('keeps the same city bucket when reverse geocoding returns a district adcode', () => {
+    const plan = useTodayPlan()
+    plan.setActiveCity({ adcode: '110000', cityName: '北京' })
+    expect(plan.addSpot({
+      ...verifiedSpot(1),
+      city: '北京',
+      id: 'bj-1',
+      amapPoiId: 'BJ-POI-1',
+    }).status).toBe('added')
+
+    // 东城区与北京市的 adcode 不同，但属于同一个城市计划。
+    plan.setActiveCity({ adcode: '110101', cityName: '北京市' })
+    expect(plan.cityKey.value).toBe('110000')
+    expect(plan.spots.value.map(spot => spot.id)).toEqual(['bj-1'])
+
+    // 普通探索页重新使用策展城市 adcode 时也不能切到空桶。
+    plan.setActiveCity({ adcode: '110000', cityName: '北京' })
+    expect(plan.count.value).toBe(1)
+  })
+
   it('falls back to city-name bucket key when no adcode is provided', () => {
     const plan = useTodayPlan()
     plan.setActiveCity({ cityName: '杭州' })
@@ -208,4 +228,17 @@ describe('useTodayPlan', () => {
     plan.setActiveCity({ cityName: '杭州' })
     expect(plan.count.value).toBe(1)
   })
+})
+
+it('跨城详情可读取该城已有计划，不改变当前激活城市', () => {
+  const plan = useTodayPlan()
+  plan.setActiveCity({ adcode: '310000', cityName: '上海' })
+  plan.addSpot(verifiedSpot(1))
+  plan.setActiveCity({ adcode: '110000', cityName: '北京' })
+  plan.addSpot({ ...verifiedSpot(2), city: '北京' })
+  expect(plan.spotsForCity('上海市').map(s => s.id)).toEqual(['spot-1'])
+  expect(plan.spotsForCity('北京').map(s => s.id)).toEqual(['spot-2'])
+  expect(plan.spotsForCity('未去城市')).toEqual([])
+  expect(plan.cityKey.value).toBe('110000')
+  expect(plan.spots.value[0].city).toBe('北京')
 })

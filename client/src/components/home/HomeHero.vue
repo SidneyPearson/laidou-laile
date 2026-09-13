@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { CityContextResponse } from '../../services/exploreApi'
 import type { RecommendationCity } from '../../repositories/cityRecommendations'
-import { homepageAssets } from '../../assets/homepage'
+import { cityHeroImage } from '../../assets/homepage/cityHeroes'
 import CityLocationButton from './CityLocationButton.vue'
 
 const props = defineProps<{
@@ -18,11 +18,11 @@ const emit = defineEmits<{
 
 const cityName = computed(() => {
   const name = props.city?.name
-  if (!name || name === '当前城市' || name === '你的城市') return '上海'
+  if (!name || name === '当前城市' || name === '你的城市') return '选择城市'
   return name.replace(/市$/, '')
 })
 
-const heroUrl = computed(() => homepageAssets.hero)
+const heroUrl = computed(() => cityHeroImage(props.city?.name))
 
 // True once we have any coordinates to work with — either a resolved city or
 // a transient "use my location" result. Basing this on coordinates (instead
@@ -48,8 +48,10 @@ const weatherDesc = computed(() => {
 <template>
   <section class="home-hero">
     <img
+      v-if="heroUrl"
+      :key="heroUrl"
       :src="heroUrl"
-      :alt="`${cityName}封面`"
+      :alt="`${cityName}城市氛围背景`"
       class="hero-cover-img"
       fetchpriority="high"
       @error="onCoverError"
@@ -74,12 +76,11 @@ const weatherDesc = computed(() => {
         </button>
 
         <div class="topbar-pills">
-          <!-- Location pill is the button: tapping it opens the same location
-               sheet as the first-visit popup (use my location / pick city). -->
+          <!-- 点击城市直接打开选择器；定位入口仍保留在首次访问面板。 -->
           <CityLocationButton
             :city-name="cityName"
             aria-label="当前定位城市，点击更换"
-            @click="emit('use-location')"
+            @click="emit('open-picker')"
           />
 
           <!-- Weather pill is a static display, not a button. -->
@@ -113,8 +114,7 @@ const weatherDesc = computed(() => {
      roughly 1/4 page higher on first scroll. */
   min-height: 480px;
   padding: 18px 12px 0;
-  /* Matches the prototype: top-down darkening + cover photo, focal point on
-     the Lujiazui cluster. */
+  /* 暗色蒙层保证不同城市背景上的标题可读。 */
   background:
     linear-gradient(to bottom, rgba(2,7,14,.58) 0%, rgba(2,7,14,.12) 30%, rgba(2,7,14,.30) 62%, #02070e 100%);
   isolation: isolate;
@@ -127,8 +127,7 @@ const weatherDesc = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Keep the Lujiazui focal point while avoiding extra zoom, so more of the
-     original skyline remains visible on narrow WeChat viewports. */
+  /* 新背景按手机竖向构图生成，主体位于中右侧。 */
   object-position: 59% 53%;
   z-index: -2;
   transform: scale(1);
@@ -206,9 +205,8 @@ const weatherDesc = computed(() => {
   max-width: 100%;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(26, 34, 47, 0.78);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* 纯色胶囊：首页滚动时毛玻璃随封面图逐帧重光栅化，X5 上明显掉帧。 */
+  background: rgba(20, 27, 39, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,9 +264,8 @@ const weatherDesc = computed(() => {
   padding: 0 9px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  background: rgba(18, 24, 34, 0.78);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* 纯色胶囊：同上，滚动时毛玻璃逐帧重算不划算。 */
+  background: rgba(15, 21, 31, 0.92);
   color: #fff;
   font-size: 12px;
   font-weight: 600;

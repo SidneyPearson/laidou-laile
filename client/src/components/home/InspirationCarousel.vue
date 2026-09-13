@@ -196,10 +196,9 @@ function onImgError(e: Event) {
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 50%;
-  background: rgba(2, 7, 14, 0.46);
+  /* 纯色：收藏钮在横滑卡片上，滑动时毛玻璃每帧重算。 */
+  background: rgba(2, 7, 14, 0.68);
   color: #fff;
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
 }
 .rec-favorite svg { width: 17px; height: 17px; }
 .rec-favorite.active { color: #fda4af; background: rgba(40, 12, 20, 0.72); }
@@ -275,13 +274,12 @@ function onImgError(e: Event) {
   padding: 4px 9px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
-  background: rgba(2, 7, 14, 0.5);
+  /* 纯色：示例角标在横滑卡片上，毛玻璃会随横滑逐帧重算。 */
+  background: rgba(2, 7, 14, 0.7);
   color: rgba(255, 255, 255, 0.92);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.06em;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .rec-info {

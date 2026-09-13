@@ -20,7 +20,7 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homeHero).toContain('min-height: 480px')
     expect(homeHero).toContain('min-height: 390px')
     // Hero uses the registered cover asset, not a hard-coded /home-bg.jpg.
-    expect(homeHero).toContain('homepageAssets.hero')
+    expect(homeHero).toContain('cityHeroImage(props.city?.name)')
     // Keep the cover at its natural cover scale; only a very subtle zoom is
     // allowed so narrow WeChat viewports retain more of the skyline.
     expect(homeHero).toContain('from { transform: scale(1); }')
@@ -139,7 +139,7 @@ describe('HomePage immersive redesign contracts', () => {
     expect(homepageAssets).toContain('浪漫 · 夜景 · 出片')
     expect(homepageAssets).toContain('亲子玩乐')
     expect(homepageAssets).toContain('特种兵式')
-    expect(homepageAssets).toContain('懒人躺平')
+    expect(homepageAssets).toContain("title: '自由'")
     // Persona/hero artwork is bundled locally (no external image CDN).
     expect(homepageAssets).not.toContain('images.unsplash.com')
   })

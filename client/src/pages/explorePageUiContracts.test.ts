@@ -4,6 +4,7 @@ import exploreMap from '../components/explore/ExploreSpotMap.vue?raw'
 import router from '../router/index.ts?raw'
 import homePage from './HomePage.vue?raw'
 import app from '../App.vue?raw'
+import cityPicker from '../components/CityPicker.vue?raw'
 
 describe('ExplorePage browse experience contracts', () => {
   it('uses a dedicated explore route without replacing the swipe flow', () => {
@@ -30,6 +31,13 @@ describe('ExplorePage browse experience contracts', () => {
     expect(exploreMap).toContain('layoutMarkerOffsets')
   })
 
+  it('keeps public search inputs at 16px to prevent iOS WeChat auto-zoom', () => {
+    expect(cityPicker).toContain('.city-picker-search input')
+    expect(cityPicker).toContain('font-size: 16px')
+    expect(explorePage).toContain('.search-box input')
+    expect(explorePage).toContain('font-size:16px')
+  })
+
   it('opens real details and lets verified spots join today directly', () => {
     expect(explorePage).toContain('<SpotDetailSheet')
     expect(explorePage).toContain('todayPlan.addSpot')
@@ -43,6 +51,6 @@ describe('ExplorePage browse experience contracts', () => {
     expect(explorePage).toContain('继续切换')
     // 各城市计划按分桶保留：切换城市是切桶而不是清空。
     expect(explorePage).toContain('todayPlan.setActiveCity(')
-    expect(explorePage).toContain('todayJourney.reset()')
+    expect(explorePage).not.toContain('todayJourney.reset()')
   })
 })

@@ -145,7 +145,7 @@ onMounted(async () => {
             </span>
             <span class="min-w-0 flex-1 text-left">
               <span class="block truncate text-base font-semibold text-white">{{ city.name }}</span>
-              <span class="mt-1 block text-xs text-white/40">进入城市探索</span>
+              <span class="mt-1 block text-xs text-white/40">选择这座城市</span>
             </span>
             <span class="city-picker-result-arrow" aria-hidden="true">→</span>
           </button>
@@ -162,7 +162,9 @@ onMounted(async () => {
 .city-picker-back { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; color: rgba(255, 255, 255, 0.65); transition: transform 0.2s ease, background 0.2s ease; }
 .city-picker-back:hover { background: rgba(255, 255, 255, 0.08); }
 .city-picker-search { display: flex; height: 50px; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid rgba(199, 255, 31, 0.34); border-radius: 16px; background: rgba(255, 255, 255, 0.07); box-shadow: 0 0 0 3px rgba(199, 255, 31, 0.04); }
-.city-picker-search input { min-width: 0; flex: 1; outline: none; border: 0; background: transparent; color: #fff; font-size: 14px; }
+/* iOS WebKit 会在聚焦小于 16px 的表单控件时自动放大页面；微信内置浏览器
+   同样遵循这条规则。保持 16px，让键盘弹出时页面比例不跳变。 */
+.city-picker-search input { min-width: 0; flex: 1; outline: none; border: 0; background: transparent; color: #fff; font-size: 16px; }
 .city-picker-search input::placeholder { color: rgba(255, 255, 255, 0.38); }
 .city-picker-search input::-webkit-search-cancel-button { display: none; }
 .city-picker-clear { color: rgba(255, 255, 255, 0.55); font-size: 22px; line-height: 1; }

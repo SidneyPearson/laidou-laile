@@ -33,18 +33,19 @@ describe('V0.4 city swipe-confirmation UI contracts', () => {
 
   it('lets users accept or skip places via the swipe deck, adding accepted ones to today plan', () => {
     expect(cityExplorePage).toContain('todayPlan.addSpot')
-    // Card actions are intentionally gesture/keyboard driven; there is no
-    // longer a separate click-action footer inside or outside the card.
+    // 同时保留手势、键盘与显式按钮入口。
     expect(cityExplorePage).toContain('onCardKeydown')
     expect(cityExplorePage).toContain('swipe(type)')
     expect(cityExplorePage).toContain('先确认今天想去的地方')
     expect(cityExplorePage).toContain('左右滑动卡片')
     expect(cityExplorePage).toContain('(cardIndex.value + 1) % spots.value.length')
     expect(cityExplorePage).toContain('这一轮看完了')
-    // No anchored-route generation; no legacy detail-sheet flow on this page.
+    // 详情复用地点库弹层，不恢复旧 LLM 路线生成。
     expect(cityExplorePage).not.toContain('planAroundSpot')
     expect(cityExplorePage).not.toContain('useRouteRequest')
-    expect(cityExplorePage).not.toContain('<SpotDetailSheet')
+    expect(cityExplorePage).toContain('<SpotDetailSheet')
+    expect(cityExplorePage).toContain('class="card-actions"')
+    expect(cityExplorePage).toContain('{{ stayPreview }}')
   })
 
   it('returns a rejected swipe to the center when the daily plan is full', () => {

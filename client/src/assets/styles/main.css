@@ -7,6 +7,15 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* 交互元素禁用双击缩放等待：微信 X5/旧内核下 click 不再有 ~300ms 判定延迟，
+     点按立即触发；pan 滚动手势不受影响。滑卡/滑动条等需要接管手势的元素
+     在组件内用 touch-action: none 覆盖（scoped 选择器优先级更高）。 */
+  button,
+  a,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+
   html {
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue',
       'Microsoft YaHei', sans-serif;

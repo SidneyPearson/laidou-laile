@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { personaLabel } from '../utils/personaLabels'
 import type { Persona } from '../types/explore'
 import { homepageAssets, personaCardCopy, personaImage } from '../assets/homepage'
 
@@ -89,7 +90,7 @@ export async function fetchHomePersonas(signal?: AbortSignal): Promise<HomePerso
         .filter((card): card is ApiCard => isValidId(card.id) && typeof card.title === 'string')
         .map(card => ({
           id: card.id,
-          title: card.title,
+          title: personaLabel(card.title),
           tagline: card.tagline ?? '',
           imageUrl: personaImage(card.id, card.imageUrl),
           sortOrder: Number(card.sortOrder) || 0,

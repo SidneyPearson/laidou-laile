@@ -1,70 +1,86 @@
 import { computed, ref } from 'vue'
+import { useTodayPlan } from './useTodayPlan'
 
 const STORAGE_KEY = 'laidou-v03-today-journey'
-const STORAGE_VERSION = 1
-
+const STORAGE_VERSION = 2
 export type JourneyStatus = 'idle' | 'active' | 'complete'
-
 interface StoredJourney {
-  version: number
+  id: string | null
   status: JourneyStatus
   completedIds: string[]
   currentId: string | null
   startedAt: string | null
   completedAt: string | null
 }
-
+interface CityJourney { cityName: string; journey: StoredJourney }
 const emptyJourney = (): StoredJourney => ({
-  version: STORAGE_VERSION,
-  status: 'idle',
-  completedIds: [],
-  currentId: null,
-  startedAt: null,
-  completedAt: null,
+  id: null, status: 'idle', completedIds: [], currentId: null, startedAt: null, completedAt: null,
 })
-
-const state = ref<StoredJourney>(emptyJourney())
+const buckets = ref<Record<string, CityJourney>>(Object.create(null))
+const storageAvailable = ref(true)
 let loaded = false
+const newJourneyId = () => globalThis.crypto?.randomUUID?.()
+  ?? `journey-${Date.now()}-${Math.random().toString(36).slice(2)}`
+const normalizeName = (name: string) => name.trim().replace(/市$/, '')
 
-function readStored(): StoredJourney {
-  if (typeof localStorage === 'undefined') return emptyJourney()
-  try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '') as Partial<StoredJourney>
-    if (
-      parsed.version !== STORAGE_VERSION
-      || !['idle', 'active', 'complete'].includes(parsed.status || '')
-      || !Array.isArray(parsed.completedIds)
-    ) return emptyJourney()
-    return {
-      version: STORAGE_VERSION,
-      status: parsed.status as JourneyStatus,
-      completedIds: [...new Set(parsed.completedIds.filter((id): id is string => typeof id === 'string'))],
-      currentId: typeof parsed.currentId === 'string' ? parsed.currentId : null,
-      startedAt: typeof parsed.startedAt === 'string' ? parsed.startedAt : null,
-      completedAt: typeof parsed.completedAt === 'string' ? parsed.completedAt : null,
-    }
-  } catch {
-    return emptyJourney()
+function sanitize(value: unknown): StoredJourney | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Partial<StoredJourney>
+  if (!['idle', 'active', 'complete'].includes(raw.status || '') || !Array.isArray(raw.completedIds)) return null
+  return {
+    id: typeof raw.id === 'string' ? raw.id : typeof raw.startedAt === 'string' ? raw.startedAt : typeof raw.completedAt === 'string' ? raw.completedAt : null,
+    status: raw.status!, completedIds: [...new Set(raw.completedIds.filter((id): id is string => typeof id === 'string'))],
+    currentId: typeof raw.currentId === 'string' ? raw.currentId : null,
+    startedAt: typeof raw.startedAt === 'string' ? raw.startedAt : null,
+    completedAt: typeof raw.completedAt === 'string' ? raw.completedAt : null,
   }
 }
 
 function load() {
   if (loaded) return
   loaded = true
-  state.value = readStored()
+  const plan = useTodayPlan()
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+    if (raw.version === STORAGE_VERSION && raw.cities && typeof raw.cities === 'object') {
+      for (const [key, value] of Object.entries(raw.cities)) {
+        const entry = value as Partial<CityJourney> | null
+        const journey = sanitize(entry?.journey)
+        if (journey) buckets.value[key] = { cityName: typeof entry?.cityName === 'string' ? entry.cityName : '', journey }
+      }
+    } else if (raw.version === 1) {
+      const journey = sanitize(raw)
+      if (journey) buckets.value[plan.cityKey.value || '__unassigned__'] = {
+        cityName: normalizeName(plan.cities.value[0] || ''), journey,
+      }
+    }
+  } catch { /* 首次使用或损坏的存档不妨碍本次行程。 */ }
 }
 
+// 与计划共享激活城市，所有切城入口都自动选中对应进度；同城名称/行政码兼容。
+function currentKey() {
+  const plan = useTodayPlan()
+  const key = plan.cityKey.value || '__unassigned__'
+  if (buckets.value[key]) return key
+  const name = normalizeName(plan.cities.value[0] || '')
+  const aliases = Object.entries(buckets.value).filter(([, b]) => name && b.cityName === name)
+  return aliases.length === 1 ? aliases[0][0] : key
+}
+function currentState(): StoredJourney { return buckets.value[currentKey()]?.journey || emptyJourney() }
+function updateState(journey: StoredJourney) {
+  const plan = useTodayPlan()
+  buckets.value[currentKey()] = { cityName: normalizeName(plan.cities.value[0] || ''), journey }
+}
 function persist() {
-  if (typeof localStorage === 'undefined') return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.value))
-  } catch {
-    /* The journey still works for this page even if storage is unavailable. */
-  }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, cities: buckets.value }))
+    storageAvailable.value = true
+  } catch { storageAvailable.value = false }
 }
 
 export function useTodayJourney() {
   load()
+  const state = computed({ get: currentState, set: updateState })
 
   const status = computed(() => state.value.status)
   const completedIds = computed(() => state.value.completedIds)
@@ -91,10 +107,11 @@ export function useTodayJourney() {
         completedAt: state.value.completedAt || new Date().toISOString(),
       }
     } else {
-      if (state.value.status === 'active' && !current) {
+      const status = state.value.status === 'complete' ? 'active' : state.value.status
+      if (status === 'active' && !current) {
         current = validIds.find(id => !completed.includes(id)) || null
       }
-      state.value = { ...state.value, completedIds: completed, currentId: current }
+      state.value = { ...state.value, status, completedIds: completed, currentId: current, completedAt: null }
     }
     persist()
   }
@@ -105,6 +122,7 @@ export function useTodayJourney() {
     state.value = {
       ...state.value,
       status: 'active',
+      id: state.value.id || newJourneyId(),
       completedIds: completed,
       currentId: validIds.find(id => !completed.includes(id)) || validIds[0],
       startedAt: state.value.startedAt || new Date().toISOString(),
@@ -123,7 +141,7 @@ export function useTodayJourney() {
   }
 
   function completeSpot(id: string, validIds: string[]) {
-    if (state.value.status !== 'active' || !validIds.includes(id)) return false
+    if (state.value.status !== 'active' || !validIds.includes(id) || state.value.completedIds.includes(id)) return false
     const completed = [...new Set([...state.value.completedIds, id])]
       .filter(spotId => validIds.includes(spotId))
     const remaining = validIds.filter(spotId => !completed.includes(spotId))
@@ -138,6 +156,15 @@ export function useTodayJourney() {
     return true
   }
 
+  function undoSpot(id: string, validIds: string[]) {
+    if (!validIds.includes(id) || !state.value.completedIds.includes(id)) return false
+    state.value = { ...state.value, status: 'active',
+      completedIds: state.value.completedIds.filter(spotId => spotId !== id && validIds.includes(spotId)),
+      currentId: id, completedAt: null }
+    persist()
+    return true
+  }
+
   function reset() {
     state.value = emptyJourney()
     persist()
@@ -145,6 +172,8 @@ export function useTodayJourney() {
 
   return {
     status,
+    journeyId: computed(() => state.value.id),
+    storageAvailable,
     completedIds,
     currentId,
     startedAt,
@@ -153,11 +182,13 @@ export function useTodayJourney() {
     start,
     chooseNext,
     completeSpot,
+    undoSpot,
     reset,
   }
 }
 
 export function resetTodayJourneyForTests() {
-  state.value = emptyJourney()
+  buckets.value = Object.create(null)
   loaded = false
+  storageAvailable.value = true
 }

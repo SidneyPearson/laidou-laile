@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { loadTicketImage, encodeTicket } from '../../utils/ticketImage'
+import { personaLabel } from '../../utils/personaLabels'
 import type { TodaySpot } from '../../types/todayPlan'
 import { burstConfetti, prefersReducedMotion } from '../../utils/delight'
 
@@ -8,12 +10,21 @@ const props = defineProps<{
   persona: string
   spots: TodaySpot[]
   duration: string
+  /** 历史票根传入 yyyy-mm-dd 显示生成日期；缺省为今天。 */
+  date?: string
 }>()
 
 const emit = defineEmits<{ close: []; saved: [] }>()
 const saving = ref(false)
 const saveMessage = ref('')
 const saveFailed = ref(false)
+const generatedUrl = ref('')
+const usedFallback = ref(false)
+let generationController: AbortController | null = null
+onBeforeUnmount(() => {
+  generationController?.abort()
+  if (generatedUrl.value) URL.revokeObjectURL(generatedUrl.value)
+})
 /** 票根静态地图加载完成标记（未完成时显示 shimmer 占位，避免灰块）。 */
 const mapLoaded = ref(false)
 const fanSpots = computed(() => props.spots.slice(0, 6))
@@ -25,9 +36,16 @@ const staticMapUrl = computed(() => {
   return `/api/city/static-map?points=${encodeURIComponent(points)}`
 })
 
-const dateLabel = new Intl.DateTimeFormat('zh-CN', {
+const ticketDateFormatter = new Intl.DateTimeFormat('zh-CN', {
   year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short',
-}).format(new Date())
+})
+const dateLabel = computed(() => {
+  if (props.date) {
+    const historical = new Date(`${props.date}T12:00:00`)
+    if (!Number.isNaN(historical.getTime())) return ticketDateFormatter.format(historical)
+  }
+  return ticketDateFormatter.format(new Date())
+})
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
@@ -76,31 +94,6 @@ onMounted(() => {
 
 function hideBrokenImage(event: Event) {
   ;(event.currentTarget as HTMLImageElement).style.display = 'none'
-}
-
-async function loadCover(spot: TodaySpot): Promise<HTMLImageElement | null> {
-  const sources = [spot.coverImageUrl, spot.coverImageFallbackUrl].filter(Boolean) as string[]
-  for (const source of sources) {
-    const image = await new Promise<HTMLImageElement | null>(resolve => {
-      const candidate = new Image()
-      candidate.crossOrigin = 'anonymous'
-      candidate.onload = () => resolve(candidate)
-      candidate.onerror = () => resolve(null)
-      candidate.src = source
-    })
-    if (image) return image
-  }
-  return null
-}
-
-async function loadImageUrl(source: string): Promise<HTMLImageElement | null> {
-  return new Promise(resolve => {
-    const image = new Image()
-    image.crossOrigin = 'anonymous'
-    image.onload = () => resolve(image)
-    image.onerror = () => resolve(null)
-    image.src = source
-  })
 }
 
 function drawCoverCard(
@@ -177,22 +170,23 @@ function drawCoverCard(
   ctx.restore()
 }
 
-async function generateTicket(): Promise<{ blob: Blob; url: string; filename: string }> {
+async function generateTicket(signal: AbortSignal): Promise<{ blob: Blob; url: string; filename: string }> {
   const canvas = document.createElement('canvas')
   canvas.width = 1080
   canvas.height = 1600
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas is unavailable')
     const [coverImages, mapImage] = await Promise.all([
-      Promise.all(fanSpots.value.map(loadCover)),
-      loadImageUrl(staticMapUrl.value),
+      Promise.all(fanSpots.value.map(spot => loadTicketImage([spot.coverImageUrl, spot.coverImageFallbackUrl], signal))),
+      loadTicketImage([staticMapUrl.value], signal),
     ])
 
+    usedFallback.value = !mapImage || coverImages.some(image => !image)
     const gradient = ctx.createLinearGradient(0, 0, 1080, 1440)
     gradient.addColorStop(0, '#111714')
     gradient.addColorStop(1, '#050706')
     ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, 1080, 1440)
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     ctx.fillStyle = '#baff18'
     ctx.fillRect(0, 0, 1080, 22)
@@ -203,7 +197,7 @@ async function generateTicket(): Promise<{ blob: Blob; url: string; filename: st
     ctx.fillText(fitText(ctx, props.city || '今日城市', 900), 76, 235)
     ctx.font = '500 30px system-ui, sans-serif'
     ctx.fillStyle = 'rgba(255,255,255,.58)'
-    ctx.fillText(`${dateLabel}  ·  ${props.persona}模式`, 78, 296)
+    ctx.fillText(`${dateLabel.value}  ·  ${personaLabel(props.persona)}模式`, 78, 296)
 
     if (mapImage) {
       ctx.save()
@@ -261,7 +255,7 @@ async function generateTicket(): Promise<{ blob: Blob; url: string; filename: st
     ctx.font = '900 58px system-ui, sans-serif'
     ctx.fillText(`${props.spots.length} 个地点 · 全部到达`, 120, 1292)
     ctx.font = '700 27px system-ui, sans-serif'
-    ctx.fillText(`预计停留 ${props.duration}  ·  今日收藏完成`, 120, 1350)
+    ctx.fillText(`预计停留 ${props.duration}  ·  今日行程完成`, 120, 1350)
 
     ctx.strokeStyle = 'rgba(255,255,255,.18)'
     ctx.setLineDash([12, 12])
@@ -278,9 +272,11 @@ async function generateTicket(): Promise<{ blob: Blob; url: string; filename: st
     ctx.font = '500 22px system-ui, sans-serif'
     ctx.fillText('本票仅纪念快乐，不作为报销凭证', 1004, 1533)
 
-    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
-    if (!blob) throw new Error('Image could not be encoded')
+    const blob = await encodeTicket(canvas, signal)
+    if (signal.aborted) throw new DOMException('Cancelled', 'AbortError')
+    if (generatedUrl.value) URL.revokeObjectURL(generatedUrl.value)
     const url = URL.createObjectURL(blob)
+    generatedUrl.value = url
     return { blob, url, filename: `${props.city || '城市'}-今日票根.png` }
 }
 
@@ -291,11 +287,10 @@ function downloadBlob(url: string, filename: string) {
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
 }
 
 /** 尝试走系统分享（Web Share API，带图片文件）。返回 true 表示已走分享面板。 */
-async function trySystemShare(blob: Blob, url: string, filename: string): Promise<boolean> {
+async function trySystemShare(blob: Blob, filename: string): Promise<boolean> {
   if (typeof File === 'undefined') return false
   const file = new File([blob], filename, { type: 'image/png' })
   const nav = navigator as Navigator & {
@@ -308,34 +303,23 @@ async function trySystemShare(blob: Blob, url: string, filename: string): Promis
     title: '今日城市票根',
     text: `来都来了 · ${props.city || ''} 今天没有白来`,
   })
-  URL.revokeObjectURL(url)
   return true
 }
 
 async function saveTicket() {
+  if (saving.value) return
   saving.value = true
-  saveMessage.value = ''
+  saveMessage.value = '正在准备图片，网络较慢时会使用简洁背景…'
   saveFailed.value = false
+  generationController = new AbortController()
   try {
-    const { blob, url, filename } = await generateTicket()
-    // 移动端优先走系统分享面板：用户选「存储图像」即可直接存入系统相册。
-    // 系统面板 resolve 即代表用户选了某个 action（AbortedError 才算取消），
-    // 视作保存成功，1.2s 后让父组件关闭 sheet 并展示「已存入相册」提示。
-    if (await trySystemShare(blob, url, filename)) {
-      saveMessage.value = '✓ 已存入相册，今天没有白来'
-      window.setTimeout(() => emit('saved'), 1200)
-      return
-    }
+    const { url, filename } = await generateTicket(generationController.signal)
     downloadBlob(url, filename)
-    saveMessage.value = '票根图片已开始下载，请在浏览器下载记录中查看。'
+    saveMessage.value = `${usedFallback.value ? '部分图片未加载，已使用简洁背景。' : ''}票根已生成，可长按上方图片保存；浏览器支持时也会开始下载。`
   } catch (error) {
-    // 用户取消系统面板不算失败
-    if ((error as Error)?.name === 'AbortError') {
-      saveMessage.value = '已取消保存'
-      return
-    }
+    if ((error as Error)?.name === 'AbortError') return
     saveFailed.value = true
-    saveMessage.value = '保存失败，请稍后重试；也可以长按预览截图保存。'
+    saveMessage.value = '暂时无法生成图片，请重试；也可以截屏保留票根。'
   } finally {
     saving.value = false
   }
@@ -345,17 +329,19 @@ async function saveTicket() {
 async function shareTicket() {
   if (saving.value) return
   saving.value = true
-  saveMessage.value = ''
+  saveMessage.value = '正在准备分享图片…'
   saveFailed.value = false
+  generationController = new AbortController()
   try {
-    const { blob, url, filename } = await generateTicket()
-    if (await trySystemShare(blob, url, filename)) {
+    const { blob, url, filename } = await generateTicket(generationController.signal)
+    saveMessage.value = '图片已准备好，请在系统面板中选择操作。'
+    if (await trySystemShare(blob, filename)) {
       burstConfetti(document.querySelector<HTMLElement>('.ticket-preview'), {
         count: 32,
         size: [6, 13],
         duration: 1300,
       })
-      saveMessage.value = '分享成功，今天没有白来。'
+      saveMessage.value = '已完成系统分享操作。'
       return
     }
     downloadBlob(url, filename)
@@ -367,7 +353,7 @@ async function shareTicket() {
       return
     }
     saveFailed.value = true
-    saveMessage.value = '分享失败，请稍后重试；也可以长按预览截图保存。'
+    saveMessage.value = generatedUrl.value ? '当前环境未完成分享，可长按上方图片保存后分享。' : '生成失败，请重试或截屏保留票根。'
   } finally {
     saving.value = false
   }
@@ -376,7 +362,7 @@ async function shareTicket() {
 
 <template>
   <div
-    class="fixed inset-0 z-[70] flex items-end justify-center bg-black/55 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 backdrop-blur-sm"
+    class="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4"
     @click.self="emit('close')"
   >
     <section class="max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-[30px] bg-[#f7f6f2] p-4 shadow-2xl">
@@ -388,12 +374,13 @@ async function shareTicket() {
         <button type="button" aria-label="关闭票根" class="h-9 w-9 rounded-full bg-stone-200 text-stone-600" @click.stop="emit('close')">×</button>
       </div>
 
-      <div class="ticket-preview relative overflow-hidden rounded-[24px] bg-stone-950 p-6 text-white">
+      <img v-if="generatedUrl" :src="generatedUrl" alt="已生成的城市票根，可长按保存" class="w-full rounded-[24px]">
+      <div v-else class="ticket-preview relative overflow-hidden rounded-[24px] bg-stone-950 p-6 text-white">
         <div class="ticket-glow pointer-events-none absolute -right-16 top-20 h-48 w-48 rounded-full bg-lime-300/10 blur-3xl" />
         <div class="absolute inset-x-0 top-0 h-1.5 bg-lime-300" />
         <p class="text-[10px] font-bold tracking-[0.2em] text-lime-300">来 都 来 了 · CITY PASS</p>
         <h2 class="mt-4 text-3xl font-black">{{ city }}</h2>
-        <p class="mt-1 text-[10px] text-white/45">{{ dateLabel }} · {{ persona }}模式</p>
+        <p class="mt-1 text-[10px] text-white/45">{{ dateLabel }} · {{ personaLabel(persona) }}模式</p>
 
         <div class="relative -mx-2 mt-4 h-[205px] overflow-hidden rounded-[20px] bg-emerald-950">
           <div v-if="!mapLoaded" class="ticket-map-loading" aria-hidden="true" />
@@ -440,7 +427,7 @@ async function shareTicket() {
 
         <div class="relative rounded-2xl bg-lime-300 p-4 text-stone-900 shadow-[0_8px_24px_rgba(186,255,24,.12)]">
           <p class="text-lg font-black">{{ spots.length }} 个地点 · 全部到达</p>
-          <p class="mt-1 text-[10px] font-semibold text-stone-700">预计停留 {{ duration }} · 今日收藏完成</p>
+          <p class="mt-1 text-[10px] font-semibold text-stone-700">预计停留 {{ duration }} · 今日行程完成</p>
         </div>
         <div class="relative mt-5 flex items-end justify-between border-t border-dashed border-white/15 pt-4">
           <p class="text-xs font-bold text-lime-300">今天没有白来。</p>

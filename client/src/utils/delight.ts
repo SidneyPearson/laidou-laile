@@ -116,6 +116,28 @@ export function pickCopy(pool: readonly string[], index: number): string {
   return pool[Math.abs(index) % pool.length]
 }
 
+/** 加入今日计划后的情绪反馈文案。 */
+export const FIRST_SPOT_TOAST = '第一站选定，今天有方向了'
+export const PLAN_FULL_TOAST = '今日计划满员，准备出发！'
+
+/**
+ * 加入今日计划成功后的情绪反馈：
+ * - 第 1 个地点：更温暖的文案，给用户“开始了”的方向感；
+ * - 达到上限：在 anchor（默认页面 main）放一簇彩带 + 满员文案，形成情绪高潮；
+ * - 其余情况：维持原“已加入今日计划”。
+ * 彩带遵循 prefers-reduced-motion（burstConfetti 内部自动降级），只返回文案不受影响。
+ */
+export function celebratePlanAdded(count: number, limit: number, anchor?: HTMLElement | null): string {
+  if (count >= limit) {
+    const target = anchor
+      ?? (typeof document !== 'undefined' ? document.querySelector<HTMLElement>('main') : null)
+    burstConfetti(target, { count: 32, size: [6, 12], duration: 1300 })
+    return PLAN_FULL_TOAST
+  }
+  if (count === 1) return FIRST_SPOT_TOAST
+  return '已加入今日计划'
+}
+
 /** 超过今日计划上限（默认 3 个）时的趣味提醒，反复触发时轮换文案不重复念叨。 */
 const PLAN_LIMIT_MESSAGES = [
   '今天 3 个已满员，这个先留给下次吧',

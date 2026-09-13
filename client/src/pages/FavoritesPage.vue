@@ -6,18 +6,17 @@ import SpotDetailSheet from '../components/explore/SpotDetailSheet.vue'
 import { useExploreCity } from '../composables/useExploreCity'
 import { useFavorites } from '../composables/useFavorites'
 import { usePersona } from '../composables/usePersona'
-import { useTodayJourney } from '../composables/useTodayJourney'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { PERSONAS } from '../data/mockExploreSpots'
 import type { FavoriteSpot } from '../types/favorites'
 import { isFullDaySuggestedDuration, TODAY_PLAN_LIMIT } from '../types/todayPlan'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import { haptic } from '../utils/haptics'
+import { celebratePlanAdded } from '../utils/delight'
 
 const router = useRouter()
 const favorites = useFavorites()
 const todayPlan = useTodayPlan()
-const journey = useTodayJourney()
 const { city: exploreCity, setExploreCity } = useExploreCity()
 const { persona, hasChosenPersona } = usePersona()
 
@@ -57,7 +56,7 @@ function toggleFavorite(spot: FavoriteSpot) {
 }
 
 function navigate(spot: FavoriteSpot) {
-  openAmapNavigation(spot.amapName || spot.name, spot.lng, spot.lat)
+  openAmapNavigation(spot.amapName || spot.name, spot.lng, spot.lat, spot.name)
 }
 
 function switchToSpotCity(spot: FavoriteSpot) {
@@ -70,7 +69,6 @@ function switchToSpotCity(spot: FavoriteSpot) {
     center: descriptor.center,
   })
   todayPlan.setActiveCity({ adcode: descriptor.adcode, cityName: descriptor.name || spot.city })
-  journey.reset()
 }
 
 function addToToday(spot: FavoriteSpot) {
@@ -107,9 +105,14 @@ function finishAddToToday(spot: FavoriteSpot) {
     return
   }
   haptic(isFullDaySuggestedDuration(spot.suggestedDuration) ? [28, 50, 28] : 18)
-  showToast(isFullDaySuggestedDuration(spot.suggestedDuration)
-    ? `已加入${normalizeCity(spot.city)}计划；这个地点建议游玩一整天`
-    : `已加入${normalizeCity(spot.city)}的今日计划`)
+  if (isFullDaySuggestedDuration(spot.suggestedDuration)) {
+    showToast(`已加入${normalizeCity(spot.city)}计划；这个地点建议游玩一整天`)
+  } else if (todayPlan.count.value >= TODAY_PLAN_LIMIT) {
+    // 满员是情绪高点，保留庆祝（彩带 + 满员文案），其余情况维持城市名文案。
+    showToast(celebratePlanAdded(todayPlan.count.value, TODAY_PLAN_LIMIT))
+  } else {
+    showToast(`已加入${normalizeCity(spot.city)}的今日计划`)
+  }
 }
 
 onBeforeUnmount(() => {
@@ -219,7 +222,7 @@ onBeforeUnmount(() => {
         <section class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="cross-city-title">
           <p>切换计划城市</p>
           <h2 id="cross-city-title">加入{{ normalizeCity(pendingCrossCity.city) }}的今日计划？</h2>
-          <span>当前城市的计划会暂时收起，切回来仍会保留；正在进行的行程状态会重置。</span>
+          <span>当前城市的地点和打卡进度会暂时收起，切回来时一起恢复。</span>
           <div>
             <button type="button" @click="pendingCrossCity = null">取消</button>
             <button type="button" class="confirm-primary" @click="confirmCrossCityAdd">切换并加入</button>
@@ -240,7 +243,7 @@ onBeforeUnmount(() => {
 .city-filters { display:flex; gap:8px; overflow-x:auto; padding:0 16px 13px; scrollbar-width:none; }.city-filters::-webkit-scrollbar { display:none; }.city-filters button { flex:none; padding:8px 13px; border:1px solid rgba(255,255,255,.11); border-radius:999px; color:rgba(255,255,255,.55); font-size:10px; font-weight:800; }.city-filters button.active { border-color:var(--accent); background:var(--accent); color:#071007; }
 .favorite-list { display:grid; gap:11px; padding:0 16px 24px; }.favorite-card { display:flex; min-height:142px; overflow:hidden; border:1px solid rgba(255,255,255,.1); border-radius:23px; background:rgba(15,21,31,.94); box-shadow:0 13px 30px rgba(0,0,0,.2); }.favorite-cover { position:relative; width:126px; flex:none; overflow:hidden; }.favorite-cover::after { position:absolute; inset:0; content:""; background:linear-gradient(180deg,transparent 55%,rgba(2,7,14,.78)); }.favorite-cover>span { position:absolute; z-index:2; right:8px; bottom:8px; left:8px; overflow:hidden; color:rgba(255,255,255,.78); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }.favorite-copy { display:flex; min-width:0; flex:1; flex-direction:column; padding:14px 13px 12px; }.favorite-copy>div { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }.favorite-copy h2 { overflow:hidden; font-size:16px; font-weight:900; text-overflow:ellipsis; white-space:nowrap; }.favorite-copy button { display:grid; width:30px; height:30px; flex:none; place-items:center; border:1px solid rgba(253,164,175,.28); border-radius:50%; color:#fda4af; }.favorite-copy button svg { width:15px; height:15px; }.favorite-copy>p { display:-webkit-box; margin-top:8px; overflow:hidden; color:rgba(255,255,255,.52); font-size:10px; line-height:1.55; -webkit-box-orient:vertical; -webkit-line-clamp:3; line-clamp:3; }.favorite-copy footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; padding-top:8px; }.favorite-copy footer span { color:rgba(255,255,255,.36); font-size:9px; }.favorite-copy footer b { color:var(--accent); font-size:9px; }
 .favorites-empty { display:flex; min-height:62dvh; flex-direction:column; align-items:center; justify-content:center; padding:38px 34px; text-align:center; }.favorites-empty.compact { min-height:40dvh; }.favorites-empty>div { display:grid; width:84px; height:84px; place-items:center; border:1px solid rgba(199,255,31,.24); border-radius:50%; background:radial-gradient(circle,rgba(199,255,31,.12),transparent 70%); color:var(--accent); font-size:36px; }.favorites-empty .empty-eyebrow { margin-top:22px; }.favorites-empty h2 { margin-top:10px; font-size:21px; font-weight:950; }.favorites-empty>p:not(.empty-eyebrow) { max-width:310px; margin-top:9px; color:rgba(255,255,255,.45); font-size:11px; line-height:1.8; }.favorites-empty>button { margin-top:22px; padding:12px 18px; border-radius:999px; background:var(--accent); color:#071007; font-size:11px; font-weight:900; }
-.confirm-mask { position:fixed; z-index:100; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:16px 16px max(18px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.7); backdrop-filter:blur(5px); }.confirm-card { width:100%; max-width:420px; padding:22px 20px; border:1px solid rgba(255,255,255,.13); border-radius:25px; background:#151c26; }.confirm-card>p { color:var(--accent); font-size:9px; font-weight:850; letter-spacing:.14em; }.confirm-card h2 { margin-top:8px; font-size:20px; font-weight:950; }.confirm-card>span { display:block; margin-top:9px; color:rgba(255,255,255,.55); font-size:11px; line-height:1.7; }.confirm-card>div { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }.confirm-card button { padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:14px; color:rgba(255,255,255,.75); font-size:11px; font-weight:850; }.confirm-card .confirm-primary { border-color:var(--accent); background:var(--accent); color:#071007; }
+.confirm-mask { position:fixed; z-index:100; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:16px 16px max(18px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.7); }.confirm-card { width:100%; max-width:420px; padding:22px 20px; border:1px solid rgba(255,255,255,.13); border-radius:25px; background:#151c26; }.confirm-card>p { color:var(--accent); font-size:9px; font-weight:850; letter-spacing:.14em; }.confirm-card h2 { margin-top:8px; font-size:20px; font-weight:950; }.confirm-card>span { display:block; margin-top:9px; color:rgba(255,255,255,.55); font-size:11px; line-height:1.7; }.confirm-card>div { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }.confirm-card button { padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:14px; color:rgba(255,255,255,.75); font-size:11px; font-weight:850; }.confirm-card .confirm-primary { border-color:var(--accent); background:var(--accent); color:#071007; }
 .favorites-toast { position:fixed; z-index:110; bottom:calc(104px + env(safe-area-inset-bottom)); left:50%; max-width:calc(100% - 40px); padding:10px 16px; transform:translateX(-50%); border:1px solid rgba(255,255,255,.12); border-radius:999px; background:rgba(18,24,33,.96); color:#fff; font-size:11px; font-weight:750; text-align:center; white-space:nowrap; box-shadow:0 12px 30px rgba(0,0,0,.4); }
 .sheet-enter-active,.sheet-leave-active,.toast-enter-active,.toast-leave-active { transition:opacity .2s ease; }.sheet-enter-from,.sheet-leave-to,.toast-enter-from,.toast-leave-to { opacity:0; }
 @media (max-width:360px) { .favorite-cover { width:108px; }.favorite-copy { padding-left:11px; padding-right:10px; }.favorites-summary { gap:10px; }.favorites-summary button { font-size:9px; } }

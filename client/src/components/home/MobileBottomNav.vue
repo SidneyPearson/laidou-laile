@@ -63,9 +63,8 @@ const items: Item[] = [
   padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(8, 12, 18, 0.92);
-  backdrop-filter: blur(8px) saturate(140%);
-  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  /* 纯色不透明底：毛玻璃在微信 X5 里随页面滚动每帧重光栅化，是全局滚动掉帧主因。 */
+  background: rgba(7, 11, 17, 0.97);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
@@ -81,7 +80,7 @@ const items: Item[] = [
   right: 0;
   left: 0;
   height: max(120px, env(safe-area-inset-bottom));
-  background: #080c12;
+  background: #070b11;
   pointer-events: none;
 }
 

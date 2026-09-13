@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useTodayPlan } from '../../composables/useTodayPlan'
+import { planStayPreview } from '../../utils/planStayPreview'
 import type { InspirationSpot, PersonaOption } from '../../types/explore'
 import { departureReminders, whySpotFitsPersona } from '../../utils/exploreDetails'
 import SpotCover from './SpotCover.vue'
@@ -8,6 +10,7 @@ const props = withDefaults(defineProps<{
   spot: InspirationSpot
   persona: PersonaOption | null
   actionReady: boolean
+  planHint?: string
   inToday: boolean
   favoriteReady?: boolean
   inFavorites?: boolean
@@ -15,6 +18,11 @@ const props = withDefaults(defineProps<{
   favoriteReady: false,
   inFavorites: false,
 })
+
+const plan = useTodayPlan()
+const effectivePlanHint = computed(() => props.actionReady
+  ? props.planHint ?? planStayPreview(plan.spotsForCity(props.spot.city), props.spot, props.persona?.id ?? 'couple')
+  : '')
 
 const emit = defineEmits<{
   close: []
@@ -39,9 +47,10 @@ const reminders = computed(() => departureReminders(props.spot))
           eager
         />
         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
+        <!-- 收藏与关闭按钮：44×44 触控热区 + 12px 间距，避免拇指点关闭时误触收藏。 -->
         <button
           v-if="favoriteReady"
-          class="absolute right-[60px] top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur transition active:scale-90"
+          class="absolute right-[72px] top-4 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur transition active:scale-90"
           :class="inFavorites ? 'text-rose-300' : 'text-white'"
           :aria-label="inFavorites ? '取消收藏' : '收藏地点'"
           :aria-pressed="inFavorites"
@@ -52,7 +61,7 @@ const reminders = computed(() => departureReminders(props.spot))
           </svg>
         </button>
         <button
-          class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur"
+          class="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur"
           aria-label="关闭地点详情"
           @click="emit('close')"
         >
@@ -101,6 +110,14 @@ const reminders = computed(() => departureReminders(props.spot))
           </p>
         </section>
 
+        <section v-if="actionReady" class="rounded-2xl bg-white p-4 shadow-sm">
+          <h3 class="text-xs font-bold text-stone-900">导航目的地</h3>
+          <p class="mt-2 text-xs leading-5 text-stone-700">{{ spot.amapName || spot.name }}</p>
+          <p v-if="spot.amapName && spot.amapName !== spot.name" class="mt-1 text-[11px] leading-5 text-stone-500">
+            这是“{{ spot.name }}”对应的具体地图位置；景区范围较大时，请确认是否从这里开始游览。
+          </p>
+        </section>
+
         <section class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <h3 class="text-xs font-bold text-amber-900">出发前提醒</h3>
           <ul class="mt-1.5 space-y-1">
@@ -121,6 +138,7 @@ const reminders = computed(() => departureReminders(props.spot))
       </div>
 
       <div class="flex-none border-t border-stone-200 bg-[#f7f6f2]/95 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+        <p v-if="effectivePlanHint" class="mb-3 text-xs leading-5 text-amber-800" role="status">{{ effectivePlanHint }}</p>
         <div class="grid grid-cols-2 gap-3">
           <button
             class="rounded-2xl border border-primary-200 bg-white py-3.5 text-sm font-bold text-primary-700 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"

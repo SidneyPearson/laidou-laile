@@ -30,13 +30,14 @@ import { useGeolocation } from '../composables/useGeolocation'
 import { useFavorites } from '../composables/useFavorites'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import { haversineDist } from '../utils/geo'
-import { floatEmojis, timeGreeting } from '../utils/delight'
+import { floatEmojis, timeGreeting, celebratePlanAdded } from '../utils/delight'
 import { haptic } from '../utils/haptics'
 import {
   defaultHomePersonaCards,
   fetchHomePersonas,
   type HomePersonaCard,
 } from '../repositories/homePersonas'
+import { cityHeroImage } from '../assets/homepage/cityHeroes'
 import type { InspirationSpot, Persona } from '../types/explore'
 import { isFullDaySuggestedDuration, TODAY_PLAN_LIMIT } from '../types/todayPlan'
 
@@ -58,6 +59,9 @@ const weatherLoading = ref(false)
 
 const spots = ref<InspirationSpot[]>([])
 const spotsLoading = ref(true)
+/** 首屏启动遮罩：数据（城市/推荐/画像/天气）与封面图就绪前整页不揭开，
+ *  避免弱网下"先出背景图、画像模块几秒后才弹入"的割裂感。 */
+const booting = ref(true)
 const selectedSpot = ref<InspirationSpot | null>(null)
 const confirmReset = ref(false)
 /** 切换城市二次确认：当前城市有今日计划时，先确认再切换（各城市计划分别保留）。 */
@@ -222,20 +226,21 @@ function localFallback(cityName: string): InspirationSpot[] {
     .map(spot => ({ ...spot, verificationStatus: 'demo' as const, source: 'local_demo' as const }))
 }
 
-async function loadWeatherAndSpots() {
+async function loadWeatherAndSpots(): Promise<unknown> {
   const city = selectedCity.value
   if (!city?.center) {
     spots.value = []
     spotsLoading.value = false
-    return
+    return Promise.resolve()
   }
   const center = city.center
 
+  let weatherTask: Promise<unknown> = Promise.resolve()
   weatherController?.abort()
   if (weatherCoordsKey !== coordsKey(center)) {
     weatherController = new AbortController()
     weatherLoading.value = true
-    fetchCityContext(center.lat, center.lng, weatherController.signal)
+    weatherTask = fetchCityContext(center.lat, center.lng, weatherController.signal)
       .then((ctx) => {
         if (selectedCity.value?.adcode === city.adcode) {
           weather.value = ctx.weather
@@ -253,6 +258,7 @@ async function loadWeatherAndSpots() {
   }
 
   await loadSpots()
+  return weatherTask
 }
 
 /** 首页灵感采用编辑排序：先按后台推荐级别，再按同级 priority。
@@ -319,11 +325,10 @@ function isSameCity(a: RecommendationCity | null, b: RecommendationCity): boolea
   return !!a && a.adcode === b.adcode
 }
 
-/** 真正执行切换：切到该城市的计划桶、重置行程进度、记住选择。
+/** 真正执行切换：切到该城市的计划与行程桶、记住选择。
  *  各城市的今日计划分别保存，切回原城市会恢复，不再静默清空。 */
 function applyCitySwitch(next: RecommendationCity) {
   todayPlan.setActiveCity({ adcode: next.adcode, cityName: next.name })
-  todayJourney.reset()
   selectedCity.value = next
   setExploreCity(next)
 }
@@ -551,7 +556,7 @@ function handleSpotSelect(spot: InspirationSpot) {
 function navigateToSpot() {
   const spot = selectedSpot.value
   if (!spot || !selectedActionReady(spot)) return
-  openAmapNavigation(spot.amapName || spot.name, spot.lng as number, spot.lat as number)
+  openAmapNavigation(spot.amapName || spot.name, spot.lng as number, spot.lat as number, spot.name)
 }
 
 function toggleTodaySpot() {
@@ -576,7 +581,7 @@ function toggleTodaySpot() {
     haptic([28, 50, 28])
     showToast('已加入；这个地点建议游玩一整天')
   } else {
-    showToast('已加入今日计划')
+    showToast(celebratePlanAdded(todayPlan.count.value, TODAY_PLAN_LIMIT))
   }
 }
 
@@ -603,19 +608,37 @@ function setupScrollReveal() {
 /* -------------------- lifecycle -------------------- */
 
 onMounted(async () => {
-  // Homepage persona cards are editor-configurable; fall back to built-in
-  // defaults while loading so the first paint already shows all four cards.
-  fetchHomePersonas().then((cards) => { personaCards.value = cards }).catch(() => {})
+  // 画像卡后台可配置；失败时内置兜底卡已经是初始值。
+  const personaTask = fetchHomePersonas()
+    .then((cards) => { personaCards.value = cards })
+    .catch(() => {})
 
   const result = await loadCityRecommendations()
   cities.value = result.cities
+  let weatherTask: Promise<unknown> = Promise.resolve()
   if (result.cities.length > 0) {
     selectedCity.value = matchRememberedCity(exploreCity.value, result.cities) ?? result.cities[0]
     setExploreCity(selectedCity.value)
-    await loadWeatherAndSpots()
+    weatherTask = loadWeatherAndSpots()
   } else {
     spotsLoading.value = false
   }
+
+  const heroUrl = cityHeroImage(selectedCity.value?.name)
+  const heroTask = heroUrl ? new Promise<void>(resolve => {
+    const image = new Image()
+    image.onload = () => resolve()
+    image.onerror = () => resolve()
+    image.src = heroUrl
+  }) : Promise.resolve()
+
+  // 整页一次性揭开：等首屏数据 + 封面图都就绪；弱网最多等 3.2s 兜底，
+  // 超时后骨架屏/兜底文案接管，绝不把用户卡在加载屏上。
+  await Promise.race([
+    Promise.allSettled([personaTask, weatherTask, heroTask]),
+    new Promise<void>((resolve) => setTimeout(resolve, 3200)),
+  ])
+  booting.value = false
 
   // First-visit location sheet (only when the user has never dismissed it and
   // no city has been resolved yet).
@@ -627,6 +650,7 @@ onMounted(async () => {
     showLocationSheet.value = true
   }
 
+  // 内容在揭开遮罩后才挂载，滚动揭示观察器要在此时挂。
   await nextTick()
   setupScrollReveal()
 })
@@ -640,6 +664,18 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="home-page">
+    <!-- 首屏启动遮罩：数据就绪前不渲染页面内容，揭开即完整页面 -->
+    <Transition name="boot-fade">
+      <div v-if="booting" class="home-boot" aria-busy="true" aria-label="正在加载">
+        <div class="home-boot-brand">
+          <strong>来都来了</strong>
+          <em>City Inspiration</em>
+        </div>
+        <span class="home-boot-spinner" aria-hidden="true" />
+      </div>
+    </Transition>
+
+    <template v-if="!booting">
     <HomeHero
       :city="selectedCity"
       :weather="weather"
@@ -703,6 +739,8 @@ onBeforeUnmount(() => {
       <p class="home-footer" @click="tapFooter">{{ footerCopy }}</p>
     </div>
 
+    </template>
+
     <!-- 固定弹层传送到 body，避免 iOS 独立滚动层形成层叠上下文后被 App Shell 底栏盖住。 -->
     <Teleport to="body">
       <Transition name="sheet" :duration="220">
@@ -749,7 +787,7 @@ onBeforeUnmount(() => {
         <div v-if="showCityConfirm" class="sheet-mask" @click.self="cancelCitySwitch">
           <div class="sheet-panel sheet-panel--dark confirm-sheet">
             <h3>切换到{{ pendingCity?.name.replace(/市$/, '') }}？</h3>
-            <p>切换后，当前「<strong>{{ currentCityLabel }}</strong>」的今日计划会暂时收起，切回该城市时自动恢复。</p>
+            <p>切换后，当前「<strong>{{ currentCityLabel }}</strong>」的地点和打卡进度会暂时收起，切回该城市时一起恢复。</p>
             <div class="confirm-actions">
               <button class="btn-ghost" type="button" @click="cancelCitySwitch">取消</button>
               <button class="btn-danger" type="button" @click="confirmCitySwitch">切换城市</button>
@@ -798,6 +836,64 @@ onBeforeUnmount(() => {
   max-width: 480px;
   margin: 0 auto;
   overflow-x: hidden;
+}
+
+/* ===== 首屏启动遮罩：数据齐了整页再揭开 ===== */
+.home-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(199, 255, 31, 0.08), transparent 55%),
+    #02070e;
+}
+.home-boot-brand {
+  text-align: center;
+}
+.home-boot-brand strong {
+  display: block;
+  font-family: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', Georgia, 'Songti SC', 'STSong', serif;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #f7f9fb;
+}
+.home-boot-brand em {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-indent: 0.32em;
+  color: rgba(255, 255, 255, 0.42);
+}
+.home-boot-spinner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(199, 255, 31, 0.16);
+  border-top-color: var(--accent);
+  animation: boot-spin 0.8s linear infinite;
+}
+@keyframes boot-spin {
+  to { transform: rotate(360deg); }
+}
+.boot-fade-leave-active {
+  visibility: visible;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.boot-fade-leave-to {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-boot-spinner { animation-duration: 1.6s; }
 }
 
 /* ===== Scroll reveal ===== */

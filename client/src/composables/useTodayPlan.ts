@@ -380,16 +380,29 @@ export function useTodayPlan() {
   function setActiveCity(descriptor: { adcode?: string | null; cityName?: string | null }): string | null {
     const key = resolveCityKey(descriptor)
     if (!key) return activeCityKey.value
+    const nextCityName = normalizeCityName(descriptor.cityName)
+    // 逆地理编码返回的通常是区县 adcode（如东城区 110101），策展城市使用
+    // 城市级 adcode（北京 110000）。城市名一致时两者必须继续使用同一个桶，
+    // 否则从 Swipe 页进入普通探索页会看起来像把刚选的计划清空了。
+    if (activeCityKey.value && nextCityName && nextCityName === activeCityName) {
+      return activeCityKey.value
+    }
     if (key === activeCityKey.value) {
-      if (descriptor.cityName) activeCityName = normalizeCityName(descriptor.cityName)
+      if (nextCityName) activeCityName = nextCityName
       return key
     }
     if (activeCityKey.value) cityBuckets[activeCityKey.value] = [...spots.value]
     activeCityKey.value = key
-    activeCityName = normalizeCityName(descriptor.cityName) || cityBuckets[key]?.[0]?.city?.replace(/市$/, '') || ''
+    activeCityName = nextCityName || cityBuckets[key]?.[0]?.city?.replace(/市$/, '') || ''
     spots.value = cityBuckets[key] ? [...cityBuckets[key]] : []
     persist()
     return key
+  }
+
+  function spotsForCity(cityName: string): TodaySpot[] {
+    const name = normalizeCityName(cityName)
+    if (name === activeCityName) return spots.value
+    return Object.values(cityBuckets).find(list => normalizeCityName(list[0]?.city) === name) ?? []
   }
 
   function hasSpot(id: string): boolean {
@@ -489,6 +502,7 @@ export function useTodayPlan() {
     storageAvailable,
     setActiveCity,
     hasSpot,
+    spotsForCity,
     addSpot,
     removeSpot,
     clear,

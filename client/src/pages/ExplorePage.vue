@@ -18,6 +18,7 @@ import {
 import { fetchCityContext, fetchExploreRecommendations } from '../services/exploreApi'
 import { openAmapNavigation } from '../utils/amapNavigation'
 import { haptic } from '../utils/haptics'
+import { celebratePlanAdded } from '../utils/delight'
 import type { ExploreCategory, InspirationSpot } from '../types/explore'
 import { isFullDaySuggestedDuration, TODAY_PLAN_LIMIT } from '../types/todayPlan'
 
@@ -209,9 +210,8 @@ async function applyCity(next: RecommendationCity) {
   const switchedCity = city.value?.adcode !== next.adcode
   if (switchedCity) {
     // 按城市分别保存今日计划：切到目标城市的计划桶（没有则从空开始），
-    // 原城市的计划保留在本地，切回时恢复。同时重置上一城市的行程进度。
+    // 原城市的计划保留在本地，切回时恢复。行程进度也随城市恢复。
     todayPlan.setActiveCity({ adcode: next.adcode, cityName: next.name })
-    todayJourney.reset()
   }
   setExploreCity(next)
   showPicker.value = false
@@ -257,7 +257,7 @@ function toggleToday(spot: InspirationSpot) {
     if (isFullDaySuggestedDuration(spot.suggestedDuration)) {
       haptic([28, 50, 28])
       showToast('已加入；这个地点建议游玩一整天')
-    } else showToast('已加入今日计划')
+    } else showToast(celebratePlanAdded(todayPlan.count.value, TODAY_PLAN_LIMIT))
   }
   else if (result.status === 'duplicate') showToast('这个地点已经在今日计划里')
   else showToast('这个地点暂时不能加入今日计划')
@@ -286,7 +286,7 @@ function toggleSelectedSpot() {
 function navigateToSelected() {
   const spot = selectedSpot.value
   if (!spot || !actionReady(spot)) return
-  openAmapNavigation(spot.amapName || spot.name, spot.lng as number, spot.lat as number)
+  openAmapNavigation(spot.amapName || spot.name, spot.lng as number, spot.lat as number, spot.name)
 }
 
 async function restoreLegacyRecentCity() {
@@ -495,7 +495,7 @@ onBeforeUnmount(() => {
         <section class="city-confirm" role="alertdialog" aria-modal="true" aria-labelledby="city-confirm-title">
           <p class="city-confirm-eyebrow">切换城市</p>
           <h2 id="city-confirm-title">要切换到{{ pendingCity.name.replace(/市$/, '') }}吗？</h2>
-          <p>切换后，当前「{{ city?.name.replace(/市$/, '') }}」的今日计划会暂时收起，切回该城市时自动恢复。</p>
+          <p>切换后，当前「{{ city?.name.replace(/市$/, '') }}」的地点和打卡进度会暂时收起，切回该城市时一起恢复。</p>
           <div class="city-confirm-actions">
             <button type="button" class="city-confirm-cancel" @click="cancelCitySwitch">取消</button>
             <button type="button" class="city-confirm-submit" @click="confirmCitySwitch">继续切换</button>
@@ -526,14 +526,15 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .explore-page { --accent:#c7ff1f; width:100%; max-width:480px; min-height:100dvh; margin:0 auto; padding-bottom:110px; overflow-x:hidden; background:#02070e; color:#fff; }
-.explore-header { position:sticky; z-index:30; top:0; display:flex; align-items:center; justify-content:space-between; padding:max(18px,env(safe-area-inset-top)) 18px 14px; border-bottom:1px solid rgba(255,255,255,.07); background:rgba(2,7,14,.9); backdrop-filter:blur(18px); }
+.explore-header { position:sticky; z-index:30; top:0; display:flex; align-items:center; justify-content:space-between; padding:max(18px,env(safe-area-inset-top)) 18px 14px; border-bottom:1px solid rgba(255,255,255,.07); /* 吸顶栏不用毛玻璃：列表滚动时 blur 每帧重算导致掉帧，纯色视觉无差 */ background:rgba(2,7,14,.97); }
 .explore-eyebrow { color:#c7ff1f; font-size:9px; font-weight:800; letter-spacing:.18em; }
 .explore-header h1 { margin-top:3px; font-size:24px; font-weight:900; letter-spacing:-.03em; }
 .city-switch { display:flex; height:36px; align-items:center; gap:6px; padding:0 12px; border:1px solid rgba(255,255,255,.13); border-radius:999px; background:rgba(255,255,255,.05); color:rgba(255,255,255,.74); font-size:11px; font-weight:700; }
 .explore-tools { position:sticky; z-index:20; top:76px; padding:12px 0 9px; background:linear-gradient(180deg,#02070e 78%,rgba(2,7,14,.86)); }
 .search-box { display:flex; height:48px; align-items:center; gap:10px; margin:0 16px; padding:0 14px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:#101620; color:rgba(255,255,255,.48); }
 .search-box:focus-within { border-color:rgba(199,255,31,.5); box-shadow:0 0 0 3px rgba(199,255,31,.06); }
-.search-box input { min-width:0; flex:1; border:0; outline:0; background:transparent; color:#fff; font-size:13px; }
+/* 与城市搜索保持一致，避免 iPhone 微信聚焦小字号输入框时自动放大视口。 */
+.search-box input { min-width:0; flex:1; border:0; outline:0; background:transparent; color:#fff; font-size:16px; }
 .search-box input::-webkit-search-cancel-button { display:none; }
 .search-box input::placeholder { color:rgba(255,255,255,.36); }
 .search-box button { color:rgba(255,255,255,.5); font-size:20px; }
@@ -553,7 +554,7 @@ onBeforeUnmount(() => {
 .view-switch button.active { background:rgba(255,255,255,.12); color:#c7ff1f; }
 .spot-feed { padding:0 16px 32px; }
 .featured-card { position:relative; height:290px; overflow:hidden; border:1px solid rgba(255,255,255,.13); border-radius:26px; background:#101720; box-shadow:0 18px 40px rgba(0,0,0,.32); }
-.featured-favorite { position:absolute; z-index:4; top:14px; right:14px; display:grid; width:38px; height:38px; place-items:center; border:1px solid rgba(255,255,255,.24); border-radius:50%; background:rgba(2,7,14,.48); color:#fff; backdrop-filter:blur(8px); }.featured-favorite svg { width:18px; height:18px; }.featured-favorite.active { color:#fda4af; background:rgba(40,12,20,.72); }
+.featured-favorite { position:absolute; z-index:4; top:14px; right:14px; display:grid; width:38px; height:38px; place-items:center; border:1px solid rgba(255,255,255,.24); border-radius:50%; background:rgba(2,7,14,.72); color:#fff; }.featured-favorite svg { width:18px; height:18px; }.featured-favorite.active { color:#fda4af; background:rgba(40,12,20,.72); }
 .featured-shade { position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.04) 28%,rgba(2,7,14,.3) 50%,rgba(2,7,14,.98) 100%); }
 .featured-content { position:absolute; right:18px; bottom:17px; left:18px; }
 .feature-badge,.selected-badge { display:inline-flex; padding:5px 9px; border-radius:999px; font-size:9px; font-weight:800; }
@@ -571,7 +572,7 @@ onBeforeUnmount(() => {
 .spot-row-tags { display:flex; gap:5px; margin-top:8px; overflow:hidden; }
 .explore-empty,.city-empty { display:flex; min-height:54dvh; flex-direction:column; align-items:center; justify-content:center; padding:36px; text-align:center; }.explore-empty>span { color:#c7ff1f; font-size:34px; }.explore-empty h2,.city-empty h2 { margin-top:12px; font-size:20px; font-weight:900; }.explore-empty p,.city-empty>p:not(.explore-eyebrow) { margin-top:8px; color:rgba(255,255,255,.46); font-size:12px; line-height:1.8; }.explore-empty button,.city-empty button { margin-top:20px; padding:11px 18px; border-radius:999px; background:#c7ff1f; color:#071007; font-size:12px; font-weight:900; }
 .city-orbit { display:grid; width:84px; height:84px; margin-bottom:22px; place-items:center; border:1px solid rgba(199,255,31,.28); border-radius:999px; background:radial-gradient(circle,rgba(199,255,31,.16),transparent 68%); box-shadow:0 0 36px rgba(199,255,31,.1); }.city-orbit span { color:#c7ff1f; font-size:34px; }
-.sheet-mask { position:fixed; z-index:70; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.62); backdrop-filter:blur(5px); }.sheet-panel { width:100%; max-width:480px; max-height:84dvh; overflow-y:auto; padding:20px; border:1px solid rgba(255,255,255,.13); border-bottom:0; border-radius:28px 28px 0 0; background:linear-gradient(180deg,#181e28,#090e16); }
+.sheet-mask { position:fixed; z-index:70; inset:0; display:flex; align-items:flex-end; justify-content:center; /* mask 本身 62% 黑，毛玻璃视觉无收益还拖慢弹层动画 */ background:rgba(0,0,0,.62); }.sheet-panel { width:100%; max-width:480px; max-height:84dvh; overflow-y:auto; padding:20px; border:1px solid rgba(255,255,255,.13); border-bottom:0; border-radius:28px 28px 0 0; background:linear-gradient(180deg,#181e28,#090e16); }
 .explore-toast { position:fixed; z-index:90; bottom:104px; left:50%; max-width:calc(100% - 40px); padding:10px 16px; transform:translateX(-50%); border:1px solid rgba(255,255,255,.12); border-radius:999px; background:rgba(18,24,33,.95); color:#fff; font-size:11px; font-weight:700; box-shadow:0 12px 30px rgba(0,0,0,.35); }
 .city-confirm-mask { z-index:100; }
 .city-confirm { width:calc(100% - 32px); max-width:420px; padding:22px 20px 20px; border:1px solid rgba(255,255,255,.12); border-radius:24px; background:#151c26; box-shadow:0 20px 60px rgba(0,0,0,.42); color:#fff; }

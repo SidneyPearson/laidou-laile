@@ -12,8 +12,8 @@ export const PERSONAS: PersonaOption[] = [
   // Keep `couple` as the stable internal id; the user-facing name is 约会.
   { id: 'couple', name: '约会', emoji: '🌙', tagline: '氛围、拍照和夜景' },
   { id: 'family', name: '亲子', emoji: '🎈', tagline: '少折返，留够休息时间' },
-  { id: 'lazy', name: '懒人', emoji: '🛋️', tagline: '点位少，但每处都能待' },
-  { id: 'urban', name: '都市丽人', emoji: '🥂', tagline: '街区、展览与精致体验' },
+  { id: 'lazy', name: '自由', emoji: '🛋️', tagline: '点位少，但每处都能待' },
+  { id: 'urban', name: '精致', emoji: '🥂', tagline: '街区、展览与精致体验' },
 ]
 
 export const EXPLORE_CATEGORIES: CategoryOption[] = [

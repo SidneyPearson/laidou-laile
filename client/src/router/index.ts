@@ -17,6 +17,8 @@ export const router = createRouter({
     { path: '/today', name: 'today-plan', component: () => import('../pages/TodayPlanPage.vue') },
     { path: '/favorites', name: 'favorites', component: () => import('../pages/FavoritesPage.vue') },
     { path: '/me', name: 'me', component: () => import('../pages/MePage.vue') },
+    { path: '/visited', name: 'visited-cities', component: () => import('../pages/VisitedCitiesPage.vue') },
+    { path: '/tickets', name: 'my-tickets', component: () => import('../pages/MyTicketsPage.vue') },
     { path: '/admin/login', name: 'admin-login', component: () => import('../pages/admin/AdminLoginPage.vue') },
     {
       path: '/admin', component: () => import('../layouts/AdminLayout.vue'), meta: { requiresAdmin: true },

@@ -8,10 +8,13 @@ import CityTicketSheet from '../components/today/CityTicketSheet.vue'
 import { PERSONAS } from '../data/mockExploreSpots'
 import { useTodayPlan } from '../composables/useTodayPlan'
 import { useTodayJourney } from '../composables/useTodayJourney'
+import { useFootprints } from '../composables/useFootprints'
+import { useTickets } from '../composables/useTickets'
 import { useFavorites } from '../composables/useFavorites'
 import { suggestTodayOrder, ApiRequestError } from '../services/api'
 import { fetchExploreRecommendations } from '../services/exploreApi'
 import { openAmapNavigation } from '../utils/amapNavigation'
+import { planEffort } from '../utils/planEffort'
 import { haversineDist } from '../utils/geo'
 import { haptic, hapticSelect, hapticSuccess } from '../utils/haptics'
 import { burstConfetti } from '../utils/delight'
@@ -23,6 +26,11 @@ const router = useRouter()
 const plan = useTodayPlan()
 const journey = useTodayJourney()
 const favorites = useFavorites()
+const tickets = useTickets()
+const footprints = useFootprints()
+const footprintRecorded = ref(false)
+const lastArrived = ref<{ id: string; name: string } | null>(null)
+let undoTimer: ReturnType<typeof setTimeout> | null = null
 const selectedSpot = ref<TodaySpot | null>(null)
 const suggesting = ref(false)
 const suggestionError = ref('')
@@ -62,7 +70,7 @@ const durationLabel = computed(() => {
 const durationSummary = computed(() => {
   if (plan.totalStayMinutes.value === 0) return '停留时长待补充'
   const missing = plan.spots.value.filter(spot => !spot.suggestedDuration.trim()).length
-  return `预计停留约 ${durationLabel.value}${missing ? `，另有 ${missing} 个地点待补充时长` : ''}`
+  return `预计停留约 ${durationLabel.value}${missing ? `，另有 ${missing} 个地点待补充时长` : ''}（不含交通与休息）`
 })
 const maxSpanMeters = computed(() => {
   let max = 0
@@ -75,17 +83,8 @@ const maxSpanMeters = computed(() => {
   }
   return max
 })
-const pressureNote = computed(() => {
-  if (plan.count.value === 0) return ''
-  if (!sameCity.value) return `你选了 ${plan.count.value} 个地方，涉及 ${cityLabel.value}。跨城安排不适合放在同一天，建议分开游玩。`
-  if (maxSpanMeters.value >= 15_000) {
-    return `你选了 ${plan.count.value} 个地方，${durationSummary.value}。地点跨度较大，建议删掉一个，玩得会更轻松。`
-  }
-  if (plan.totalStayMinutes.value >= 480 || plan.count.value >= 5) {
-    return `你选了 ${plan.count.value} 个地方，${durationSummary.value}。安排比较充实，记得给交通和休息留出时间。`
-  }
-  return `你选了 ${plan.count.value} 个地方，${durationSummary.value}。顺序可以继续自由调整。`
-})
+const pressureNote = computed(() => plan.count.value > 0 && !sameCity.value
+  ? `涉及 ${cityLabel.value}，建议分开安排在不同天。` : '')
 const planIds = computed(() => plan.spots.value.map(spot => spot.id))
 const completedSet = computed(() => new Set(journey.completedIds.value))
 const currentSpot = computed(() =>
@@ -100,18 +99,7 @@ const remainingSpots = computed(() =>
 const journeyProgress = computed(() =>
   plan.count.value > 0 ? Math.round(completedSpots.value.length / plan.count.value * 100) : 0,
 )
-const rhythm = computed(() => {
-  let score = 1
-  if (plan.count.value >= 3 || plan.totalStayMinutes.value >= 240) score += 1
-  if (plan.count.value >= 5 || plan.totalStayMinutes.value >= 420 || maxSpanMeters.value >= 10_000) score += 1
-  if (plan.count.value >= 6 || plan.totalStayMinutes.value >= 540 || maxSpanMeters.value >= 18_000) score += 1
-  return [
-    { label: '松弛散步局', note: '慢慢走，给偶遇留点空间。' },
-    { label: '刚刚好的一天', note: '有安排，也有喘息的余地。' },
-    { label: '城市特种兵', note: '节奏偏满，交通衔接很重要。' },
-    { label: '这不是计划，是拉练', note: '建议删掉一站，快乐会更多。' },
-  ][score - 1]
-})
+const rhythm = computed(() => planEffort(plan.totalStayMinutes.value, plan.count.value, maxSpanMeters.value))
 const suggestedNames = computed(() => {
   if (!pendingOrder.value) return ''
   const byId = new Map(plan.spots.value.map(spot => [spot.id, spot.name]))
@@ -159,6 +147,9 @@ function startJourney() {
 }
 
 function resetJourney() {
+  lastArrived.value = null
+  if (undoTimer) clearTimeout(undoTimer)
+  footprintRecorded.value = false
   journey.reset()
   pickedName.value = ''
   showTicket.value = false
@@ -184,6 +175,23 @@ function confirmClearTodayPlan() {
   }, 1800)
 }
 
+/** 生成票根：先落一条票根记录（可在「我的」查看历史票根），
+ *  同城同日重复生成只刷新；再打开票根弹层出图。 */
+function openTicket() {
+  const ticketCity = completedSpots.value[0]?.city
+    ?? plan.cities.value[0]
+    ?? '我的城市'
+  tickets.recordTicket({
+    cityAdcode: plan.cityKey.value,
+    journeyId: journey.journeyId.value,
+    cityName: ticketCity,
+    persona: currentPersona.value.name,
+    duration: durationLabel.value,
+    spots: completedSpots.value,
+  })
+  showTicket.value = true
+}
+
 /** 票根保存成功后：关掉弹层回到页面主体，并用顶部横幅确认「已存入相册」。 */
 function onTicketSaved() {
   showTicket.value = false
@@ -195,9 +203,22 @@ function onTicketSaved() {
   }, 2600)
 }
 
+function saveCompletedFootprint() {
+  footprintRecorded.value = footprints.recordCompletion({
+    status: journey.status.value,
+    completedAt: journey.completedAt.value,
+    completedIds: journey.completedIds.value,
+    cityAdcode: plan.cityKey.value,
+    journeyId: journey.journeyId.value,
+    spots: plan.spots.value,
+  })
+}
+
 function completeCurrent() {
   const spot = currentSpot.value
   if (!spot || !journey.completeSpot(spot.id, planIds.value)) return
+  saveCompletedFootprint()
+  offerUndo(spot.id)
   hapticSuccess()
   pickedName.value = ''
   const allDone = journey.status.value === 'complete'
@@ -208,8 +229,32 @@ function completeCurrent() {
 
 function completeSpot(id: string) {
   if (!journey.completeSpot(id, planIds.value)) return
+  saveCompletedFootprint()
+  offerUndo(id)
   hapticSuccess()
   celebrateArrival(journey.status.value === 'complete')
+}
+
+function offerUndo(id: string) {
+  if (undoTimer) clearTimeout(undoTimer)
+  lastArrived.value = { id, name: plan.spots.value.find(s => s.id === id)?.name || '地点' }
+  undoTimer = setTimeout(() => { lastArrived.value = null }, 8000)
+}
+
+function undoArrival(id: string) {
+  const completedAt = journey.completedAt.value
+  const journeyId = journey.journeyId.value
+  if (!journey.undoSpot(id, planIds.value)) return
+  footprints.invalidateCompletion(journeyId, completedAt, planIds.value)
+  tickets.invalidateJourney(journeyId)
+  footprintRecorded.value = false
+  showTicket.value = false
+  lastArrived.value = null
+  if (undoTimer) clearTimeout(undoTimer)
+  clearNotice.value = '已改为未到，其他地点的打卡仍保留'
+  if (clearNoticeTimer) clearTimeout(clearNoticeTimer)
+  clearNoticeTimer = setTimeout(() => { clearNotice.value = '' }, 4000)
+  hapticSelect()
 }
 
 /** 打卡成功的欢愉瞬间：单站小爆彩，全部到达来一场大的。 */
@@ -260,7 +305,7 @@ function moveSpot(id: string, direction: -1 | 1) {
 }
 
 function navigate(spot: TodaySpot) {
-  openAmapNavigation(spot.amapName || spot.name, spot.lng, spot.lat)
+  openAmapNavigation(spot.amapName || spot.name, spot.lng, spot.lat, spot.name)
 }
 
 function toggleFavorite(spot: TodaySpot) {
@@ -417,9 +462,13 @@ function restoreOriginalOrder() {
 watch(planIds, ids => journey.syncWithSpots(ids), { immediate: true })
 
 // 进入今日计划页时强制回到顶部：从探索页长列表点进来时不能继承旧 scrollY。
-onMounted(() => scrollToTop())
+onMounted(() => {
+  saveCompletedFootprint()
+  scrollToTop()
+})
 
 onBeforeUnmount(() => {
+  if (undoTimer) clearTimeout(undoTimer)
   if (pickTimer) clearInterval(pickTimer)
   if (clearNoticeTimer) clearTimeout(clearNoticeTimer)
 })
@@ -448,6 +497,11 @@ onBeforeUnmount(() => {
       ✓ {{ clearNotice }}
     </p>
 
+    <div v-if="lastArrived" class="sticky top-[calc(60px+max(18px,env(safe-area-inset-top)))] z-20 mx-5 mt-3 flex items-center justify-between gap-3 rounded-2xl bg-stone-900 px-4 py-2 text-xs text-white shadow-lg" role="status">
+      <span>{{ lastArrived.name }} · 已标记到过</span>
+      <button type="button" class="shrink-0 rounded-lg px-3 py-3 font-bold text-lime-300" @click="undoArrival(lastArrived.id)">撤销</button>
+    </div>
+    <p v-if="!journey.storageAvailable.value || !footprints.storageAvailable.value || !tickets.storageAvailable.value" role="alert" class="mx-5 mt-3 text-xs text-amber-800">浏览器暂时无法完整保存行程与足迹，关闭后可能丢失。</p>
     <div v-if="plan.count.value > 0" class="space-y-5 px-5 pt-5">
       <section class="rounded-[26px] bg-stone-900 p-5 text-white shadow-[0_14px_35px_rgba(44,44,44,0.12)]">
         <div class="flex items-center justify-between gap-3">
@@ -466,18 +520,21 @@ onBeforeUnmount(() => {
             <p class="mt-1 text-xs text-white/60">{{ durationSummary }}</p>
           </div>
         </div>
-        <p class="mt-4 rounded-2xl bg-white/10 px-3 py-2.5 text-[10px] leading-4 text-white/75">
+        <p v-if="pressureNote" class="mt-4 rounded-2xl bg-white/10 px-3 py-2.5 text-[10px] leading-4 text-white/75">
           {{ pressureNote }}
+        </p>
+        <p v-if="plan.count.value > 1" class="mt-3 text-[10px] leading-4 text-white/65">
+          最远两站直线相隔约 {{ (maxSpanMeters / 1000).toFixed(1) }} 公里；实际交通路线与用时请查看导航。
         </p>
         <div class="mt-4">
           <div class="flex items-center justify-between text-[10px]">
-            <span class="font-bold text-lime-300">{{ rhythm.label }}</span>
-            <span class="text-white/40">松弛 ··· 特种兵</span>
+            <span class="font-bold text-lime-300">行程强度：{{ rhythm.label }}</span>
+            <span class="text-white/40">轻松 ··· 较紧</span>
           </div>
           <div class="relative mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
             <div
               class="h-full rounded-full bg-gradient-to-r from-emerald-300 to-lime-300 transition-all duration-500"
-              :style="{ width: `${Math.max(16, Math.min(100, (plan.count.value / TODAY_PLAN_LIMIT) * 100))}%` }"
+              :style="{ width: `${rhythm.percent}%` }"
             />
           </div>
           <p class="mt-2 text-[10px] text-white/60">{{ rhythm.note }}</p>
@@ -529,7 +586,11 @@ onBeforeUnmount(() => {
         <p class="text-[10px] font-black tracking-[0.14em]">TODAY COMPLETED</p>
         <h2 class="mt-2 text-2xl font-black">今天没有白来。</h2>
         <p class="mt-2 text-[11px] leading-5 text-stone-700">{{ plan.count.value }} 个地点全部到达，给今天留一张城市票根吧。</p>
-        <button class="mt-4 w-full rounded-2xl bg-stone-900 py-3.5 text-sm font-bold text-lime-300" @click="showTicket = true">
+        <button v-if="footprintRecorded" class="mt-3 text-xs font-bold underline underline-offset-4" @click="router.replace({ name: 'visited-cities' })">
+          足迹已点亮 · 去地图看看 →
+        </button>
+        <p v-if="!footprints.storageAvailable.value" role="alert" class="mt-2 text-xs">浏览器暂时无法保存足迹，关闭后可能丢失。</p>
+        <button class="mt-4 w-full rounded-2xl bg-stone-900 py-3.5 text-sm font-bold text-lime-300" @click="openTicket">
           生成今日城市票根 →
         </button>
         <button class="mt-2 w-full py-2 text-[10px] font-bold text-stone-700 underline decoration-stone-500/40 underline-offset-4" @click="resetJourney">
@@ -622,6 +683,7 @@ onBeforeUnmount(() => {
           @details="selectedSpot = spot"
           @navigate="navigate(spot)"
           @complete="completeSpot(spot.id)"
+          @undo="undoArrival(spot.id)"
         />
       </section>
     </div>

@@ -65,9 +65,8 @@ function onMaskClick() {
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  /* mask 已压暗，毛玻璃在弹层滑入动画里逐帧重算不划算。 */
   background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
 }
 
 .loc-sheet {
@@ -80,8 +79,6 @@ function onMaskClick() {
   background:
     linear-gradient(180deg, rgba(24, 29, 39, 0.97), rgba(10, 14, 22, 0.99));
   box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.48);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
 }
 
 .grabber {

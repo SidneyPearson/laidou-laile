@@ -136,7 +136,9 @@ export async function suggestOrder(
     })),
     reason: changed
       ? '在保留全部已选地点的前提下，按相邻地点距离给出较少折返的参考顺序。'
-      : '你当前的顺序已经比较连贯，可以按这个顺序作为参考。',
+      : spanKm >= 15
+        ? `你当前的顺序折返已经较少，不过全程跨度约 ${Math.round(spanKm)} 公里，路程不短，出发前建议再精简一处。`
+        : '你当前的顺序已经比较连贯，可以按这个顺序作为参考。',
     reminders,
     source: 'deterministic_distance',
   }

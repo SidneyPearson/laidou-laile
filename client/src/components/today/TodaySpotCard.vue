@@ -19,6 +19,7 @@ const emit = defineEmits<{
   details: []
   navigate: []
   complete: []
+  undo: []
 }>()
 </script>
 
@@ -81,7 +82,7 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <div class="grid border-t border-stone-100" :class="journeyState === 'current' ? 'grid-cols-3' : 'grid-cols-2'">
+    <div class="grid border-t border-stone-100" :class="journeyState === 'current' || journeyState === 'completed' ? 'grid-cols-3' : 'grid-cols-2'">
       <button class="py-2.5 text-[10px] font-semibold text-stone-500" @click="emit('details')">
         查看详情
       </button>
@@ -95,6 +96,8 @@ const emit = defineEmits<{
       >
         ✓ 到过了
       </button>
+      <button v-if="journeyState === 'completed'" class="border-l border-stone-100 py-3 text-[10px] font-semibold text-stone-600"
+        @click="emit('undo')">改为未到</button>
     </div>
   </article>
 </template>

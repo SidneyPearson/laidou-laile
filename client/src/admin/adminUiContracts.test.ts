@@ -14,6 +14,8 @@ const adminSources = [adminLayout, citySwitcher, adminComponents, spotEditPage, 
 describe('admin UI contracts', () => {
   it('keeps credentials out of local storage and uses password autocomplete', () => {
     expect(loginPage).toContain('autocomplete="current-password"')
+    expect(loginPage).toContain('min-h-[100dvh]')
+    expect(loginPage).not.toContain('grid min-h-full place-items-center')
     expect(authSource).not.toContain('localStorage')
     expect(authSource).not.toContain('sessionStorage')
     expect(citySwitcher).not.toContain('localStorage')

@@ -7,11 +7,12 @@ import { useGeolocation } from '../composables/useGeolocation'
 import { usePersona } from '../composables/usePersona'
 import { useTodayJourney } from '../composables/useTodayJourney'
 import { useTodayPlan } from '../composables/useTodayPlan'
+import { useFootprints } from '../composables/useFootprints'
+import { useTickets } from '../composables/useTickets'
 import CityLocationButton from '../components/home/CityLocationButton.vue'
 import LocationSheet from '../components/home/LocationSheet.vue'
 import CityPicker from '../components/CityPicker.vue'
 import {
-  defaultHomePersonaCards,
   fetchHomePersonas,
   type HomePersonaCard,
 } from '../repositories/homePersonas'
@@ -26,6 +27,8 @@ const router = useRouter()
 const favorites = useFavorites()
 const plan = useTodayPlan()
 const journey = useTodayJourney()
+const tickets = useTickets()
+const footprints = useFootprints()
 const { city, setExploreCity } = useExploreCity()
 const { coords, error: locationError, requestLocation } = useGeolocation()
 const { persona, hasChosenPersona, setPersona, resetPersona } = usePersona()
@@ -36,7 +39,9 @@ const showCityPicker = ref(false)
 const pendingCity = ref<RecommendationCity | null>(null)
 const showCityConfirm = ref(false)
 const toast = ref('')
-const personaCards = ref<HomePersonaCard[]>(defaultHomePersonaCards())
+// 后台启用画像返回前不渲染本地旧标签；否则后台调整启用项后，首帧会先显示
+// 旧列表再闪成真实列表。固定骨架负责维持版式，接口失败后才使用仓库兜底。
+const personaCards = ref<HomePersonaCard[]>([])
 const personasLoaded = ref(false)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 let personasController: AbortController | null = null
@@ -110,7 +115,6 @@ function openLocationSheet() {
 
 function applyCitySwitch(next: RecommendationCity) {
   plan.setActiveCity({ adcode: next.adcode, cityName: next.name })
-  journey.reset()
   setExploreCity(next)
   showToast(`已切换到${next.name.replace(/市$/, '')}`)
 }
@@ -241,12 +245,38 @@ onBeforeUnmount(() => {
       </button>
     </section>
 
+    <button type="button" class="footprint-banner" @click="router.replace({ name: 'visited-cities' })">
+      <span class="footprint-globe" aria-hidden="true">🗺️</span>
+      <span class="footprint-copy">
+        <b>点亮我的足迹地图</b>
+        <small>{{ footprints.visitedCount.value }} 座城市已点亮 · 完成行程自动点亮</small>
+      </span>
+      <em>→</em>
+    </button>
+
     <section class="panel persona-panel" aria-labelledby="persona-title">
       <div class="panel-head">
         <div><p>MY PERSONA</p><h2 id="persona-title">我的城市画像</h2></div>
       </div>
 
-      <div class="persona-layout" :class="{ 'is-unselected': !hasVisiblePersona }" aria-live="polite">
+      <div
+        v-if="!personasLoaded"
+        class="persona-layout persona-layout--loading"
+        :class="{ 'is-unselected': !hasChosenPersona }"
+        aria-label="正在同步城市画像"
+        aria-busy="true"
+      >
+        <div v-if="hasChosenPersona" class="persona-portrait persona-skeleton" aria-hidden="true" />
+        <div class="persona-visual-copy" aria-hidden="true">
+          <i class="persona-skeleton persona-skeleton--title" />
+          <i class="persona-skeleton persona-skeleton--copy" />
+          <div class="persona-chip-row persona-chip-row--loading">
+            <i v-for="index in 4" :key="index" class="persona-skeleton" />
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="persona-layout" :class="{ 'is-unselected': !hasVisiblePersona }" aria-live="polite">
         <div v-if="hasVisiblePersona && currentPersonaCard" class="persona-portrait" aria-hidden="true">
           <img :src="currentPersonaCard.imageUrl" alt="" decoding="async" @error="onPersonaImageError">
         </div>
@@ -277,6 +307,7 @@ onBeforeUnmount(() => {
         <button type="button" @click="router.replace({ name: 'explore' })"><i>⌁</i><span><b>探索城市灵感</b><small>继续看已验证的策展地点</small></span><em>→</em></button>
         <button type="button" @click="router.replace({ name: 'today-plan' })"><i>✦</i><span><b>打开今日计划</b><small>{{ journeyLabel }}</small></span><em>→</em></button>
         <button type="button" @click="router.replace({ name: 'favorites' })"><i>♡</i><span><b>查看我的收藏</b><small>{{ favorites.count.value }} 个地点，跨城市保留</small></span><em>→</em></button>
+        <button type="button" @click="router.replace({ name: 'my-tickets' })"><i>🎫</i><span><b>我的城市票根</b><small>{{ tickets.tickets.value.length }} 张票根，回看走过的城市</small></span><em>→</em></button>
       </div>
     </section>
 
@@ -313,7 +344,7 @@ onBeforeUnmount(() => {
         <section class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="city-switch-title">
           <p>切换城市</p>
           <h2 id="city-switch-title">切换到{{ pendingCity?.name.replace(/市$/, '') }}？</h2>
-          <span>当前「{{ cityLabel }}」的今日计划会暂时收起，切回该城市时自动恢复。</span>
+          <span>当前「{{ cityLabel }}」的地点和打卡进度会暂时收起，切回该城市时一起恢复。</span>
           <div>
             <button type="button" @click="cancelCitySwitch">取消</button>
             <button type="button" class="danger" @click="confirmCitySwitch">切换城市</button>
@@ -342,19 +373,27 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .me-page { --accent:#c7ff1f; width:100%; max-width:480px; min-height:100dvh; margin:0 auto; padding:0 16px calc(112px + env(safe-area-inset-bottom)); overflow-x:hidden; background:radial-gradient(circle at 8% 0,rgba(56,189,248,.12),transparent 26%),radial-gradient(circle at 95% 14%,rgba(199,255,31,.09),transparent 24%),#02070e; color:#fff; }
-.profile-hero { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px; padding:max(27px,env(safe-area-inset-top)) 2px 22px; }.avatar { display:grid; width:62px; height:62px; place-items:center; border:1px solid rgba(199,255,31,.38); border-radius:21px; background:linear-gradient(145deg,rgba(199,255,31,.24),rgba(56,189,248,.16)); color:var(--accent); font-size:27px; font-weight:950; box-shadow:0 0 28px rgba(199,255,31,.1); }.identity { min-width:0; }.identity p,.panel-head p { color:var(--accent); font-size:8px; font-weight:850; letter-spacing:.17em; }.identity h1 { margin-top:3px; font-size:23px; font-weight:950; letter-spacing:-.04em; }.identity>span { display:block; margin-top:3px; overflow:hidden; color:rgba(255,255,255,.38); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
-.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.stats-grid button { min-width:0; padding:16px; border:1px solid rgba(255,255,255,.1); border-radius:21px; background:rgba(15,22,32,.88); text-align:left; box-shadow:0 12px 28px rgba(0,0,0,.18); }.stats-grid strong { display:block; color:var(--accent); font-size:26px; line-height:1; }.stats-grid span { display:block; margin-top:5px; font-size:12px; font-weight:900; }.stats-grid small { display:block; margin-top:7px; overflow:hidden; color:rgba(255,255,255,.38); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
-.panel { margin-top:12px; padding:17px; border:1px solid rgba(255,255,255,.09); border-radius:23px; background:rgba(14,20,30,.86); }.panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }.panel-head h2 { margin-top:3px; font-size:16px; font-weight:920; }.panel-note { margin-top:7px; color:rgba(255,255,255,.58); font-size:9px; line-height:1.55; }
+.profile-hero { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px; padding:max(27px,env(safe-area-inset-top)) 2px 22px; }.avatar { display:grid; width:62px; height:62px; place-items:center; border:1px solid rgba(199,255,31,.38); border-radius:21px; background:linear-gradient(145deg,rgba(199,255,31,.24),rgba(56,189,248,.16)); color:var(--accent); font-size:27px; font-weight:950; box-shadow:0 0 28px rgba(199,255,31,.1); }.identity { min-width:0; }.identity p,.panel-head p { color:var(--accent); font-size:10px; font-weight:850; letter-spacing:.17em; }.identity h1 { margin-top:4px; font-size:24px; font-weight:950; letter-spacing:-.04em; }.identity>span { display:block; margin-top:4px; overflow:hidden; color:rgba(255,255,255,.42); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.stats-grid button { min-width:0; padding:16px; border:1px solid rgba(255,255,255,.1); border-radius:21px; background:rgba(15,22,32,.88); text-align:left; box-shadow:0 12px 28px rgba(0,0,0,.18); }.stats-grid strong { display:block; color:var(--accent); font-size:26px; line-height:1; }.stats-grid span { display:block; margin-top:6px; font-size:14px; font-weight:900; }.stats-grid small { display:block; margin-top:7px; overflow:hidden; color:rgba(255,255,255,.42); font-size:10.5px; text-overflow:ellipsis; white-space:nowrap; }
+.footprint-banner { display:flex; align-items:center; gap:12px; width:100%; margin-top:12px; padding:16px 17px; border:1px solid rgba(199,255,31,.22); border-radius:23px; background:linear-gradient(135deg,rgba(199,255,31,.13),rgba(56,189,248,.1) 55%,rgba(14,20,30,.92)); text-align:left; box-shadow:0 14px 32px rgba(0,0,0,.28); }
+.footprint-banner:active { transform:scale(.985); }
+.footprint-globe { display:grid; width:46px; height:46px; flex:none; place-items:center; border-radius:16px; background:rgba(199,255,31,.14); font-size:24px; font-style:normal; }
+.footprint-copy { display:flex; min-width:0; flex:1; flex-direction:column; gap:4px; }
+.footprint-copy b { font-size:15.5px; font-weight:900; }
+.footprint-copy small { color:rgba(255,255,255,.62); font-size:11.5px; line-height:1.45; }
+.footprint-banner em { flex:none; color:var(--accent); font-size:18px; font-style:normal; }
+.panel { margin-top:12px; padding:17px; border:1px solid rgba(255,255,255,.09); border-radius:23px; background:rgba(14,20,30,.86); }.panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }.panel-head h2 { margin-top:4px; font-size:18px; font-weight:920; }.panel-note { margin-top:8px; color:rgba(255,255,255,.62); font-size:12px; line-height:1.6; }
 .persona-panel { overflow:hidden; padding:15px; }
-.persona-layout { display:grid; grid-template-columns:132px minmax(0,1fr); align-items:center; gap:14px; margin-top:12px; }.persona-portrait { aspect-ratio:1; overflow:hidden; border:1px solid rgba(255,255,255,.14); border-radius:18px; background:#151d27; }.persona-portrait img { width:100%; height:100%; object-fit:contain; }.persona-visual-copy { min-width:0; }.persona-visual-copy strong { display:block; overflow:hidden; color:#fff; font-size:20px; font-weight:950; letter-spacing:-.025em; text-overflow:ellipsis; white-space:nowrap; }.persona-visual-copy p { margin-top:4px; overflow:hidden; color:rgba(255,255,255,.56); font-size:10px; line-height:1.5; text-overflow:ellipsis; white-space:nowrap; }.persona-layout.is-unselected { grid-template-columns:1fr; padding:4px 0; }.persona-layout.is-unselected strong { color:rgba(255,255,255,.78); font-size:16px; letter-spacing:0; }.persona-layout.is-unselected p { color:rgba(255,255,255,.48); }
-.persona-chip-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:12px; }.persona-chip-row button { display:flex; min-width:0; min-height:40px; align-items:center; justify-content:center; padding:0 8px; overflow:hidden; border:1px solid rgba(255,255,255,.13); border-radius:999px; color:rgba(255,255,255,.68); font-size:10px; font-weight:800; text-overflow:ellipsis; white-space:nowrap; transition:transform .16s ease-out,border-color .16s ease-out,background .16s ease-out,color .16s ease-out; }.persona-chip-row button:active { transform:scale(.96); }.persona-chip-row button.active { border-color:var(--accent); background:var(--accent); color:#101508; }
-.persona-hint { margin-top:10px; color:rgba(255,255,255,.5); font-size:9px; line-height:1.5; }
-.shortcut-list,.data-actions { display:grid; gap:1px; margin-top:13px; overflow:hidden; border-radius:16px; background:rgba(255,255,255,.07); }.shortcut-list button { display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:10px; padding:11px 12px; background:#101720; text-align:left; }.shortcut-list i { display:grid; width:32px; height:32px; place-items:center; border-radius:11px; background:rgba(199,255,31,.08); color:var(--accent); font-size:17px; font-style:normal; }.shortcut-list span { display:flex; min-width:0; flex-direction:column; }.shortcut-list b { font-size:10px; }.shortcut-list small { margin-top:3px; overflow:hidden; color:rgba(255,255,255,.36); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }.shortcut-list em { color:rgba(255,255,255,.3); font-size:13px; font-style:normal; }
-.data-actions button { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; background:#101720; text-align:left; }.data-actions button:disabled { opacity:.35; }.data-actions span { display:flex; flex-direction:column; font-size:10px; font-weight:800; }.data-actions small { margin-top:3px; color:rgba(255,255,255,.35); font-size:8px; font-weight:500; }.data-actions b { color:#fca5a5; font-size:9px; }.storage-warning { margin-top:10px; color:#fcd34d; font-size:9px; line-height:1.5; }.me-footer { padding:21px 0 4px; color:rgba(255,255,255,.2); font-size:8px; text-align:center; letter-spacing:.1em; }
+.persona-layout { display:grid; grid-template-columns:132px minmax(0,1fr); align-items:center; gap:14px; margin-top:12px; }.persona-portrait { aspect-ratio:1; overflow:hidden; border:1px solid rgba(255,255,255,.14); border-radius:18px; background:#151d27; }.persona-portrait img { width:100%; height:100%; object-fit:contain; }.persona-visual-copy { min-width:0; }.persona-visual-copy strong { display:block; overflow:hidden; color:#fff; font-size:20px; font-weight:950; letter-spacing:-.025em; text-overflow:ellipsis; white-space:nowrap; }.persona-visual-copy p { margin-top:5px; overflow:hidden; color:rgba(255,255,255,.6); font-size:12px; line-height:1.55; text-overflow:ellipsis; white-space:nowrap; }.persona-layout.is-unselected { grid-template-columns:1fr; padding:4px 0; }.persona-layout.is-unselected strong { color:rgba(255,255,255,.82); font-size:17px; letter-spacing:0; }.persona-layout.is-unselected p { color:rgba(255,255,255,.48); }
+.persona-chip-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:12px; }.persona-chip-row button { display:flex; min-width:0; min-height:44px; align-items:center; justify-content:center; padding:0 10px; overflow:hidden; border:1px solid rgba(255,255,255,.13); border-radius:999px; color:rgba(255,255,255,.72); font-size:12px; font-weight:800; text-overflow:ellipsis; white-space:nowrap; transition:transform .16s ease-out,border-color .16s ease-out,background .16s ease-out,color .16s ease-out; }.persona-chip-row button:active { transform:scale(.96); }.persona-chip-row button.active { border-color:var(--accent); background:var(--accent); color:#101508; }
+.persona-layout--loading .persona-visual-copy { display:grid; align-content:center; }.persona-skeleton { display:block; border:0; background:rgba(255,255,255,.085); }.persona-skeleton--title { width:46%; height:20px; border-radius:7px; }.persona-skeleton--copy { width:74%; height:12px; margin-top:9px; border-radius:6px; }.persona-chip-row--loading i { min-height:44px; border-radius:999px; }
+.persona-hint { margin-top:11px; color:rgba(255,255,255,.55); font-size:11.5px; line-height:1.6; }
+.shortcut-list,.data-actions { display:grid; gap:1px; margin-top:13px; overflow:hidden; border-radius:16px; background:rgba(255,255,255,.07); }.shortcut-list button { display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:10px; padding:11px 12px; background:#101720; text-align:left; }.shortcut-list i { display:grid; width:32px; height:32px; place-items:center; border-radius:11px; background:rgba(199,255,31,.08); color:var(--accent); font-size:17px; font-style:normal; }.shortcut-list span { display:flex; min-width:0; flex-direction:column; }.shortcut-list b { font-size:13.5px; font-weight:800; }.shortcut-list small { margin-top:3px; overflow:hidden; color:rgba(255,255,255,.42); font-size:10.5px; text-overflow:ellipsis; white-space:nowrap; }.shortcut-list em { color:rgba(255,255,255,.3); font-size:13px; font-style:normal; }
+.data-actions button { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; background:#101720; text-align:left; }.data-actions button:disabled { opacity:.35; }.data-actions span { display:flex; flex-direction:column; font-size:13.5px; font-weight:800; }.data-actions small { margin-top:3px; color:rgba(255,255,255,.4); font-size:11px; font-weight:500; }.data-actions b { color:#fca5a5; font-size:11px; font-weight:700; }.storage-warning { margin-top:10px; color:#fcd34d; font-size:11.5px; line-height:1.6; }.me-footer { padding:22px 0 4px; color:rgba(255,255,255,.25); font-size:10px; text-align:center; letter-spacing:.1em; }
 .city-picker-mask { position:fixed; z-index:90; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.55); }.city-picker-panel { width:100%; max-width:480px; max-height:82vh; padding:20px; overflow-y:auto; border:1px solid rgba(255,255,255,.14); border-bottom:0; border-radius:28px 28px 0 0; background:linear-gradient(180deg,rgba(24,29,39,.98),rgba(10,14,22,.99)); box-shadow:0 -20px 50px rgba(0,0,0,.5); }.city-sheet-enter-active,.city-sheet-leave-active { transition:opacity .18s ease; }.city-sheet-enter-active .city-picker-panel,.city-sheet-leave-active .city-picker-panel { transition:transform .28s cubic-bezier(.2,.8,.2,1); }.city-sheet-enter-from,.city-sheet-leave-to { opacity:0; }.city-sheet-enter-from .city-picker-panel,.city-sheet-leave-to .city-picker-panel { transform:translateY(100%); }.city-sheet-leave-active { pointer-events:none; }
-.confirm-mask { position:fixed; z-index:100; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:16px 16px max(18px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.72); backdrop-filter:blur(5px); }.confirm-card { width:100%; max-width:420px; padding:22px 20px; border:1px solid rgba(255,255,255,.13); border-radius:25px; background:#151c26; }.confirm-card>p { color:#fca5a5; font-size:9px; font-weight:850; letter-spacing:.14em; }.confirm-card h2 { margin-top:8px; font-size:20px; font-weight:950; }.confirm-card>span { display:block; margin-top:9px; color:rgba(255,255,255,.55); font-size:11px; line-height:1.7; }.confirm-card>div { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }.confirm-card button { padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:14px; color:rgba(255,255,255,.75); font-size:11px; font-weight:850; }.confirm-card .danger { border-color:#ef4444; background:#ef4444; color:#fff; }
+.confirm-mask { position:fixed; z-index:100; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:16px 16px max(18px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.72); }.confirm-card { width:100%; max-width:420px; padding:22px 20px; border:1px solid rgba(255,255,255,.13); border-radius:25px; background:#151c26; }.confirm-card>p { color:#fca5a5; font-size:10.5px; font-weight:850; letter-spacing:.14em; }.confirm-card h2 { margin-top:8px; font-size:20px; font-weight:950; }.confirm-card>span { display:block; margin-top:10px; color:rgba(255,255,255,.6); font-size:13px; line-height:1.7; }.confirm-card>div { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }.confirm-card button { padding:13px; border:1px solid rgba(255,255,255,.12); border-radius:14px; color:rgba(255,255,255,.8); font-size:13px; font-weight:850; }.confirm-card .danger { border-color:#ef4444; background:#ef4444; color:#fff; }
 .me-toast { position:fixed; z-index:110; bottom:calc(104px + env(safe-area-inset-bottom)); left:50%; max-width:calc(100% - 40px); padding:10px 16px; transform:translateX(-50%); border:1px solid rgba(255,255,255,.12); border-radius:18px; background:rgba(18,24,33,.96); color:#fff; font-size:11px; font-weight:750; line-height:1.45; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,.4); }
 .sheet-enter-active,.sheet-leave-active,.toast-enter-active,.toast-leave-active { transition:opacity .2s ease; }.sheet-enter-from,.sheet-leave-to,.toast-enter-from,.toast-leave-to { opacity:0; }
-@media (max-width:360px) { .me-page { padding-right:12px; padding-left:12px; }.panel { padding-right:13px; padding-left:13px; }.persona-panel { padding-right:13px; padding-left:13px; }.persona-layout { grid-template-columns:108px minmax(0,1fr); gap:12px; }.persona-layout.is-unselected { grid-template-columns:1fr; }.persona-visual-copy strong { font-size:17px; }.persona-chip-row { gap:5px; margin-top:9px; }.persona-chip-row button { padding:0 6px; font-size:9px; } }
+@media (max-width:360px) { .me-page { padding-right:12px; padding-left:12px; }.panel { padding-right:13px; padding-left:13px; }.persona-panel { padding-right:13px; padding-left:13px; }.persona-layout { grid-template-columns:108px minmax(0,1fr); gap:12px; }.persona-layout.is-unselected { grid-template-columns:1fr; }.persona-visual-copy strong { font-size:17px; }.persona-chip-row { gap:5px; margin-top:9px; }.persona-chip-row button { padding:0 6px; font-size:11px; } }
 @media (prefers-reduced-motion:reduce) { .persona-chip-row button,.persona-chip-row button:active { transition:none; transform:none; } }
 </style>

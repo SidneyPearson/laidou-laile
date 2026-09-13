@@ -19,10 +19,13 @@ import {
 } from '../services/exploreApi'
 import { ApiRequestError } from '../services/api'
 import { useTodayPlan } from '../composables/useTodayPlan'
+import SpotDetailSheet from '../components/explore/SpotDetailSheet.vue'
+import { planStayPreview } from '../utils/planStayPreview'
+import { openAmapNavigation } from '../utils/amapNavigation'
 import { usePersona } from '../composables/usePersona'
 import { fetchHomePersonas } from '../repositories/homePersonas'
 import { haptic, hapticLight, hapticSelect, hapticSuccess } from '../utils/haptics'
-import { prefersReducedMotion } from '../utils/delight'
+import { prefersReducedMotion, celebratePlanAdded } from '../utils/delight'
 import type {
   ExploreCategory,
   InspirationSpot,
@@ -45,17 +48,21 @@ const adcode = ref<string | undefined>(
     : undefined,
 )
 const weather = ref<CityContextResponse['weather']>(null)
-const contextLoading = ref(false)
+const contextLoading = ref(true)
 const contextError = ref('')
 
 const spots = ref<InspirationSpot[]>([])
 const feedLoading = ref(false)
+const isLoading = computed(() => contextLoading.value || feedLoading.value)
+let disposed = false
+let contextRequestId = 0
 const usingFallback = ref(false)
 const feedError = ref('')
 const personaDisplayNames = ref(new Map<string, string>())
 
 /** Cards accepted so far (all actually added to todayPlan). */
 const selected = ref<InspirationSpot[]>([])
+const detailSpot = ref<InspirationSpot | null>(null)
 const cardIndex = ref(0)
 const reviewedCount = ref(0)
 const toast = ref('')
@@ -115,7 +122,7 @@ const weatherSummary = computed(() => {
   return `${weather.value.weather} · ${weather.value.temperature}℃`
 })
 const totalCount = computed(() => spots.value.length)
-const progressText = computed(() => totalCount.value > 0
+const progressText = computed(() => isLoading.value ? '正在加载…' : totalCount.value > 0
   ? `第 ${cardIndex.value + 1} / ${totalCount.value} · 已加入 ${todayPlan.count.value}`
   : '0 / 0')
 const categoryLabel = (category: Exclude<ExploreCategory, 'all'>): string =>
@@ -171,6 +178,22 @@ const deck = computed<DeckItem[]>(() => {
     layer: (offset === 0 ? 'front' : offset === 1 ? 'back-1' : 'back-2') as DeckItem['layer'],
   }})
 })
+const currentSpot = computed(() => spots.value[cardIndex.value % spots.value.length])
+const stayPreview = computed(() => planStayPreview([...todayPlan.spots.value], currentSpot.value, persona.value))
+function canUseSpot(spot: InspirationSpot): boolean {
+  return !usingFallback.value && spot.mock === false && spot.source === 'amap_verified'
+    && spot.verificationStatus === 'verified' && !!spot.amapPoiId && !!spot.address
+    && Number.isFinite(spot.lng) && Number.isFinite(spot.lat)
+}
+function navigateDetail() {
+  const spot = detailSpot.value
+  if (spot && canUseSpot(spot)) openAmapNavigation(spot.amapName || spot.name, spot.lng!, spot.lat!, spot.name)
+}
+function addDetail() {
+  if (detailSpot.value?.id !== currentSpot.value?.id) return
+  swipe('add')
+  if (detailSpot.value && todayPlan.spots.value.some(spot => spot.id === detailSpot.value?.id)) detailSpot.value = null
+}
 const frontStyle = computed(() => {
   if (flying.value || dragActive.value || Math.abs(dragX.value) > 0) {
     return { transform: `translateX(${dragX.value}px) rotate(${dragX.value / 18}deg)` }
@@ -191,6 +214,7 @@ function normalizeCityName(value: string): string {
 }
 
 function queryNumber(value: unknown): number | null {
+  if (value === undefined || value === null || value === '' || Array.isArray(value)) return null
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : null
 }
@@ -209,6 +233,7 @@ function localFallback(): InspirationSpot[] {
 }
 
 function resetSwipe() {
+  detailSpot.value = null
   cardIndex.value = 0
   reviewedCount.value = 0
   // Keep the confirmation count aligned with the persisted Today Plan. The
@@ -222,6 +247,7 @@ function resetSwipe() {
 }
 
 async function loadRecommendations() {
+  if (disposed) return
   const requestId = ++feedRequestId
   feedController?.abort()
   feedController = new AbortController()
@@ -246,7 +272,7 @@ async function loadRecommendations() {
         limit: 60,
         isRainy: weather.value?.isRainy ?? false,
       }, feedController.signal)
-      if (requestId !== feedRequestId) return
+      if (disposed || requestId !== feedRequestId) return
       all.push(...result.spots)
       cursor = result.nextCursor
       pages += 1
@@ -254,14 +280,14 @@ async function loadRecommendations() {
     spots.value = [...new Map(all.map(spot => [spot.id, spot])).values()]
     usingFallback.value = false
   } catch (error) {
-    if (requestId !== feedRequestId) return
+    if (disposed || requestId !== feedRequestId) return
     const requestError = error instanceof ApiRequestError ? error : null
     if (requestError?.code === 'CANCELLED') return
     spots.value = localFallback()
     usingFallback.value = true
     feedError.value = requestError?.message || '实时城市内容暂时不可用'
   } finally {
-    if (requestId === feedRequestId) {
+    if (!disposed && requestId === feedRequestId) {
       feedLoading.value = false
       resetSwipe()
     }
@@ -269,11 +295,15 @@ async function loadRecommendations() {
 }
 
 async function loadContext() {
+  if (disposed) return
+  const requestId = ++contextRequestId
+  contextLoading.value = true
   const lat = queryNumber(route.query.lat)
   const lng = queryNumber(route.query.lng)
   if (lat === null || lng === null) {
     contextError.value = '缺少有效定位，请重新选择城市'
     await loadRecommendations()
+    if (!disposed && requestId === contextRequestId) contextLoading.value = false
     return
   }
 
@@ -284,6 +314,7 @@ async function loadContext() {
 
   try {
     const context = await fetchCityContext(lat, lng, contextController.signal)
+    if (disposed || requestId !== contextRequestId) return
     cityName.value = context.city
     district.value = context.district
     adcode.value = context.adcode
@@ -291,15 +322,16 @@ async function loadContext() {
     // 用真实城市级 adcode 校准今日计划桶（query 里可能是区级 adcode 或只有城市名）。
     todayPlan.setActiveCity({ adcode: context.adcode, cityName: context.city })
   } catch (error) {
+    if (disposed || requestId !== contextRequestId) return
     const requestError = error instanceof ApiRequestError ? error : null
     if (requestError?.code !== 'CANCELLED') {
       contextError.value = requestError?.message || '城市与天气识别暂时不可用'
     }
   } finally {
-    contextLoading.value = false
+    if (!disposed && requestId === contextRequestId) contextLoading.value = false
   }
 
-  await loadRecommendations()
+  if (!disposed && requestId === contextRequestId) await loadRecommendations()
 }
 
 /* -------------------- swipe interactions -------------------- */
@@ -312,7 +344,7 @@ interface DragSession {
 let session: DragSession | null = null
 
 function onCardDown(event: PointerEvent, item: DeckItem) {
-  if (item.layer !== 'front') return
+  if (item.layer !== 'front' || detailSpot.value || flying.value) return
   dragActive.value = true
   dragX.value = 0
   session = { startX: event.clientX, pointerId: event.pointerId }
@@ -363,7 +395,7 @@ function swipe(type: 'add' | 'skip') {
         selected.value = [...selected.value, spot]
       }
       if (isFullDaySuggestedDuration(spot.suggestedDuration)) playFullDayFeedback()
-      else showToast('已加入今日计划')
+      else showToast(celebratePlanAdded(todayPlan.count.value, TODAY_PLAN_LIMIT, document.querySelector<HTMLElement>('.dock')))
     } else if (result.status === 'limit') {
       const message = playLimitFeedback()
       addError.value = message
@@ -476,6 +508,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  disposed = true
+  contextRequestId += 1
+  feedRequestId += 1
   contextController?.abort()
   feedController?.abort()
   if (toastTimer) clearTimeout(toastTimer)
@@ -513,24 +548,28 @@ const finishEnabled = computed(() => selected.value.length >= 1)
         <div class="mode-top">
           <div class="mode-kicker"><span aria-hidden="true">⚡</span> {{ currentPersona.name }}模式已开启</div>
         </div>
-        <p>
+        <p v-if="isLoading" role="status">正在整理{{ cityReady ? cityName : '当前城市' }}的推荐地点…</p>
+        <p v-else>
           已从{{ cityReady ? cityName : '当前城市' }}地点库中为你筛出
           <b class="mode-count">{{ totalCount }}</b> 个符合「{{ currentPersona.name }}」标签的地点，快速确认后即可生成今日路线。
         </p>
-        <div v-if="usingFallback" class="mode-note">
+        <!-- 只有兜底真的拿出了演示地点，才告诉用户「当前展示本地演示地点」；
+             兜底也是空时改走下方专属空态，避免两条文案互相打架。 -->
+        <div v-if="usingFallback && spots.length > 0" class="mode-note">
           {{ feedError || '实时推荐暂不可用' }}，当前展示本地演示地点。
+          <button type="button" @click="loadContext">重试加载</button>
         </div>
       </section>
 
       <div class="confirm-head">
         <div>
           <h2>先确认今天想去的地方</h2>
-          <p>左右滑动卡片，喜欢就加入今日计划</p>
+          <p>点击按钮或左右滑动卡片，喜欢就加入</p>
         </div>
         <div class="progress"><b>{{ progressText }}</b></div>
       </div>
 
-      <div v-if="feedLoading" class="stack-wrap">
+      <div v-if="isLoading" class="stack-wrap" aria-busy="true" aria-label="正在加载推荐地点">
         <div class="card skeleton-card">
           <div class="skeleton-shine" />
           <div class="skeleton-body">
@@ -543,8 +582,15 @@ const finishEnabled = computed(() => selected.value.length >= 1)
 
       <template v-else>
         <div v-if="spots.length === 0" class="empty show">
-          <h3>还没有可推荐的地点</h3>
-          <p>这个城市的地点库还是空的，换个城市试试。</p>
+          <template v-if="usingFallback">
+            <h3>暂时拿不到城市内容</h3>
+            <p>{{ feedError || '实时城市内容暂时不可用' }}；本地演示地点也没有这座城市的存货。稍后再来，或换个城市试试。</p>
+          </template>
+          <template v-else>
+            <h3>还没有可推荐的地点</h3>
+            <p>这个城市暂时没有符合「{{ currentPersona.name }}」标签的地点，换个身份或城市试试。</p>
+          </template>
+          <button v-if="usingFallback" type="button" @click="loadContext">重试加载</button>
           <button type="button" @click="router.replace({ name: 'home' })">返回首页</button>
         </div>
 
@@ -556,6 +602,8 @@ const finishEnabled = computed(() => selected.value.length >= 1)
             :class="[item.layer, { dragging: dragActive && item.layer === 'front', flying: flying && item.layer === 'front' }]"
             :style="item.layer === 'front' ? frontStyle : undefined"
             :tabindex="item.layer === 'front' ? 0 : -1"
+            :aria-hidden="item.layer !== 'front'"
+            :inert="item.layer !== 'front'"
             :aria-label="item.layer === 'front' ? `当前地点：${item.spot.name}。按 → 加入今日计划，按 ← 跳过` : undefined"
             @pointerdown="onCardDown($event, item)"
             @pointermove="onCardMove($event, item)"
@@ -570,7 +618,9 @@ const finishEnabled = computed(() => selected.value.length >= 1)
             <div class="swipe-label right" :style="item.layer === 'front' ? { opacity: String(frontLabelRight) } : undefined">加入今日计划</div>
             <div class="swipe-label left" :style="item.layer === 'front' ? { opacity: String(frontLabelLeft) } : undefined">先跳过</div>
             <div class="card-body">
-              <h3>{{ item.spot.name }}</h3>
+              <h3><button type="button" :tabindex="item.layer === 'front' ? 0 : -1"
+                :aria-label="`查看${item.spot.name}详情`" @pointerdown.stop @pointerup.stop @keydown.stop
+                @click.stop="detailSpot = item.spot">{{ item.spot.name }}</button></h3>
               <div class="meta">{{ spotMeta(item.spot) }}</div>
               <div class="tags">
                 <span v-for="tag in item.spot.tags.slice(0, 3)" :key="tag" class="tag">{{ tag }}</span>
@@ -583,6 +633,15 @@ const finishEnabled = computed(() => selected.value.length >= 1)
               </div>
             </div>
           </article>
+        </div>
+
+        <div v-if="currentSpot" class="card-actions-wrap">
+          <p class="stay-preview" role="status">{{ stayPreview }}</p>
+          <div class="card-actions">
+            <button type="button" :disabled="flying" @click="swipe('skip')">先跳过</button>
+            <button type="button" :disabled="flying" @click="detailSpot = currentSpot">查看详情</button>
+            <button type="button" class="add-action" :disabled="flying || !canUseSpot(currentSpot)" @click="swipe('add')">加入今日计划</button>
+          </div>
         </div>
 
         <p v-if="addError" class="add-error" role="alert">{{ addError }}</p>
@@ -612,6 +671,11 @@ const finishEnabled = computed(() => selected.value.length >= 1)
     </div>
 
     <div class="toast" role="status" aria-live="polite" :class="{ show: !!toast }">{{ toast }}</div>
+    <Teleport to="body">
+      <SpotDetailSheet v-if="detailSpot" :spot="detailSpot" :persona="currentPersona"
+        :plan-hint="stayPreview" :action-ready="canUseSpot(detailSpot)" :in-today="todayPlan.spots.value.some(spot => spot.id === detailSpot?.id)"
+        @close="detailSpot = null" @navigate="navigateDetail" @toggle-today="addDetail" />
+    </Teleport>
   </main>
 </template>
 
@@ -678,22 +742,20 @@ const finishEnabled = computed(() => selected.value.length >= 1)
   flex-shrink: 0;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(8, 13, 20, 0.58);
+  /* 纯色不用毛玻璃：按钮压在滑卡上，拖卡/飞卡动画时 blur 会每帧重光栅化。 */
+  background: rgba(8, 13, 20, 0.85);
   color: #fff;
   font-size: 24px;
   display: grid;
   place-items: center;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 .location {
   flex: 1;
   height: 42px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(18, 25, 35, 0.72);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  /* 纯色不用毛玻璃：定位条压在滑卡上，拖卡时 blur 每帧重算会掉帧。 */
+  background: rgba(16, 23, 33, 0.92);
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -740,9 +802,8 @@ const finishEnabled = computed(() => selected.value.length >= 1)
   padding: 9px 12px 10px;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 15px;
-  background: linear-gradient(135deg, rgba(5, 10, 17, 0.78), rgba(12, 18, 28, 0.70));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  /* 提高不透明度后去掉毛玻璃：模式卡压在滑卡上，blur 在卡片动画期间逐帧重算。 */
+  background: linear-gradient(135deg, rgba(6, 11, 19, 0.95), rgba(12, 18, 28, 0.94));
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
   position: relative;
   overflow: hidden;
@@ -851,6 +912,13 @@ const finishEnabled = computed(() => selected.value.length >= 1)
   font-size: clamp(15px, 4.2vw, 18px);
 }
 
+.card-actions-wrap { flex: none; position: relative; z-index: 5; }
+.stay-preview { margin: 0 2px 7px; color: #d9e9bd; font-size: 11px; line-height: 1.5; }
+.card-actions { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 7px; }
+.card-actions button { min-height: 44px; border: 1px solid var(--line); border-radius: 13px; background: #141d28; color: white; font-size: 12px; font-weight: 700; }
+.card-actions .add-action { background: var(--lime); color: #152008; }
+.card-actions button:disabled { opacity: .45; }
+.card-body h3 button { max-width: 100%; min-height: 44px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 /* ---------- swipe deck ---------- */
 .stack-wrap {
   position: relative;
@@ -1091,9 +1159,8 @@ const finishEnabled = computed(() => selected.value.length >= 1)
   padding: 4px 8px 4px 10px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(14, 19, 27, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* 底栏 92% 不透明，毛玻璃视觉无收益；飞卡动画时 blur 还会逐帧重算。 */
+  background: rgba(13, 18, 26, 0.96);
   box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) auto;
@@ -1167,8 +1234,10 @@ const finishEnabled = computed(() => selected.value.length >= 1)
   letter-spacing: -0.02em;
   color: var(--text);
 }
-.dock-count {
+.dock-copy .dock-count {
+  display: inline;
   color: var(--lime);
+  font-size: inherit;
 }
 .dock-copy span {
   display: block;
@@ -1378,5 +1447,9 @@ const finishEnabled = computed(() => selected.value.length >= 1)
   .dock {
     margin-top: 6px;
   }
+}
+@media (max-height: 740px) {
+  .mode p { display: none; }
+  .card-body .reason-box { display: none; }
 }
 </style>
